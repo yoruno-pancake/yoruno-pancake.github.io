@@ -467,7 +467,7 @@ function fmtFrame(v){
   if(v===''||v==null)return '';
   const n=parseFloat(v);
   if(isNaN(n))return String(v);
-  return (n>0?'+':'')+n;
+  return (n>0?'+':'')+n+'F';
 }
 function movesUnit(n){return LANG==='ja'?(n+'技'):(n+(n===1?' move':' moves'));}
 function combosUnit(n){return LANG==='ja'?(n+'コンボ'):(n+(n===1?' combo':' combos'));}
@@ -4145,6 +4145,8 @@ function duplicateCombo(id){
   const subSet=new Set(ids);let lastIdx=-1;arr.forEach((c,i)=>{if(subSet.has(c.id))lastIdx=i;});
   arr.splice(lastIdx+1,0,...clones);
   char.combos=NormalizeComboOrder(arr);
+  editingCombos.delete(id); // 複製元（元のコンボ）の編集モードを解除
+  editingCombos.add(idMap.get(id)); // 新しく作った複製コンボを編集中にする
   renderCombos();if(activeTab==='tree')renderTree();
   showToast(getDesc(id).length?t('dupWithBranchToast'):t('dupToast'));
 }
@@ -4568,6 +4570,8 @@ function addBranch(pid){
   const char=cur();const p=char.combos.find(c=>c.id===pid);
   const branch={id:genComboId(),name:(p?p.name:'')+t('branchSuffix'),moves:p?[...p.moves]:[],counters:p?[...(p.counters||[])]:[],tags:p?[...(p.tags||[])]:[], damage:'',frame:'',parentId:pid,note:''};
   char.combos.splice(branchInsertIndex(char.combos,pid),0,branch);
+  editingCombos.delete(pid); // 分岐元（元のコンボ）の編集モードを解除
+  editingCombos.add(branch.id); // 新しく作った分岐コンボを編集中にする
   closeModal();renderCombos();if(activeTab==='tree')renderTree();showToast(t('branchAddedToast'));
 }
 function delBranch(id){
@@ -4583,10 +4587,36 @@ function showModal(html){
 }
 function closeModal(){document.getElementById('modalRoot').innerHTML='';}
 
+// ── ドラッグ中のマウスホイールスクロール ──
+// コンボ（または技カード）を掴んで移動している間、ネイティブD&D中でも
+// マウスホイールでスクロールコンテナ（コンボ一覧／技一覧／ツリー）を上下スクロールできるようにする。
+function _findScrollableAncestor(el){
+  while(el&&el!==document.body&&el!==document.documentElement){
+    if(el.scrollHeight>el.clientHeight+1){
+      const oy=getComputedStyle(el).overflowY;
+      if(oy==='auto'||oy==='scroll')return el;
+    }
+    el=el.parentElement;
+  }
+  return null;
+}
+function setupDragWheelScroll(){
+  window.addEventListener('wheel',e=>{
+    const dragging=(comboDragId!=null)||(dragSrc&&dragSrc.type!=null);
+    if(!dragging)return;
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    const sc=_findScrollableAncestor(under)||document.querySelector('.combo-scroll');
+    if(!sc)return;
+    sc.scrollTop+=e.deltaY;
+    e.preventDefault();
+  },{passive:false});
+}
+
 // ── INIT ──
 document.documentElement.lang=LANG;
 applyStaticI18n();
 applyCompactMoves();
+setupDragWheelScroll();
 autoScale();render();
 </script>
 </body>
