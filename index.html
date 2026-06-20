@@ -130,6 +130,8 @@ body.compact-moves .move-card-grip{display:none;}
 .ctr-pc{background:#f47b20;color:#fff;}
 .ctr-d{background:#9b59b6;color:#fff;}
 .ctr-g{background:#2980b9;color:#fff;}
+/* ★ 4色のヒット状況バッジで文字色を統一: 白文字＋細い暗色の縁取りで、明るい黄背景でも視認性を確保 */
+.ctr-c,.ctr-pc,.ctr-d,.ctr-g{color:#fff;-webkit-text-stroke:.6px rgba(0,0,0,.7);text-stroke:.6px rgba(0,0,0,.7);paint-order:stroke fill;text-shadow:0 1px 1px rgba(0,0,0,.4);}
 /* STARTER TREE の技チップ内に出す小型のヒット状況バッジ（色は ctr-c / ctr-pc / ctr-d を流用） */
 .tree-chip-ctr{display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;line-height:1;padding:1px 3px;border-radius:3px;margin-left:4px;vertical-align:middle;}
 .add-combo-btn{background:#2a1c0a;border:1.5px dashed #8a5a1e;border-radius:7px;color:#d6a05a;font-size:12px;font-weight:600;padding:8px;cursor:pointer;width:100%;font-family:inherit;transition:border-color .15s,color .15s,background .15s;}
@@ -139,7 +141,13 @@ body.compact-moves .move-card-grip{display:none;}
 .tree-view-wrap{flex:1;overflow:auto;padding:14px;}
 .tree-root{display:flex;flex-direction:column;gap:16px;}
 .tree-starter-block{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;}
-.tree-starter-hdr{background:var(--bg3);padding:7px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bd);}
+.tree-starter-hdr{background:var(--bg3);padding:7px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bd);cursor:pointer;user-select:none;transition:background .15s;}
+.tree-starter-hdr:hover{background:var(--bg4);}
+/* ★ 技ごとに折り畳み。ヘッダクリックで .collapsed をトグルし、コンボ一覧を隠す */
+.tree-starter-toggle{flex-shrink:0;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;color:var(--dim);font-size:10px;transition:transform .15s;}
+.tree-starter-block.collapsed .tree-starter-toggle{transform:rotate(-90deg);}
+.tree-starter-block.collapsed .tree-starter-hdr{border-bottom:none;}
+.tree-starter-block.collapsed .tree-combos{display:none;}
 .tree-starter-name{font-size:13px;font-weight:700;color:var(--gold);}
 .tree-combos{padding:8px 12px;display:flex;flex-direction:column;gap:5px;}
 .tree-combo-row{display:flex;align-items:flex-start;gap:8px;padding:5px 8px;background:var(--bg4);border-radius:7px;border:1px solid var(--bd);}
@@ -158,11 +166,13 @@ body.compact-moves .move-card-grip{display:none;}
 .tree-diff-legend{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--dim);margin:0 0 10px 2px;}
 .tree-diff-legend .lg-dot{display:inline-flex;align-items:center;gap:4px;}
 .tree-diff-legend .lg-sw{width:10px;height:10px;border-radius:3px;display:inline-block;}
-/* ヒット状況の凡例は2列グリッドにし、C/PC を1行目・D/G を2行目に置く。
-   これでパニッシュカウンターの後で改行され、カウンター(C)とディレイ(D)が左列で縦に揃う */
-.tree-hit-legend{align-items:start;}
-.tree-hit-legend .lg-grid{display:grid;grid-template-columns:auto auto;gap:4px 14px;}
+/* ヒット状況の凡例: PC表示では C/PC/D/G を1行に並べる。
+   モバイルでは横幅が足りないため2列グリッド（C/PC=1行目, D/G=2行目）に折り返す */
+.tree-hit-legend{align-items:center;}
+.tree-hit-legend .lg-grid{display:grid;grid-template-columns:repeat(4,auto);gap:4px 14px;}
 .tree-hit-legend .lg-grid .lg-dot{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+body.mobile .tree-hit-legend{align-items:start;}
+body.mobile .tree-hit-legend .lg-grid{grid-template-columns:auto auto;}
 .tree-combo-meta{display:flex;gap:8px;margin-top:3px;}
 .tree-meta-item{font-size:10px;color:var(--muted);}
 .tree-meta-item span{color:var(--gold);}
@@ -3314,6 +3324,8 @@ function toggleMoveList(){
 }
 // ── 同じ技のまとめ表示（×N）。非編集時のみ適用 ──
 let groupRepeats=(()=>{try{return localStorage.getItem('sf6_groupRepeats')!=='0';}catch(e){return true;}})(); // 既定ON
+// ★ STARTER TREE の技ごとの折り畳み状態（"キャラ::スターターキー" を保持）
+let treeCollapsed=new Set();
 function setGroupRepeats(on){
   groupRepeats=!!on;
   try{localStorage.setItem('sf6_groupRepeats',groupRepeats?'1':'0');}catch(e){}
@@ -4268,6 +4280,7 @@ function renderTree(){
     const sm=mv(k);const s=sm?cs(sm.type):cs('other');
     const block=document.createElement('div');block.className='tree-starter-block';
     block.innerHTML=`<div class="tree-starter-hdr">
+      <span class="tree-starter-toggle">▼</span>
       ${sm?(thumbSrc(sm)?`<img src="${thumbSrc(sm)}" style="width:56px;height:32px;border-radius:4px;object-fit:cover;">`:`<div style="min-width:36px;height:20px;border-radius:3px;padding:0 4px;background:${s.bg};color:${s.fg};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;white-space:nowrap;">${sm.inputStr}</div>`):'<div style="width:20px;height:20px;border-radius:3px;background:#222;color:#9a9aa8;display:flex;align-items:center;justify-content:center;font-size:9px;">?</div>'}
       <div><div class="tree-starter-name">${sm?esc(sm.name):esc(t('noStarter'))}</div><div style="font-size:10px;color:${s.fg}">${sm?sm.inputStr:''}</div></div>
       <div style="margin-left:auto;font-size:10px;color:#8e8e9c">${esc(combosUnit(list.length))}</div></div>`;
@@ -4322,7 +4335,15 @@ function renderTree(){
       row.querySelectorAll('.tree-move-chip').forEach((el,i)=>{const _mid=chipMids[i];el.addEventListener('click',ev=>{ev.stopPropagation();showMoveModal(_mid);});});
       listEl.appendChild(row);children.forEach(ch=>rRow(ch,depth+1));
     }
-    list.forEach(c=>rRow(c,0));block.appendChild(listEl);root.appendChild(block);
+    list.forEach(c=>rRow(c,0));block.appendChild(listEl);
+    // ★ 技ごとの折り畳み: 保存済み状態を反映し、ヘッダクリックでトグル
+    const _ckey=db.currentChar+'::'+k;
+    if(treeCollapsed.has(_ckey))block.classList.add('collapsed');
+    block.querySelector('.tree-starter-hdr').addEventListener('click',()=>{
+      const collapsed=block.classList.toggle('collapsed');
+      if(collapsed)treeCollapsed.add(_ckey);else treeCollapsed.delete(_ckey);
+    });
+    root.appendChild(block);
   });
   wrap.appendChild(root);
 }
