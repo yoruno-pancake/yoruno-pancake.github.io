@@ -332,6 +332,11 @@ body.mobile .mobile-add-btn{display:inline-flex;align-items:center;gap:4px;backg
 #addBanner .ab-name{color:var(--gold);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #addBanner .ab-done{background:var(--gold);color:#2e1c08;border:none;font-weight:700;font-size:13px;padding:8px 16px;border-radius:7px;cursor:pointer;font-family:inherit;}
 body.mobile.adding{padding-bottom:60px;}
+/* ★ MOVE LIST 表示切替（サムネイル大 / リスト）ボタン */
+.ml-hdr-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.ml-view-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--bd2);background:var(--bg3);color:var(--gold);border-radius:6px;font-family:inherit;font-size:10px;letter-spacing:.5px;line-height:1;cursor:pointer;white-space:nowrap;}
+.ml-view-btn:hover{border-color:var(--gold);}
+body.mobile .ml-view-btn{height:24px;font-size:11px;padding:0 9px;}
 /* ★ モバイル: MOVE LISTの折り畳み（画面を広く使う） */
 .ml-toggle{display:none;}
 body.mobile .panel-hdr{cursor:pointer;user-select:none;}
@@ -379,7 +384,7 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
   </div>
   <div class="main">
     <div class="left">
-      <div class="panel-hdr" onclick="toggleMoveList()"><span style="display:flex;align-items:center;gap:8px;"><span class="move-list-title">MOVE LIST</span><span id="moveCount" style="color:#8e8e9c;font-size:9px;"></span></span><span class="ml-toggle" id="mlToggle">▾</span></div>
+      <div class="panel-hdr" onclick="toggleMoveList()"><span style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="move-list-title">MOVE LIST</span><span id="moveCount" style="color:#8e8e9c;font-size:9px;"></span></span><span class="ml-hdr-right"><button type="button" class="ml-view-btn" id="mlViewToggle" onclick="toggleCompactMoves(event)"></button><span class="ml-toggle" id="mlToggle">▾</span></span></div>
       <div class="sort-bar" id="sortBar"></div>
       <div class="move-list-wrap" id="moveList"></div>
     </div>
@@ -455,6 +460,7 @@ function applyStaticI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.getAttribute('data-i18n'));});
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.setAttribute('placeholder',t(el.getAttribute('data-i18n-ph')));});
   const tt=document.querySelector('title');if(tt)tt.textContent='SF6 COMBO MEMO';
+  updateMlViewToggle();
 }
 // 技カテゴリのラベル（UI表示用。技名そのものではないので翻訳する）
 const CAT_LABELS={
@@ -653,6 +659,11 @@ const I18N={
   mvFullDesc:{ja:'各技を16:9のサムネイル付きカードで表示する',en:'Show each move as a card with a 16:9 thumbnail'},
   mvCompact:{ja:'リスト表示（コンパクト）',en:'List view (compact)'},
   mvCompactDesc:{ja:'サムネイルを省いて技名とコマンドだけを詰めて表示。技数が多いキャラで一覧しやすくなります',en:'Hide thumbnails and show just names and inputs in a dense list — easier to scan when a character has many moves'},
+  // MOVE LIST ヘッダーの表示切替ボタン（現在の表示モードを表示し、タップでもう一方へ切替）
+  mlBtnThumb:{ja:'🖼 サムネ',en:'🖼 Thumb'},
+  mlBtnList:{ja:'☰ リスト',en:'☰ List'},
+  mlBtnTitleThumb:{ja:'表示: サムネイル大（タップでリスト表示に切替）',en:'View: large thumbnail (tap to switch to list view)'},
+  mlBtnTitleList:{ja:'表示: リスト（タップでサムネイル大に切替）',en:'View: list (tap to switch to large thumbnails)'},
   secData:{ja:'データ',en:'Data'},
   resetBtn:{ja:'🗑 データの初期化',en:'🗑 Reset all data'},
   resetDesc:{ja:'保存データをすべて削除して初期状態に戻します。先に「📤 書き出し」での保存を推奨します。',en:'Deletes all saved data and restores the initial state. Exporting first via "📤 Export" is recommended.'},
@@ -3333,11 +3344,25 @@ function setGroupRepeats(on){
 }
 // ── 改善5: 技リストのコンパクト（リスト）表示 ──
 let compactMoves=(()=>{try{return localStorage.getItem('sf6_compactMoves')==='1';}catch(e){return false;}})(); // 既定OFF
-function applyCompactMoves(){document.body.classList.toggle('compact-moves',compactMoves);}
+// MOVE LIST ヘッダーの表示切替ボタンのラベル・ツールチップを現在のモードに合わせて更新
+function updateMlViewToggle(){
+  const b=document.getElementById('mlViewToggle');if(!b)return;
+  // 現在のモードを表示（サムネイル大ならサムネ表記、コンパクトならリスト表記）
+  b.innerHTML=compactMoves?t('mlBtnList'):t('mlBtnThumb');
+  b.title=compactMoves?t('mlBtnTitleList'):t('mlBtnTitleThumb');
+}
+function applyCompactMoves(){document.body.classList.toggle('compact-moves',compactMoves);updateMlViewToggle();}
 function setCompactMoves(on){
   compactMoves=!!on;
   try{localStorage.setItem('sf6_compactMoves',compactMoves?'1':'0');}catch(e){}
   applyCompactMoves();openSettingsModal();
+}
+// MOVE LIST ヘッダーのボタンから切替（設定モーダルは開かず、折り畳みも誤作動させない）
+function toggleCompactMoves(ev){
+  if(ev){ev.stopPropagation();}
+  compactMoves=!compactMoves;
+  try{localStorage.setItem('sf6_compactMoves',compactMoves?'1':'0');}catch(e){}
+  applyCompactMoves();
 }
 function applyScale(s){
   if(isMobile()){ // スマホでは等倍・縦スクロールに任せる
@@ -3506,13 +3531,6 @@ function openSettingsModal(){
       <span style="display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;">${desc}</span>
     </button>`;
   };
-  const mvOpt=(compact,label,desc)=>{
-    const sel=compactMoves===compact;
-    return `<button onclick="setCompactMoves(${compact})" style="display:block;width:100%;text-align:left;margin-bottom:8px;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;background:${sel?'#2e1f08':'var(--bg3)'};border:1px solid ${sel?'var(--gold)':'var(--bd2)'};color:${sel?'var(--gold)':'var(--text)'};">
-      <span style="font-weight:700;">${sel?'● ':'○ '}${label}</span>
-      <span style="display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;">${desc}</span>
-    </button>`;
-  };
   showModal(`<div class="modal-title-bar">${t('settingsTitle')}</div>
     <div style="font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:8px;">${t('secLanguage')}</div>
     ${langOpt('ja',t('langJa'),t('langJaDesc'))}
@@ -3526,10 +3544,6 @@ function openSettingsModal(){
     <div style="font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:8px;">${t('secGroupRepeats')}</div>
     ${grpOpt(true,t('grpOn'),t('grpOnDesc'))}
     ${grpOpt(false,t('grpOff'),t('grpOffDesc'))}
-    <div style="height:1px;background:var(--bd);margin:14px 0;"></div>
-    <div style="font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:8px;">${t('secMoveDisplay')}</div>
-    ${mvOpt(false,t('mvFull'),t('mvFullDesc'))}
-    ${mvOpt(true,t('mvCompact'),t('mvCompactDesc'))}
     <div style="height:1px;background:var(--bd);margin:14px 0;"></div>
     <div style="font-size:10px;letter-spacing:1px;color:#ff6666;margin-bottom:8px;">${t('secData')}</div>
     <button class="close-btn" style="width:100%;border-color:#ff4444;color:#ff6666;background:#2a1414;" onclick="openResetModal()">${t('resetBtn')}</button>
@@ -3639,7 +3653,7 @@ function openTutorial(){
     H('#9b59b6','🎯 ヒット状況（C / PC / D / G）')+
     D(`コンボ内の各技に、当てたときの状況を色付きで記録できます。${b('✎ 編集')}中、各技チップの ${b('✕ ボタンの手前のボタン')}を押すたびに切り替わります（${b('通常 → C → PC → D → G → 通常')} の順で循環）。<br>• <span class="ctr-badge ctr-c">C</span> ${b('カウンター')}（黄）— 相手の技に割り込んでヒット<br>• <span class="ctr-badge ctr-pc">PC</span> ${b('パニッシュカウンター')}（橙）— 確定反撃でヒット<br>• <span class="ctr-badge ctr-d">D</span> ${b('ディレイ')}（紫）— 入力を遅らせて繋ぐ技<br>• <span class="ctr-badge ctr-g">G</span> ${b('ガード')}（青）— ガードされた（ブロック）状況<br>設定すると非編集時も技の右側に${b('バッジ表示')}され、${b('STARTER TREE')} や ${b('📋 コマンド出力')}（例: 中P(PC)）にも反映されます。${b('もう一度押して通常')}に戻すと解除できます。`)+
     H('#2ecc71','🔧 技の管理')+
-    D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
+    D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能<br>• ${b('表示切替（🖼 / ☰）')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイル大表示とリスト（コンパクト）表示をワンタップで切替（モバイルでは折りたたみボタンの左に表示）<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
     H('#e84393','📑 タブ')+
     D(`• ${b('COMBO LIST')} — コンボの作成・編集メイン画面<br>• ${b('STARTER TREE')} — 始動技ごとにコンボをツリー表示<br>• ${b('📝 MEMO')} — キャラごとの自由メモ（個別保存）`)+
     H('#2980b9','📱 モバイル表示')+
@@ -3656,7 +3670,7 @@ function openTutorial(){
     H('#9b59b6','🎯 Hit state (C / PC / D / G)')+
     D(`You can record, in color, the situation in which each move in a combo lands. While in ${b('✎ Edit')}, pressing ${b('the button just before the ✕ button')} on each move chip cycles it (${b('Normal → C → PC → D → G → Normal')}).<br>• <span class="ctr-badge ctr-c">C</span> ${b('Counter')} (yellow) — Hit by interrupting the opponent's move<br>• <span class="ctr-badge ctr-pc">PC</span> ${b('Punish Counter')} (orange) — Hit as a guaranteed punish<br>• <span class="ctr-badge ctr-d">D</span> ${b('Delay')} (purple) — A move linked by delaying the input<br>• <span class="ctr-badge ctr-g">G</span> ${b('Guard')} (blue) — The move was guarded (blocked)<br>Once set, a ${b('badge')} also shows on the right of the move outside edit mode, and it carries over to ${b('STARTER TREE')} and ${b('📋 Copy notation')} (e.g. 中P(PC)). ${b('Press again to return to Normal')} to clear it.`)+
     H('#2ecc71','🔧 Managing moves')+
-    D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
+    D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move<br>• ${b('View toggle (🖼 / ☰)')} — Use the ${b('button in the MOVE LIST header')} to switch between large-thumbnail and compact list view with one tap (on mobile it sits to the left of the collapse toggle)<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
     H('#e84393','📑 Tabs')+
     D(`• ${b('COMBO LIST')} — The main screen for creating and editing combos<br>• ${b('STARTER TREE')} — Combos shown as a tree grouped by starter move<br>• ${b('📝 MEMO')} — Free notes per character (saved individually)`)+
     H('#2980b9','📱 Mobile display')+
