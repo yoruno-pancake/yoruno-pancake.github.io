@@ -4378,4 +4378,603 @@ function comboToText(combo){
   return parts.map(p=>p.unit+(p.count>1?`×${p.count}`:'')).join(' ▶ ');
 }
 function copyCombo(id){
-  const char=cur();const combo=(char.combos||[]).find
+  const char=cur();const combo=(char.combos||[]).find(c=>c.id===id);if(!combo)return;
+  const text=comboToText(combo);
+  if(!text){showToast(t('noMovesToCopy'),'err');return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>showToast(t('copied'))).catch(()=>fallbackCopy(text));
+  }else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast(t('copied'));}
+  catch(e){showToast(t('copyFail'),'err');}
+}
+// ── ROUTE GRAPH 表示/非表示トグル（コンボ単位）──
+// inRoute===false のコンボを ROUTE GRAPH から除外する。未設定(undefined)は表示扱い（デフォルト表示）。
+function toggleComboRoute(id){
+  const combo=(cur().combos||[]).find(c=>c.id===id);if(!combo)return;
+  const shown=combo.inRoute!==false; // 現在表示中か
+  combo.inRoute=!shown;              // 表示→非表示(false) / 非表示→表示(true)
+  updateSavedIndicator();
+  renderCombos();
+  if(activeTab==='route')renderRouteGraph();
+  showToast(combo.inRoute===false?t('rgToastOff'):t('rgToastOn'));
+}
+
+// ── TREE ──
+function renderTree(){
+  const wrap=document.getElementById('treeViewWrap');wrap.innerHTML='';
+  const char=cur();const combos=char.combos||[];
+  if(!combos.length){wrap.innerHTML='<div style="color:#7a7a8a;font-size:12px;text-align:center;padding:30px;">'+esc(t('noCombosTree'))+'</div>';return;}
+  if(combos.some(c=>c.parentId)){
+    const lg=document.createElement('div');lg.className='tree-diff-legend';
+    lg.innerHTML=esc(t('treeDiffLabel'))+'<span class="lg-dot"><span class="lg-sw" style="background:var(--bg4);opacity:.6;"></span>'+esc(t('legendCommon'))+'</span><span class="lg-dot"><span class="lg-sw" style="background:#2e1f08;box-shadow:0 0 0 1.5px rgba(244,123,32,.7);"></span>'+esc(t('legendBranch'))+'</span>';
+    wrap.appendChild(lg);
+  }
+  // ヒット状況の凡例（いずれかのコンボで C/PC/D が設定されているときだけ表示）
+  if(combos.some(c=>(c.counters||[]).some(x=>x))){
+    const lg2=document.createElement('div');lg2.className='tree-diff-legend tree-hit-legend';
+    lg2.innerHTML=esc(t('treeHitLabel'))+'<span class="lg-grid"><span class="lg-dot"><span class="ctr-badge ctr-c">C</span>'+esc(t('ctrCounter'))+'</span><span class="lg-dot"><span class="ctr-badge ctr-pc">PC</span>'+esc(t('ctrPunish'))+'</span><span class="lg-dot"><span class="ctr-badge ctr-d">D</span>'+esc(t('ctrDelay'))+'</span><span class="lg-dot"><span class="ctr-badge ctr-g">G</span>'+esc(t('ctrGuard'))+'</span></span>';
+    wrap.appendChild(lg2);
+  }
+  const map={};combos.forEach(c=>{if(c.parentId)return;const k=c.moves[0]||'__none__';if(!map[k])map[k]=[];map[k].push(c);});
+  // 親子参照を一度だけ索引化（行ごとの char.combos.filter/find による2乗オーダー走査を回避）
+  const _byId=new Map();const _kids=new Map();
+  combos.forEach(c=>{_byId.set(c.id,c);const p=c.parentId||null;let a=_kids.get(p);if(!a){a=[];_kids.set(p,a);}a.push(c);});
+  const root=document.createElement('div');root.className='tree-root';
+  Object.entries(map).forEach(([k,list])=>{
+    const sm=mv(k);const s=sm?cs(sm.type):cs('other');
+    const block=document.createElement('div');block.className='tree-starter-block';
+    block.innerHTML=`<div class="tree-starter-hdr">
+      <span class="tree-starter-toggle">▼</span>
+      ${sm?(thumbSrc(sm)?`<img src="${esc(thumbSrc(sm))}" style="width:56px;height:32px;border-radius:4px;object-fit:cover;">`:`<div style="min-width:36px;height:20px;border-radius:3px;padding:0 4px;background:${s.bg};color:${s.fg};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;white-space:nowrap;">${esc(sm.inputStr)}</div>`):'<div style="width:20px;height:20px;border-radius:3px;background:#222;color:#9a9aa8;display:flex;align-items:center;justify-content:center;font-size:9px;">?</div>'}
+      <div><div class="tree-starter-name">${sm?esc(sm.name):esc(t('noStarter'))}</div><div style="font-size:10px;color:${s.fg}">${sm?esc(sm.inputStr):''}</div></div>
+      <div style="margin-left:auto;font-size:10px;color:#8e8e9c">${esc(combosUnit(list.length))}</div></div>`;
+    const listEl=document.createElement('div');listEl.className='tree-combos';
+    function rRow(combo,depth){
+      const dg=comboDG(combo);const dgManual=comboDGManual(combo);const children=_kids.get(combo.id)||[];
+      const row=document.createElement('div');row.className='tree-combo-row';row.style.marginLeft=(depth*20)+'px';
+      // ★ 分岐コンボは親と比較し、共通部分=淡色 / 分岐後=ゴールド、分岐点に ⎇ を表示
+      const parent=combo.parentId?_byId.get(combo.parentId):null;
+      let divergeIdx=-1;
+      if(parent){divergeIdx=(combo.moves||[]).length;for(let i=0;i<(combo.moves||[]).length;i++){if(i>=parent.moves.length||combo.moves[i]!==parent.moves[i]){divergeIdx=i;break;}}}
+      const hasDiverged=!!parent&&divergeIdx<(combo.moves||[]).length; // 分岐後の固有技があるときだけ色分け
+      const parts=[];const chipMids=[]; // チップと技IDの対応（クリックで詳細表示するため）
+      ensureCounters(combo); // ヒット状況の並行配列を技数に揃える
+      // ★ まとめ表示ON時は連続する同一技（ヒット状況・共通/分岐区分が同じ）を ×N にまとめる。ツリーは常に閲覧用なので編集状態に関係なく適用。
+      const _units=[];
+      (combo.moves||[]).forEach((mid,idx)=>{
+        if(!mv(mid))return;
+        const common=hasDiverged&&idx<divergeIdx;
+        const branch=hasDiverged&&idx>=divergeIdx;
+        const ctr=(combo.counters&&combo.counters[idx])||'';
+        const last=_units[_units.length-1];
+        if(groupRepeats&&last&&last.mid===mid&&last.ctr===ctr&&last.common===common&&last.branch===branch&&!(hasDiverged&&idx===divergeIdx)){last.count++;}
+        else{_units.push({mid,startIdx:idx,count:1,ctr,common,branch});}
+      });
+      _units.forEach(u=>{
+        const m=mv(u.mid);if(!m)return;const sm2=cs(m.type);const idx=u.startIdx;
+        if(parts.length>0){
+          if(hasDiverged&&idx===divergeIdx)parts.push('<span class="branch-split-sep">⎇</span>');
+          else parts.push('<span class="arrow-sep" style="font-size:10px;">▶</span>');
+        }else if(hasDiverged&&divergeIdx===0&&idx===0){parts.push('<span class="branch-split-sep">⎇</span>');}
+        const cls='tree-move-chip'+(u.common?' tmc-common':'')+(u.branch?' tmc-branch':'');
+        const cm=u.ctr?ctrMeta(u.ctr):null;
+        const badge=cm?`<span class="tree-chip-ctr ${cm.cls}" title="${cm.title}">${cm.label}</span>`:'';
+        const xN=u.count>1?`<span class="rep-x">×${u.count}</span>`:'';
+        parts.push(`<span class="${cls}" style="background:${sm2.bg};color:${sm2.fg};" title="${esc(t('chipDetailTitle'))}">${esc(m.name)}${xN}${badge}</span>`);
+        chipMids.push(u.mid);
+      });
+      const mvHtml=parts.join('');
+      const tagsHtml=(combo.tags||[]).map((t)=>{const tc=tagColor(t);return`<span class="tree-tag" style="background:${tc.bg};color:${tc.fg};">${esc(t)}</span>`;}).join('');
+      row.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;margin-right:8px;flex-shrink:0;"><div class="tree-dot"></div>${children.length?'<div class="tree-line"></div>':''}</div>
+      <div class="tree-combo-content">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;"><div class="tree-combo-name">${esc(combo.name)}</div>${tagsHtml}</div>
+        <div class="tree-combo-moves">${mvHtml||'<span style="color:#6f6f82;font-size:10px;">'+esc(t('noMovesTree'))+'</span>'}</div>
+        <div class="tree-combo-meta">${combo.damage?`<div class="tree-meta-item">DMG: <span>${escv(combo.damage)}</span></div>`:''}
+          ${combo.frame?`<div class="tree-meta-item">${esc(t('frameLabel'))}: <span>${esc(fmtFrame(combo.frame))}</span></div>`:''}
+          <div class="tree-meta-item dg">DG: <span>${barsTxt(dg)}${dgManual?' ✎':''}</span></div>
+          ${combo.note?`<div class="tree-meta-item" style="color:#9a9aa8;font-size:10px;">${esc(combo.note)}</div>`:''}
+        </div>
+      </div>`;
+      // ★ STARTER TREE でも技チップのクリックで詳細モーダルを表示（COMBO LIST と同様）
+      row.querySelectorAll('.tree-move-chip').forEach((el,i)=>{const _mid=chipMids[i];el.addEventListener('click',ev=>{ev.stopPropagation();showMoveModal(_mid);});});
+      listEl.appendChild(row);children.forEach(ch=>rRow(ch,depth+1));
+    }
+    list.forEach(c=>rRow(c,0));block.appendChild(listEl);
+    // ★ 技ごとの折り畳み: 保存済み状態を反映し、ヘッダクリックでトグル
+    const _ckey=db.currentChar+'::'+k;
+    if(treeCollapsed.has(_ckey))block.classList.add('collapsed');
+    block.querySelector('.tree-starter-hdr').addEventListener('click',()=>{
+      const collapsed=block.classList.toggle('collapsed');
+      if(collapsed)treeCollapsed.add(_ckey);else treeCollapsed.delete(_ckey);
+    });
+    root.appendChild(block);
+  });
+  wrap.appendChild(root);
+}
+
+// ── ROUTE GRAPH ──
+// コンボの全技を1技ずつノード化し、先頭から数えて同じ位置(深さ)の技が同じものを
+// 同じノードに重ねて表示する読み取り専用ビュー（位置そろえ）。
+// ※「先頭からの並び一致」は STARTER TREE が担うため、ここでは扱わない。
+function renderRouteGraph(){
+  const wrap=document.getElementById('routeGraphWrap');if(!wrap)return;
+  wrap.innerHTML='';
+  const ja=(typeof LANG!=='undefined'&&LANG==='ja');
+  const char=cur();
+  const withMoves=((char&&char.combos)||[]).filter(c=>(c.moves||[]).some(m=>mv(m)));
+  const combos=withMoves.filter(c=>c.inRoute!==false); // ★ コンボ単位の表示トグル（非表示は除外）
+  if(!combos.length){wrap.innerHTML='<div class="rg-empty">'+esc(withMoves.length?t('rgAllHidden'):t('rgEmpty'))+'</div>';return;}
+  const hiddenCount=withMoves.length-combos.length;
+
+  // ── ノード構築（位置(列)+技 が同じなら集約。途中までの並びが違っても重ねる）──
+  // 同じ技のまとめ表示(groupRepeats)がONなら、連続する同一技を ×N の1ノードにまとめる。
+  let uid=0;const allNodes=[];const comboPath={};const edges=[];
+  const nodeMap=new Map();const edgeSet=new Set();
+  const newNode=(mid,d,count,ctr)=>{const n={id:'n'+(uid++),mid:mid,depth:d,count:count,ctr:ctr,pass:0,ends:[]};allNodes.push(n);return n;};
+  // ノードの同一性: 位置(列) + 技 + まとめ数 + ヒット状況。弱P×3 と 弱P×2、
+  // またヒット状況(カウンター/ディレイ等)が付いた技と素の技は別ノードとして扱う。
+  const getNode=(mid,d,count,ctr)=>{const k=d+'|'+mid+'|'+count+'|'+ctr;let n=nodeMap.get(k);if(!n){n=newNode(mid,d,count,ctr);nodeMap.set(k,n);}return n;};
+  combos.forEach(c=>{
+    ensureCounters(c); // ヒット状況の並行配列を技数に揃える
+    // 各コンボを「塊(ユニット)」列に変換。まとめるのは「素の同一技が連続」する場合のみ。
+    // カウンターやディレイ等のヒット状況が付いた技は別技として扱い、まとめない。
+    const units=[];
+    (c.moves||[]).forEach((mid,idx)=>{if(!mv(mid))return;
+      const ctr=(c.counters&&c.counters[idx])||'';
+      const last=units[units.length-1];
+      if(groupRepeats&&last&&last.mid===mid&&last.ctr===''&&ctr===''){last.count++;}
+      else{units.push({mid:mid,count:1,ctr:ctr});}});
+    const path=[];let prev=null;
+    units.forEach((u,d)=>{const n=getNode(u.mid,d,u.count,u.ctr);n.pass++;path.push(n.id);
+      if(prev){const ek=prev.id+'>'+n.id;if(!edgeSet.has(ek)){edgeSet.add(ek);edges.push({src:prev.id,dst:n.id,key:ek});}}
+      prev=n;});
+    if(prev)prev.ends.push(c);comboPath[c.id]=path;});
+  const byId={};allNodes.forEach(n=>byId[n.id]=n);
+
+  // ── レイアウト（位置=列。各列のノード順は接続先の平均位置にそろえて交差を低減）──
+  const colStep=210,rowGap=96,topPad=48,leftPad=92,rightPad=190;
+  const cols=[];allNodes.forEach(n=>{(cols[n.depth]||(cols[n.depth]=[])).push(n);});
+  const prevAdj=new Map(),nextAdj=new Map();
+  allNodes.forEach(n=>{prevAdj.set(n.id,[]);nextAdj.set(n.id,[]);});
+  edges.forEach(e=>{nextAdj.get(e.src).push(e.dst);prevAdj.get(e.dst).push(e.src);});
+  cols.forEach(col=>col&&col.forEach((n,i)=>n._ord=i));
+  const sweep=usePrev=>{const ds=usePrev?cols.map((_,i)=>i):cols.map((_,i)=>i).reverse();
+    ds.forEach(d=>{const col=cols[d];if(!col)return;
+      col.forEach(n=>{const nb=(usePrev?prevAdj:nextAdj).get(n.id);n._bc=nb.length?nb.reduce((s,id)=>s+byId[id]._ord,0)/nb.length:n._ord;});
+      col.sort((a,b)=>a._bc-b._bc);col.forEach((n,i)=>n._ord=i);});};
+  sweep(true);sweep(false);sweep(true);
+  // ★ 次数（ノードに接続する線の本数）に比例して縦間隔を広げ、分岐・合流が集中するノード周りの線の混雑を緩和する。
+  //   標準の通過ノード（入力1+出力1=2本）は加算0。線が増えるほどスロット高を大きくして上下に余白を確保する。
+  const degBase=2,degStep=26,degMax=120;
+  const nodeDeg=n=>prevAdj.get(n.id).length+nextAdj.get(n.id).length;
+  const slotH=n=>rowGap+Math.min(degMax,Math.max(0,nodeDeg(n)-degBase)*degStep);
+  // 各列の高さ＝その列のスロット高の合計。最も高い列に合わせてステージ高を決める（高次数ノードがなければ従来と同じ高さ）。
+  const colH=cols.map(c=>c?c.reduce((s,n)=>s+slotH(n),0):0);
+  const maxColH=Math.max(rowGap,...colH);
+  const stageH=Math.max(topPad*2+(maxColH-rowGap)+60,200);
+  const midY=stageH/2;
+  // 各列をスロット高で積み上げ、列ごとに縦中央そろえで配置する。隣接ノード間の間隔は両者のスロット高の平均になる。
+  cols.forEach((col,d)=>{if(!col)return;
+    const slots=col.map(slotH);let acc=0;const ctr=[];
+    for(let i=0;i<col.length;i++){ctr.push(acc+slots[i]/2);acc+=slots[i];}
+    const shift=midY-(ctr[0]+ctr[ctr.length-1])/2;
+    col.forEach((n,i)=>{n.x=leftPad+d*colStep;n.y=ctr[i]+shift;});});
+  const stageW=leftPad+(cols.length-1)*colStep+rightPad;
+
+  // ── ツールバー（凡例）──
+  const tb=document.createElement('div');tb.className='rg-toolbar';
+  tb.innerHTML='<span class="rg-hint">'+esc(t('rgHint'))+'</span>'+
+    (hiddenCount>0?'<span class="rg-hidden-note" style="font-size:10px;color:#7c8a99;margin-left:8px;">'+esc(t('rgHiddenCount').replace('{n}',hiddenCount))+'</span>':'')+
+    '<span class="rg-legend">'+
+      '<span class="ld"><span class="lsq" style="background:#e3ebf5;"></span>'+esc(t('rgLegStart'))+'</span>'+
+      '<span class="ld"><span class="lsq" style="background:var(--gold);"></span>'+esc(t('rgLegEnd'))+'</span>'+
+      '<span class="ld"><span class="rg-cnt">N</span>'+esc(t('rgLegShared'))+'</span>'+
+    '</span>';
+  wrap.appendChild(tb);
+
+  // ── ステージ ──
+  const scroll=document.createElement('div');scroll.className='rg-scroll';
+  const stage=document.createElement('div');stage.className='rg-stage';
+  stage.style.width=stageW+'px';stage.style.height=stageH+'px';
+  const SVGNS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(SVGNS,'svg');
+  svg.setAttribute('class','rg-edges');svg.setAttribute('width',stageW);svg.setAttribute('height',stageH);
+  svg.setAttribute('viewBox','0 0 '+stageW+' '+stageH);stage.appendChild(svg);
+
+  const ePath=(x1,y1,x2,y2)=>{const dx=(x2-x1)*0.5;return 'M '+x1+' '+y1+' C '+(x1+dx)+' '+y1+' '+(x2-dx)+' '+y2+' '+x2+' '+y2;};
+  const edgeEls=[];
+  edges.forEach(e=>{const a=byId[e.src],b=byId[e.dst];const path=document.createElementNS(SVGNS,'path');
+    path.setAttribute('d',ePath(a.x,a.y,b.x,b.y));path.setAttribute('class','rg-edge');path.dataset.key=e.key;
+    svg.appendChild(path);edgeEls.push(path);});
+
+  const nodeEls={};
+  allNodes.forEach(n=>{
+    const m=mv(n.mid);const sc=cs(m?m.type:'other');const isEnd=n.ends.length>0;const isStart=n.depth===0;
+    const el=document.createElement('div');
+    el.className='rg-node'+(isEnd?' t-end':'')+(isStart&&!isEnd?' t-start':'');
+    el.style.left=n.x+'px';el.style.top=n.y+'px';el.dataset.id=n.id;
+    const cnt=n.pass>1?'<span class="rg-cnt" title="'+esc(ja?('この技をこの位置で使うコンボ '+n.pass+'本'):(n.pass+' combos use this move here'))+'">'+n.pass+'</span>':'';
+    let cap='';
+    if(isEnd){
+      if(n.ends.length===1){
+        const c=n.ends[0];const dg=comboDG(c);const meta=[];
+        if(c.damage)meta.push('DMG '+esc(String(c.damage)));if(dg)meta.push('DG '+esc(barsTxt(dg)));
+        cap='<div class="rg-end-cap"><div class="ec-row"><span class="ec-nm">'+esc(c.name||'COMBO')+'</span>'+(meta.length?'<span class="ec-mt">'+meta.join(' / ')+'</span>':'')+'</div></div>';
+      }else{
+        // 複数コンボがここで締める場合は積み重ねず件数だけ表示（詳細はクリックで情報バーに）
+        cap='<div class="rg-end-cap"><span class="ec-count" title="'+esc(ja?'クリックで一覧':'click to list')+'">'+(ja?('締め '+n.ends.length+'件'):(n.ends.length+' combos end here'))+'</span></div>';
+      }
+    }
+    const xN=(n.count>1)?'<span class="rep-x">×'+n.count+'</span>':'';
+    const cm=n.ctr?ctrMeta(n.ctr):null;
+    const ctrBadge=cm?'<span class="tree-chip-ctr '+cm.cls+'" title="'+esc(cm.title)+'">'+esc(cm.label)+'</span>':'';
+    el.innerHTML='<div class="rg-chip" style="background:'+sc.bg+';color:'+sc.fg+';">'+cnt+'<span class="cn-line"><span class="cn">'+esc(m?m.name:'?')+'</span>'+xN+ctrBadge+'</span><span class="ci">'+esc(m?m.inputStr:'')+'</span></div>'+cap;
+    el.addEventListener('click',ev=>{ev.stopPropagation();select(n.id);});
+    stage.appendChild(el);nodeEls[n.id]=el;
+  });
+
+  scroll.appendChild(stage);wrap.appendChild(scroll);
+  const info=document.createElement('div');info.className='rg-info';info.textContent=t('rgHint');wrap.appendChild(info);
+
+  let selId=null;
+  function select(id){
+    if(selId===id){clearSel();return;}
+    selId=id;
+    const hot=combos.filter(c=>comboPath[c.id].indexOf(id)>=0);
+    const keepN={},keepE={};
+    hot.forEach(c=>{const p=comboPath[c.id];p.forEach(nid=>keepN[nid]=true);for(let i=0;i+1<p.length;i++)keepE[p[i]+'>'+p[i+1]]=true;});
+    Object.keys(nodeEls).forEach(k=>{nodeEls[k].classList.toggle('dim',!keepN[k]);nodeEls[k].classList.toggle('sel',k===id);});
+    edgeEls.forEach(e=>{const on=!!keepE[e.dataset.key];e.classList.toggle('hot',on);e.classList.toggle('faded',!on);});
+    const nd=byId[id];const m=mv(nd.mid);
+    if(nd.ends&&nd.ends.length){
+      // 締めノード: ここで終わるコンボの一覧（名前 + DMG/DG）を情報バーに表示
+      const list=nd.ends.slice(0,8).map(c=>{const dg=comboDG(c);const mt=[];if(c.damage)mt.push('DMG '+esc(String(c.damage)));if(dg)mt.push('DG '+esc(barsTxt(dg)));
+        return '<b>'+esc(c.name||'COMBO')+'</b>'+(mt.length?(ja?'（':' (')+mt.join(' / ')+(ja?'）':')'):'');}).join(ja?'、':', ');
+      const more2=nd.ends.length>8?(ja?(' ほか'+(nd.ends.length-8)+'件'):(' +'+(nd.ends.length-8)+' more')):'';
+      info.innerHTML=ja
+        ? '<b>'+esc(m?m.name:'?')+'</b> で締めるコンボ <b>'+nd.ends.length+'</b> 件 — '+list+more2
+        : '<b>'+nd.ends.length+'</b> combo'+(nd.ends.length===1?'':'s')+' end on <b>'+esc(m?m.name:'?')+'</b> — '+list+more2;
+      return;
+    }
+    const names=hot.slice(0,4).map(c=>esc(c.name||'COMBO')).join(ja?'、':', ');
+    const more=hot.length>4?(ja?(' ほか'+(hot.length-4)+'件'):(' +'+(hot.length-4)+' more')):'';
+    info.innerHTML=ja
+      ? '<b>'+esc(m?m.name:'?')+'</b>（'+(byId[id].depth+1)+'手目） を含むコンボ <b>'+hot.length+'</b> 件 — '+names+more
+      : '<b>'+esc(m?m.name:'?')+'</b> (move '+(byId[id].depth+1)+') — included in <b>'+hot.length+'</b> combo'+(hot.length===1?'':'s')+': '+names+more;
+  }
+  function clearSel(){selId=null;Object.keys(nodeEls).forEach(k=>nodeEls[k].classList.remove('dim','sel'));edgeEls.forEach(e=>e.classList.remove('hot','faded'));info.textContent=t('rgHint');}
+  scroll.addEventListener('click',clearSel);
+}
+
+// ── MOVE DETAIL MODAL ──
+function showMoveModal(id){
+  const m=mv(id);if(!m)return;
+  const s=cs(m.type);const dgc=m.dgCost||0;
+  const fd=v=>{if(typeof v==='number')return`<span class="${v>=0?'dhit':'dblk'}">${v>=0?'+':''}${v}</span>`;return`<span class="${v==='D'?'dhit':''}">${esc(v||'-')}</span>`;};
+  // ★ 16:9 大型サムネイル
+  const _ts=thumbSrc(m);
+  const thumbHtml=_ts
+    ?`<img src="${esc(_ts)}" class="modal-thumb-lg">`
+    :`<div class="modal-thumb-lg-ph" style="background:${s.bg};color:${s.fg};font-size:18px;letter-spacing:1px;">${esc(m.inputStr)}</div>`;
+  showModal(`${thumbHtml}
+    <div class="modal-hdr">
+      <div style="min-width:44px;max-width:130px;min-height:25px;border-radius:5px;padding:4px 5px;background:${s.bg};color:${s.fg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;text-align:center;line-height:1.3;word-break:break-word;overflow-wrap:anywhere;flex-shrink:0;box-sizing:border-box;">${esc(m.inputStr)}</div>
+      <div style="min-width:0;flex:1;"><div style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${esc(m.name)}${condMark(m)}</div>
+        <div style="font-size:10px;color:${s.fg};margin-top:2px;">${catLabel(m.type)}</div>
+        <div style="font-size:10px;color:#aaa;margin-top:1px;word-break:break-word;overflow-wrap:anywhere;">${esc(m.inputStr)}</div>
+      </div>
+    </div>
+    ${m.condition?`<div class="drow-stack" style="border-bottom:1px solid var(--bd);"><span class="dkey">${esc(t('mCondition'))}</span><span class="dval-long" style="color:var(--gold);">${esc(m.condition)}</span></div>`:''}
+    <div class="stats-g">
+      <div class="sbox"><div class="slbl">${esc(t('mStartup'))}</div><div class="sval">${escv(m.startup)}</div><div class="sunit">F</div></div>
+      <div class="sbox"><div class="slbl">${esc(t('mActive'))}</div><div class="sval" style="font-size:11px;">${escv(m.active)}</div><div class="sunit">F</div></div>
+      <div class="sbox"><div class="slbl">${esc(t('mRecovery'))}</div><div class="sval" style="font-size:11px;">${escv(m.recovery)}</div><div class="sunit">F</div></div>
+    </div>
+    <div class="drow"><span class="dkey">${esc(t('mOnHit'))}</span>${fd(m.onHit)}</div>
+    <div class="drow"><span class="dkey">${esc(t('mOnBlock'))}</span>${fd(m.onBlock)}</div>
+    <div class="drow"><span class="dkey">${esc(t('mDamage'))}</span><span style="color:var(--gold)">${escv(m.damage)}</span></div>
+    <div class="drow"><span class="dkey">${esc(t('mCancel'))}</span><span style="color:${m.cancel&&m.cancel!=='-'?'#4caf50':'#8e8e9c'}">${esc(m.cancel||'-')}</span></div>
+    <div class="drow"><span class="dkey">${esc(t('mDgCost'))}</span><span class="dg-val">${dgc>0?barsTxt(dgc):t('none')}</span></div>
+    <div class="drow-stack" style="border:none"><span class="dkey">${esc(t('mNotes'))}</span><span class="dval-long" style="color:#c6c6ce;">${esc(m.notes||'-')}</span></div>
+    <div class="flex-btns" style="margin-top:10px;">
+      <button class="close-btn" onclick="closeModal()">${t('close')}</button>
+      <button class="close-btn" style="border-color:var(--gold);color:var(--gold);" id="mm-edit">${t('edit')}</button>
+    </div>`);
+  // 技IDをonclick属性へ文字列として埋め込まず、クロージャで直接渡す（読み込みJSON由来の任意IDでも安全）
+  const _eb=document.getElementById('mm-edit');if(_eb)_eb.addEventListener('click',()=>openAddMoveModal(id));
+}
+
+// ── ADD/EDIT MOVE ──
+function openAddMoveModal(editId){
+  const char=cur();const e=editId?char.moves.find(m=>m.id===editId):null;
+  const d=e||{id:'',name:'',type:'Normal',inputStr:'',startup:'',active:'',recovery:'',onHit:'',onBlock:'',damage:'',cancel:'',notes:'',condition:'',thumb:null,dgCost:0};
+  const catOpts=CAT_ORDER.map(k=>`<option value="${k}" ${d.type===k?'selected':''}>${catLabel(k)}</option>`).join('');
+  showModal(`
+    <div class="modal-title-bar">${editId?t('editMoveTitle'):t('addMoveTitle')}</div>
+    <div class="form-group"><label class="form-label">${esc(t('fName'))}</label><input class="form-inp" id="fi-name" value="${esc(d.name)}" placeholder="${esc(t('fNamePh'))}"></div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr;"><div class="form-group"><label class="form-label">${esc(t('fCategory'))}</label><select class="form-inp" id="fi-type">${catOpts}</select></div><div class="form-group"><label class="form-label">${esc(t('fCommand'))}</label><input class="form-inp" id="fi-inp" value="${esc(d.inputStr)}" placeholder="${esc(t('fCommandPh'))}"></div></div>
+    <div class="form-group"><label class="form-label">${esc(t('fCondition'))}</label><input class="form-inp" id="fi-cond" value="${esc(d.condition||'')}" placeholder="${esc(t('fConditionPh'))}"></div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr;"><div class="form-group"><label class="form-label">${esc(t('fDamage'))}</label><input class="form-inp" type="number" id="fi-dmg" value="${escv(d.damage)}"></div><div class="form-group"><label class="form-label">${esc(t('fDgCost'))}</label><input class="form-inp" type="number" id="fi-dg" value="${escv(d.dgCost||0)}" min="0" max="6" step="0.5"></div></div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;"><div class="form-group"><label class="form-label">${esc(t('fStartup'))}</label><input class="form-inp" id="fi-s" value="${escv(d.startup)}"></div><div class="form-group"><label class="form-label">${esc(t('fActive'))}</label><input class="form-inp" id="fi-a" value="${escv(d.active)}"></div><div class="form-group"><label class="form-label">${esc(t('fRecovery'))}</label><input class="form-inp" id="fi-r" value="${escv(d.recovery)}"></div></div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;"><div class="form-group"><label class="form-label">${esc(t('fOnHit'))}</label><input class="form-inp" id="fi-oh" value="${escv(d.onHit)}"></div><div class="form-group"><label class="form-label">${esc(t('fOnBlock'))}</label><input class="form-inp" id="fi-ob" value="${escv(d.onBlock)}"></div><div class="form-group"><label class="form-label">${esc(t('fCancel'))}</label><input class="form-inp" id="fi-cancel" value="${escv(d.cancel)}" placeholder="${esc(t('fCancelPh'))}"></div></div>
+    <div class="form-group"><label class="form-label">${esc(t('fNotes'))}</label><input class="form-inp" id="fi-notes" value="${esc(d.notes||'')}"></div>
+    <div class="form-group">
+      <label class="form-label">${esc(t('fThumb'))}</label>
+      <div class="thumb-wrap" id="thumbWrap" onclick="document.getElementById('thumbUp').click()" style="border-style:${thumbSrc(d)?'solid':'dashed'}">
+        ${thumbSrc(d)?`<img src="${esc(thumbSrc(d))}">`:'<div class="thumb-ph">'+esc(t('thumbPh'))+'</div>'}
+      </div>
+      <input type="file" id="thumbUp" accept="image/*" style="display:none">
+      <div id="clrSlot" style="margin-top:4px;">${d.thumb?'<button class="btn danger" style="font-size:10px;" onclick="clearThumb(event)">'+esc(t('delImage'))+'</button>':''}</div>
+    </div>
+    <div class="sep"></div>
+    <div class="flex-btns">
+      <button class="close-btn" onclick="closeModal()">${t('cancel')}</button>
+      <button class="close-btn" style="border-color:var(--gold);color:var(--gold);" id="fm-save">${t('save')}</button>
+      ${editId?`<button class="close-btn danger" style="border-color:#5a1a1a;color:#ff6666;" id="fm-delmv">${t('del')}</button>`:''}
+    </div>`);
+  // 技IDをonclick属性へ埋め込まず、クロージャで渡す
+  document.getElementById('fm-save').addEventListener('click',()=>saveMove(editId||''));
+  const _dmB=document.getElementById('fm-delmv');if(_dmB)_dmB.addEventListener('click',()=>deleteMove(editId));
+  document.getElementById('thumbUp').addEventListener('change',ev=>{
+    const f=ev.target.files[0];if(!f)return;
+    // base64化せず、選択されたファイル(Blob)をそのまま保持する。保存時にIDBへ書き込む。
+    ev.target._blob=f;ev.target._c=false;
+    if(ev.target._prevURL)URL.revokeObjectURL(ev.target._prevURL);
+    const url=URL.createObjectURL(f);ev.target._prevURL=url;
+    const w=document.getElementById('thumbWrap');w.style.borderStyle='solid';w.innerHTML=`<img src="${url}">`;
+    const sl=document.getElementById('clrSlot');if(sl)sl.innerHTML='<button class="btn danger" style="font-size:10px;" onclick="clearThumb(event)">'+esc(t('delImage'))+'</button>';
+  });
+}
+function clearThumb(e){if(e)e.stopPropagation();const w=document.getElementById('thumbWrap');w.style.borderStyle='dashed';w.innerHTML='<div class="thumb-ph">'+esc(t('thumbPh'))+'</div>';const u=document.getElementById('thumbUp');if(u._prevURL){URL.revokeObjectURL(u._prevURL);u._prevURL=null;}u._blob=null;u._c=true;document.getElementById('clrSlot').innerHTML='';}
+async function saveMove(editId){
+  const char=cur();
+  const id=editId||(Date.now().toString(36));
+  const imgKey=db.currentChar+'_'+id; // 画像キーは「キャラID_技ID」で一意（再保存で上書き）
+  const u=document.getElementById('thumbUp');
+  // 画像の確定: 削除指定 / 新規Blob / 変更なし の3通り。
+  let thumb;
+  if(u&&u._c){ // 画像を削除
+    thumb=null;
+    try{await idbDeleteImage(imgKey);}catch(e){}
+    if(thumbURLs.has(imgKey)){URL.revokeObjectURL(thumbURLs.get(imgKey));thumbURLs.delete(imgKey);}
+  }else if(u&&u._blob){ // 新しい画像をIDBへ保存
+    try{await idbPutImage(imgKey,u._blob);}catch(e){showToast(t('imgSaveFail')+e.message,'err');}
+    if(thumbURLs.has(imgKey))URL.revokeObjectURL(thumbURLs.get(imgKey));
+    thumbURLs.set(imgKey,URL.createObjectURL(u._blob));
+    thumb=imgKey;
+  }else{ // 変更なし: 既存の参照を維持（キー / 旧形式data: / null）
+    const ex=editId?char.moves.find(m=>m.id===editId):null;
+    thumb=ex?ex.thumb:null;
+  }
+  if(u&&u._prevURL){URL.revokeObjectURL(u._prevURL);u._prevURL=null;}
+  const pn=v=>{const n=parseFloat(v);return isNaN(n)?v:n;};
+  const mv2={
+    id:id,name:document.getElementById('fi-name').value||t('newMoveDefault'),
+    type:document.getElementById('fi-type').value,
+    inputStr:document.getElementById('fi-inp').value||'',startup:pn(document.getElementById('fi-s').value),
+    active:document.getElementById('fi-a').value,recovery:document.getElementById('fi-r').value,
+    onHit:pn(document.getElementById('fi-oh').value),onBlock:pn(document.getElementById('fi-ob').value),
+    damage:pn(document.getElementById('fi-dmg').value)||0,cancel:document.getElementById('fi-cancel').value||'-',
+    notes:document.getElementById('fi-notes').value||'',dgCost:parseFloat(document.getElementById('fi-dg').value)||0,thumb,
+    condition:(document.getElementById('fi-cond')?document.getElementById('fi-cond').value:'')||'',
+  };
+  if(editId){const i=char.moves.findIndex(m=>m.id===editId);if(i>=0)char.moves[i]=mv2;}
+  else char.moves.push(mv2);
+  closeModal();render();
+}
+function deleteMove(id){
+  const char=cur();
+  const target=char.moves.find(m=>m.id===id);
+  if(target&&isImgKey(target.thumb)){
+    try{idbDeleteImage(target.thumb);}catch(e){}
+    if(thumbURLs.has(target.thumb)){URL.revokeObjectURL(thumbURLs.get(target.thumb));thumbURLs.delete(target.thumb);}
+  }
+  char.moves=char.moves.filter(m=>m.id!==id);
+  char.combos.forEach(c=>{ensureCounters(c);const nm=[],nc=[];c.moves.forEach((m,i)=>{if(m!==id){nm.push(m);nc.push(c.counters[i]||'');}});c.moves=nm;c.counters=nc;});
+  closeModal();render();
+}
+
+// ── CHAR MODAL ──
+function openAddCharModal(){
+  showModal(`<div class="modal-title-bar">${t('addCharTitle')}</div>
+    <div class="form-group"><label class="form-label">${esc(t('charName'))}</label><input class="form-inp" id="ci-name" placeholder="${esc(t('charNamePh'))}"></div>
+    <div class="flex-btns" style="margin-top:8px;"><button class="close-btn" onclick="closeModal()">${t('cancel')}</button><button class="close-btn" style="border-color:var(--gold);color:var(--gold);" onclick="saveChar()">${t('add')}</button></div>`);
+  setTimeout(()=>document.getElementById('ci-name').focus(),50);
+}
+function openRenameCharModal(){
+  const c=cur();if(!c)return;
+  showModal(`<div class="modal-title-bar">${t('renameCharTitle')}</div>
+    <div class="form-group"><label class="form-label">${esc(t('charName'))}</label><input class="form-inp" id="rc-name" placeholder="${esc(t('charNamePh'))}" value="${esc(c.name)}"></div>
+    <div class="flex-btns" style="margin-top:8px;"><button class="close-btn" onclick="closeModal()">${t('cancel')}</button><button class="close-btn" style="border-color:var(--gold);color:var(--gold);" onclick="saveCharName()">${t('save')}</button></div>`);
+  setTimeout(()=>{const el=document.getElementById('rc-name');if(el){el.focus();el.select();}},50);
+}
+function saveCharName(){
+  const c=cur();if(!c)return;
+  const name=document.getElementById('rc-name').value.trim();if(!name)return;
+  c.name=name; // キャラのキー(id)は変えず表示名のみ更新 → 技ID・画像・メモへの影響なし
+  closeModal();render();
+}
+// 全キャラ共通の技プリセット（新規キャラ追加時に任意で呼び出す）。
+// 通称（技名カッコ内）・フレーム・ダメージはキャラ依存のため空欄。inputStr/種別のみ設定。
+function presetMoves(){
+  const blank={startup:'',active:'',recovery:'',onHit:'',onBlock:'',damage:'',cancel:'',notes:'',thumb:null,condition:''};
+  const defs=[]; // [name, inputStr, type, dgCost]
+  // 立ち / しゃがみ / ジャンプ の 弱中強 P・K（各6種）
+  [['立ち','','Normal'],['しゃがみ','↓＋','Normal'],['ジャンプ','（J中）','jump']].forEach(([pre,ipre,ty])=>{
+    ['弱','中','強'].forEach(st=>['P','K'].forEach(b=>defs.push([pre+st+b, ipre+st+b, ty, 0])));
+  });
+  // 投げ・ドライブ系（ドライブ系はゲージ消費(DG)を設定）
+  [
+    ['前投げ','投げ','throw',0],
+    ['後ろ投げ','←＋投げ','throw',0],
+    ['ドライブインパクト','インパクト','drive',1],
+    ['ドライブリバーサル','→＋インパクト','drive',2],
+    ['パリィドライブラッシュ','ドライブラッシュ','drive',0.5],
+    ['キャンセルドライブラッシュ','キャンセルラッシュ','drive',3],
+  ].forEach(d=>defs.push(d));
+  // 移動系（ステップ2・歩き2・各方向ジャンプ3）= その他(other)
+  [
+    ['前ステップ','→→','other',0],
+    ['後方ステップ','←←','other',0],
+    ['前歩き','→','other',0],
+    ['後ろ歩き','←','other',0],
+    ['垂直ジャンプ','↑','other',0],
+    ['前ジャンプ','↗','other',0],
+    ['後ろジャンプ','↖','other',0],
+  ].forEach(d=>defs.push(d));
+  return defs.map((d,i)=>({id:'p'+String(i+1).padStart(4,'0'),name:d[0],inputStr:d[1],type:d[2],dgCost:d[3],...blank}));
+}
+let _pendingCharName='';
+function saveChar(){
+  const name=document.getElementById('ci-name').value.trim();if(!name)return;
+  _pendingCharName=name; // モーダル差し替えで入力欄が消えるため名前を保持
+  // ネイティブ confirm はサンドボックス iframe(Claude等)で無効化されるため、アプリ内モーダルで確認する
+  showModal(`<div class="modal-title-bar">${t('presetTitle')}</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-line;margin-bottom:12px;">${esc(t('presetConfirm'))}</div>
+    <div class="flex-btns">
+      <button class="close-btn" onclick="createCharFromPending(false)">${t('presetNo')}</button>
+      <button class="close-btn" style="border-color:var(--gold);color:var(--gold);" onclick="createCharFromPending(true)">${t('presetYes')}</button>
+    </div>`);
+}
+function createCharFromPending(withPreset){
+  const name=_pendingCharName;if(!name)return;
+  const id=name.toLowerCase().replace(/[^a-z0-9]/g,'_')+Date.now();
+  db.chars[id]={name:name.toUpperCase(),moves:withPreset?presetMoves():[],combos:[],tags:['SA1','SA2','SA3','パニカン','カウンター','中央','画面端']};
+  db.currentChar=id;activeTag='ALL';activeSort='ALL';_pendingCharName='';closeModal();render();
+}
+function deleteCurrentChar(){
+  const ids=Object.keys(db.chars);if(ids.length<=1){showToast(t('cannotDelLastChar'),'err');return;}
+  const msg=LANG==='ja'?`「${cur().name}」を削除しますか？\nこのキャラのコンボ・技・メモがすべて削除されます。`:`Delete "${cur().name}"?\nAll combos, moves and memos for this character will be removed.`;
+  showModal(`<div class="modal-title-bar">${t('delCharTitle')}</div>
+    <div style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-line;margin-bottom:12px;">${esc(msg)}</div>
+    <div class="flex-btns">
+      <button class="close-btn" onclick="closeModal()">${t('cancel')}</button>
+      <button class="close-btn" style="border-color:#ff4444;color:#ff6666;background:#2a1414;" onclick="confirmDeleteChar()">${t('delCharConfirm')}</button>
+    </div>`);
+}
+function confirmDeleteChar(){
+  const ids=Object.keys(db.chars);if(ids.length<=1){closeModal();return;}
+  const delId=db.currentChar;const delChar=db.chars[delId];
+  // ① このキャラの技サムネ(IDB画像)と表示用ObjectURLを破棄する（残すとストレージが肥大する）
+  ((delChar&&delChar.moves)||[]).forEach(m=>{
+    if(isImgKey(m.thumb)){
+      try{idbDeleteImage(m.thumb);}catch(e){}
+      if(thumbURLs.has(m.thumb)){URL.revokeObjectURL(thumbURLs.get(m.thumb));thumbURLs.delete(m.thumb);}
+    }
+  });
+  // ② このキャラのメモ(localStorage)も削除する。残すと同名キャラを再作成したときに旧メモが復活してしまう
+  const memoKey='sf6_memo_'+delId;
+  try{localStorage.removeItem(memoKey);}catch(e){}
+  if(loadedMemoKey===memoKey){loadedMemoKey=null;memoDirty=false;}
+  delete db.chars[delId];db.currentChar=Object.keys(db.chars)[0];activeTag='ALL';activeSort='ALL';closeModal();render();
+  if(activeTab==='memo')loadMemo(); // メモタブ表示中に削除した場合、切替先キャラのメモへ表示を更新する
+}
+function switchChar(id){endAddMode();editingCombos.clear();db.currentChar=id;activeTag='ALL';activeSort='ALL';render();}
+// モバイル：ヘッダーの操作ボタン群を折りたたみ/展開
+function toggleTopbarMenu(){
+  const tb=document.getElementById('topbar');if(!tb)return;
+  const collapsed=tb.classList.toggle('acts-collapsed');
+  const a=document.getElementById('menuArrow');if(a)a.textContent=collapsed?'▾':'▴';
+}
+
+// ── TAG MODAL ──
+function openAddTagModal(){
+  showModal(`<div class="modal-title-bar">${t('tagMgmtTitle')}</div>
+    <div class="form-group"><label class="form-label">${esc(t('tagName'))}</label><input class="form-inp" id="ti-name" placeholder="${esc(t('tagNamePh'))}"></div>
+    <div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:6px;">${esc(t('currentTags'))}</div><div id="tagList" style="display:flex;flex-wrap:wrap;gap:5px;"></div></div>
+    <div class="flex-btns"><button class="close-btn" onclick="closeModal()">${t('close')}</button><button class="close-btn" style="border-color:var(--gold);color:var(--gold);" onclick="saveTag()">${t('add')}</button></div>`);
+  renderTagList();
+}
+function renderTagList(){
+  const tl=document.getElementById('tagList');if(!tl)return;
+  // onclick属性への文字列埋め込みはタグ名に ' などが含まれると壊れるため、data属性+リスナーで渡す
+  tl.innerHTML=(cur().tags||[]).map((t)=>{const tc=tagColor(t);return`<span class="tag-del-chip" data-tag="${esc(t)}" style="background:${tc.bg};color:${tc.fg};font-size:10px;padding:2px 8px;border-radius:10px;cursor:pointer;">${esc(t)} ✕</span>`;}).join('');
+  tl.querySelectorAll('.tag-del-chip').forEach(el=>el.addEventListener('click',()=>deleteTag(el.dataset.tag)));
+}
+function saveTag(){const v=document.getElementById('ti-name').value.trim();if(!v)return;const char=cur();if(!char.tags)char.tags=[];if(!char.tags.includes(v))char.tags.push(v);document.getElementById('ti-name').value='';updateSavedIndicator();renderTagList();renderFilterBar();}
+function deleteTag(tag){const char=cur();char.tags=char.tags.filter(t=>t!==tag);char.combos.forEach(c=>{c.tags=c.tags.filter(t=>t!==tag);});if(activeTag===tag)activeTag='ALL';updateSavedIndicator();renderTagList();renderFilterBar();renderCombos();}
+// ★ フィルターのタグをコンボへドラッグ&ドロップで付与する
+function addTagToCombo(comboId,tag){
+  const char=cur();const c=(char.combos||[]).find(x=>x.id===comboId);
+  if(!c)return;
+  if(!Array.isArray(c.tags))c.tags=[];
+  if(c.tags.includes(tag)){showToast(t('tagDropDup').replace('{tag}',tag));return;}
+  c.tags.push(tag);
+  updateSavedIndicator();
+  renderCombos();if(activeTab==='tree')renderTree();
+  showToast(t('tagDropAdded').replace('{tag}',tag));
+}
+
+// ── BRANCH MODAL ──
+function openBranchModal(parentId){
+  const char=cur();const parent=char.combos.find(c=>c.id===parentId);if(!parent)return;
+  const children=char.combos.filter(c=>c.parentId===parentId);
+  // コンボIDをonclick属性へ埋め込まず(数値以外のIDだと構文が壊れるため)、data-i の添字経由でクロージャから渡す
+  const childrenHtml=children.length?children.map((c,i)=>`<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:7px 10px;display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;"></span><span style="flex:1;font-size:12px;">${esc(c.name)}</span><button class="btn danger delbr-btn" data-i="${i}" style="font-size:10px;padding:2px 6px;">${t('del')}</button></div>`).join(''):'<div style="color:#7a7a8a;font-size:11px;padding:6px;">'+esc(t('noBranches'))+'</div>';
+  showModal(`<div class="modal-title-bar">${t('branchMgmtTitle')} — ${esc(parent.name)}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">${esc(t('branchMgmtDesc'))}</div>
+    <div style="margin-bottom:10px;">${childrenHtml}</div>
+    <button class="btn gold" style="width:100%;padding:8px;" id="br-add">${t('addBranchCombo')}</button>
+    <button class="close-btn" onclick="closeModal()">${t('close')}</button>`);
+  document.querySelectorAll('.delbr-btn').forEach(b=>b.addEventListener('click',()=>{const c=children[parseInt(b.dataset.i,10)];if(c)delBranch(c.id);}));
+  const _baB=document.getElementById('br-add');if(_baB)_baB.addEventListener('click',()=>addBranch(parentId));
+}
+function addBranch(pid){
+  const char=cur();const p=char.combos.find(c=>c.id===pid);
+  const branch={id:genComboId(),name:(p?p.name:'')+t('branchSuffix'),moves:p?[...p.moves]:[],counters:p?[...(p.counters||[])]:[],tags:p?[...(p.tags||[])]:[], damage:'',frame:'',parentId:pid,note:''};
+  char.combos.splice(branchInsertIndex(char.combos,pid),0,branch);
+  editingCombos.delete(pid); // 分岐元（元のコンボ）の編集モードを解除
+  editingCombos.add(branch.id); // 新しく作った分岐コンボを編集中にする
+  closeModal();renderCombos();if(activeTab==='tree')renderTree();showToast(t('branchAddedToast'));
+}
+function delBranch(id){
+  const char=cur();const ids=getDesc(id);char.combos=char.combos.filter(c=>!ids.includes(c.id)&&c.id!==id);
+  closeModal();renderCombos();if(activeTab==='tree')renderTree();
+}
+
+// ── MODAL HELPERS ──
+function showModal(html){
+  const root=document.getElementById('modalRoot');
+  root.innerHTML=`<div class="modal-bg" id="mbg"><div class="modal">${html}</div></div>`;
+  root.querySelector('#mbg').addEventListener('click',e=>{if(e.target===root.querySelector('#mbg'))closeModal();});
+}
+function closeModal(){document.getElementById('modalRoot').innerHTML='';}
+
+// ── ドラッグ中のマウスホイールスクロール ──
+// コンボ（または技カード）を掴んで移動している間、ネイティブD&D中でも
+// マウスホイールでスクロールコンテナ（コンボ一覧／技一覧／ツリー）を上下スクロールできるようにする。
+function _findScrollableAncestor(el){
+  while(el&&el!==document.body&&el!==document.documentElement){
+    if(el.scrollHeight>el.clientHeight+1){
+      const oy=getComputedStyle(el).overflowY;
+      if(oy==='auto'||oy==='scroll')return el;
+    }
+    el=el.parentElement;
+  }
+  return null;
+}
+function setupDragWheelScroll(){
+  window.addEventListener('wheel',e=>{
+    const dragging=(comboDragId!=null)||(dragSrc&&dragSrc.type!=null);
+    if(!dragging)return;
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    const sc=_findScrollableAncestor(under)||document.querySelector('.combo-scroll');
+    if(!sc)return;
+    sc.scrollTop+=e.deltaY;
+    e.preventDefault();
+  },{passive:false});
+}
+
+// ── INIT ──
+document.documentElement.lang=LANG;
+applyStaticI18n();
+applyCompactMoves();
+setupDragWheelScroll();
+// 未保存のコンボ／メモがある状態でタブを閉じる・離脱する際に確認ダイアログを出す
+window.addEventListener('beforeunload',e=>{if(hasUnsavedChanges()){e.preventDefault();e.returnValue='';}});
+autoScale();render();
+</script>
+</body>
+</html>
