@@ -853,7 +853,7 @@ const I18N={
   resetDesc:{ja:'保存データをすべて削除して初期状態に戻します。先に「📤 書き出し」での保存を推奨します。',en:'Deletes all saved data and restores the initial state. Exporting first via "📤 Export" is recommended.'},
   // reset modal
   resetModalTitle:{ja:'⚠ データの初期化',en:'⚠ Reset all data'},
-  resetModalBody:{ja:'保存されているすべてのデータを削除し、初期状態（2026.05.28 update）に戻します。',en:'Deletes all saved data and restores the initial state (2026.05.28 update).'},
+  resetModalBody:{ja:'保存されているすべてのデータを削除し、初期状態（2026.08.03 update）に戻します。',en:'Deletes all saved data and restores the initial state (2026.08.03 update).'},
   resetModalListHead:{ja:'以下がすべて削除されます（元に戻せません）:',en:'All of the following will be deleted (this cannot be undone):'},
   resetItem1:{ja:'作成したコンボ・分岐ルート',en:'Combos and branch routes you created'},
   resetItem2:{ja:'キャラごとの自由メモ',en:'Per-character free notes'},
@@ -3808,7 +3808,7 @@ function applyMobileClass(){
   document.body.classList.toggle('mobile',m);
   document.body.classList.toggle('touch-mode',tm);
   document.documentElement.classList.toggle('mobile-root',m);
-  if(!tm)endAddMode();   // タップ操作モードでなくなったら追加モードを解除
+  if(!tm){endAddMode();cancelPickMove(true);}   // タップ操作モードでなくなったら追加モード・移動中を解除
   applyMoveListCollapsed();
 }
 // ── MOVE LIST 折り畳み（モバイルのみ）──
