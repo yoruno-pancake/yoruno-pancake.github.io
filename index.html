@@ -81,6 +81,10 @@ body.mobile .tb-group{display:contents;}
 /* 未保存の変更インジケータ */
 .unsaved-dot{display:none;width:8px;height:8px;border-radius:50%;background:#f4c20d;box-shadow:0 0 6px rgba(244,194,13,.9);flex-shrink:0;}
 .unsaved-dot.show{display:inline-block;}
+/* 自動保存ONのときに出る最終保存時刻。狭いモバイルでは省く */
+.save-state{display:none;font-size:9px;color:var(--dim);white-space:nowrap;flex-shrink:0;line-height:1;}
+.save-state.show{display:inline-block;}
+body.mobile .save-state{display:none!important;}
 body.mobile .unsaved-dot{display:none!important;}
 .char-select,.form-inp,select{background:var(--bg3);border:1px solid var(--bd2);color:var(--text);font-size:12px;padding:4px 8px;border-radius:6px;outline:none;font-family:inherit;}
 .char-select:focus,.form-inp:focus{border-color:var(--gold);}
@@ -93,14 +97,42 @@ select option{background:var(--bg3);}
 .btn.route-off{border-color:#3a4d61;color:#7c8a99;opacity:.9;}.btn.route-off:hover{border-color:var(--gold);color:var(--gold);opacity:1;}
 .btn.special{border-color:#e74c3c;color:#e74c3c;}.btn.special:hover{border-color:#e74c3c;background:#3a1513;}
 .main{display:flex;flex:1;min-height:0;}
+/* ★ 左パネルの幅をドラッグで変えるハンドル。見た目は5pxの透明な帯で、
+   ホバー/ドラッグ中だけゴールドの線を出す（.left の border-right と二重線にならないようにする） */
+.col-resizer{flex:0 0 5px;align-self:stretch;cursor:col-resize;position:relative;z-index:5;background:transparent;touch-action:none;}
+.col-resizer::before{content:"";position:absolute;top:0;bottom:0;left:1px;width:3px;border-radius:2px;background:transparent;transition:background .15s;}
+.col-resizer:hover::before,.col-resizer.dragging::before{background:var(--gold);}
+.col-resizer:focus-visible{outline:none;}
+.col-resizer:focus-visible::before{background:var(--gold);}
+/* ドラッグ中は全体でカーソルを固定し、文字の選択やテキストカーソルへの化けを防ぐ */
+body.resizing{cursor:col-resize!important;user-select:none;}
+body.resizing *{cursor:col-resize!important;}
+body.mobile .col-resizer{display:none;}
 .left{width:260px;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;min-height:0;}
 .panel-hdr{font-size:10px;letter-spacing:2px;color:var(--gold);padding:6px 10px 5px;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .sort-bar{padding:5px 7px;border-bottom:1px solid #1e1e2e;display:flex;gap:3px;flex-wrap:wrap;flex-shrink:0;align-items:center;}
+/* ★ MOVE LIST の検索欄（技名・コマンドの部分一致）。カテゴリピルの上に置く */
+.ml-search{padding:6px 7px 0;flex-shrink:0;position:relative;display:flex;align-items:center;}
+.ml-search-inp{width:100%;background:var(--bg3);border:1px solid var(--bd2);color:var(--text);font-size:11px;font-family:inherit;padding:5px 26px 5px 24px;border-radius:6px;outline:none;}
+.ml-search-inp:focus{border-color:var(--gold);}
+.ml-search-inp::placeholder{color:#7d8895;}
+.ml-search-inp::-webkit-search-cancel-button{display:none;}
+.ml-search-ico{position:absolute;left:15px;font-size:10px;color:var(--dim);pointer-events:none;line-height:1;}
+.ml-search-clear{position:absolute;right:13px;width:16px;height:16px;border:none;background:var(--bd2);color:var(--text);border-radius:50%;font-size:9px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;font-family:inherit;}
+.ml-search.has-q .ml-search-clear{display:flex;}
+.ml-search-clear:hover{background:var(--gold);color:#2e1c08;}
+/* 検索/カテゴリで0件になったときの案内。モバイルは2列グリッドなので全幅に伸ばす */
+.ml-empty{color:#7a7a8a;font-size:11px;padding:12px 10px;text-align:center;grid-column:1/-1;}
+/* モバイルは16px未満だとiOSがフォーカス時に自動ズームするため、入力欄だけ16pxにする */
+body.mobile .ml-search-inp{font-size:16px;padding:7px 32px 7px 27px;}
+body.mobile .ml-search-ico{left:16px;font-size:12px;}
+body.mobile .ml-search-clear{right:14px;width:20px;height:20px;font-size:11px;}
 .sort-pill{font-size:10px;padding:3px 7px;border-radius:8px;cursor:pointer;border:1px solid transparent;background:var(--bg3);color:var(--muted);transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;line-height:1;}
 .sort-pill.active{background:#2a1800;border-color:#ff8030;}
-.move-list-wrap{overflow-y:auto;flex:1;padding:5px;}
+/* パネルを広げたぶんだけ列が増えるようにする。既定幅(260px)では従来どおり1列 */
+.move-list-wrap{overflow-y:auto;flex:1;padding:5px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:5px;align-content:start;}
 /* ★ 技カード: サムネ大きく16:9表示 */
-.move-card{background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:6px 8px;cursor:grab;display:flex;flex-direction:column;user-select:none;margin-bottom:5px;transition:border-color .15s,background .15s;position:relative;}
+.move-card{background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:6px 8px;cursor:grab;display:flex;flex-direction:column;user-select:none;margin-bottom:0;transition:border-color .15s,background .15s;position:relative;min-width:0;}
 @media(hover:hover){body:not(.touch-mode) .move-card:hover{border-color:var(--gold);background:var(--bg4);}}
 /* タッチ操作（モバイル／タブレット）では :hover の張り付きで金枠が残らないよう明示的に無効化 */
 body.touch-mode:not(.adding) .move-card:hover{border-color:var(--bd);background:var(--bg3);}
@@ -133,6 +165,11 @@ body.compact-moves .move-card-grip{display:none;}
 .tab-view.active{display:flex;}
 .filter-bar{padding:6px 10px;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex-shrink:0;}
 .tag-pill{font-size:10px;padding:2px 7px;border-radius:10px;cursor:pointer;border:1px solid transparent;user-select:none;transition:all .15s;}
+/* 複数選択時だけ出る AND/OR 切替と、絞り込み中の件数表示 */
+.tag-mode-btn{font-size:10px;padding:2px 8px;letter-spacing:1px;font-weight:700;}
+.tag-count{font-size:10px;color:var(--dim);white-space:nowrap;margin-left:2px;}
+body.mobile .tag-pill{font-size:12px;padding:5px 10px;}
+body.mobile .tag-mode-btn{font-size:12px;padding:5px 10px;}
 .combo-scroll{overflow-y:auto;flex:1;}
 .combo-area{padding:8px 10px;display:flex;flex-direction:column;gap:7px;}
 .combo-block{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:9px;position:relative;}
@@ -437,6 +474,7 @@ body.mobile .panel-hdr{cursor:pointer;user-select:none;}
 body.mobile .ml-toggle{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid var(--bd2);background:var(--bg3);color:var(--gold);border-radius:6px;font-size:15px;line-height:1;}
 body.mobile .left.collapsed{max-height:none;}
 body.mobile .left.collapsed .sort-bar,
+body.mobile .left.collapsed .ml-search,
 body.mobile .left.collapsed .move-list-wrap{display:none;}
 /* ★ ROUTE GRAPH タブ: 各コンボの技を「位置（手目）」で並べ、同じ位置に同じ技が出るコンボを
    1ノードにまとめた俯瞰図。ノードのバッジ＝その技をその位置で使うコンボの本数。
@@ -496,6 +534,7 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
     </div>
     <div class="tb-group">
     <span class="unsaved-dot" id="unsavedDot" title="未保存の変更があります"></span>
+    <span class="save-state" id="saveState"></span>
     <button class="btn green" onclick="saveToStorage()" data-i18n="btnSave">💾 保存</button>
     <button class="btn" onclick="exportJSON()" data-i18n="btnExport">📤 書き出し</button>
     <button class="btn" onclick="triggerImport()" data-i18n="btnImport">📥 読み込み</button>
@@ -517,9 +556,16 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
   <div class="main">
     <div class="left">
       <div class="panel-hdr" onclick="toggleMoveList()"><span style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="move-list-title">MOVE LIST</span><span id="moveCount" style="color:#8e8e9c;font-size:9px;"></span></span><span class="ml-hdr-right"><button type="button" class="ml-view-btn" id="mlViewToggle" onclick="toggleCompactMoves(event)"></button><span class="ml-toggle" id="mlToggle">▾</span></span></div>
+      <div class="ml-search" id="mlSearch">
+        <span class="ml-search-ico">🔍</span>
+        <input type="text" class="ml-search-inp" id="moveSearch" autocomplete="off" spellcheck="false"
+               data-i18n-ph="moveSearchPh" placeholder="技名・コマンドで検索">
+        <button type="button" class="ml-search-clear" id="moveSearchClear" onclick="clearMoveSearch()">✕</button>
+      </div>
       <div class="sort-bar" id="sortBar"></div>
       <div class="move-list-wrap" id="moveList"></div>
     </div>
+    <div class="col-resizer" id="colResizer" role="separator" aria-orientation="vertical" tabindex="0"></div>
     <div class="right">
       <div class="tabs">
         <div class="tab active" data-tab="combo" onclick="switchTab('combo')" data-i18n="tabCombo">コンボ一覧</div>
@@ -604,6 +650,7 @@ function applyStaticI18n(){
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.setAttribute('placeholder',t(el.getAttribute('data-i18n-ph')));});
   const tt=document.querySelector('title');if(tt)tt.textContent='SF6 COMBO MEMO';
   updateMlViewToggle();
+  syncMoveSearchUI();
 }
 // 技カテゴリのラベル（UI表示用。技名そのものではないので翻訳する）
 const CAT_LABELS={
@@ -655,7 +702,26 @@ const I18N={
   addingToEn:{ja:'',en:'Adding to '},
   // move list / filter
   noMoves:{ja:'技なし',en:'No moves'},
+  secAutoSave:{ja:'自動保存',en:'Auto-save'},
+  asOn:{ja:'ON（既定）',en:'On (default)'},
+  asOnDesc:{ja:'変更してから約1.5秒後に自動で保存します。💾保存の押し忘れで失う心配がありません。メモ欄も同時に保存されます。',en:'Saves automatically about 1.5s after a change, so nothing is lost if you forget to press Save. The memo field is saved too.'},
+  asOff:{ja:'OFF',en:'Off'},
+  asOffDesc:{ja:'💾保存を押したときだけ保存します。保存前に再読み込みすれば、その間の変更を破棄できます。',en:'Saves only when you press Save. Reloading before saving discards the changes you made.'},
+  autoSaveFail:{ja:'自動保存に失敗しました: ',en:'Auto-save failed: '},
+  dotTitleAuto:{ja:'未保存の変更があります（まもなく自動保存されます）',en:'Unsaved changes (auto-save will run shortly)'},
+  dotTitleManual:{ja:'未保存の変更があります（💾保存で保存されます）',en:'Unsaved changes (press Save to store them)'},
+  moveSearchPh:{ja:'技名・コマンドで検索',en:'Search name or input'},
+  moveSearchClear:{ja:'検索をクリア',en:'Clear search'},
+  noMoveHits:{ja:'該当する技がありません',en:'No matching moves'},
+  clearFilters:{ja:'条件をクリア',en:'Clear filters'},
   filterLabel:{ja:'FILTER:',en:'FILTER:'},
+  resizerTitle:{ja:'ドラッグで技リストの幅を変更（ダブルクリックで既定幅、←→キーでも調整可）',en:'Drag to resize the move list (double-click to reset, arrow keys also work)'},
+  tagModeAnd:{ja:'AND',en:'AND'},
+  tagModeOr:{ja:'OR',en:'OR'},
+  tagModeAndTitle:{ja:'選んだタグをすべて持つコンボだけ表示中（クリックでORに切替）',en:'Showing combos with all selected tags (click for OR)'},
+  tagModeOrTitle:{ja:'選んだタグのどれかを持つコンボを表示中（クリックでANDに切替）',en:'Showing combos with any selected tag (click for AND)'},
+  noComboHits:{ja:'条件に合うコンボがありません',en:'No combos match the filter'},
+  clearTagFilter:{ja:'フィルタを解除',en:'Clear filter'},
   addTag:{ja:'＋タグ',en:'＋ Tag'},
   // combos
   noCombos:{ja:'コンボがありません',en:'No combos yet'},
@@ -3463,6 +3529,7 @@ const SEED_VERSION = 16; // ★ シード(内蔵技データ)を更新したら�
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
+  { version:'1.3.2', date:'2026.08.09', ja:['MOVE LIST に検索欄を追加しました。技名とコマンドの部分一致で絞り込めます。空白で区切るとAND検索（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１、キック／ｷｯｸ）は区別しません','⚙ 設定に「自動保存」を追加しました（既定ON）。変更してから約1.5秒後に自動で保存し、メモ欄も同時に保存されるため、💾保存の押し忘れで内容を失う心配がありません。トップバーには最終保存時刻を表示します。OFFにすると従来どおり💾保存を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます','FILTER のタグを複数選択できるようにしました。タグは押すたびに選択／解除が切り替わり、2つ以上選ぶと AND／OR の切替ボタンが現れます。AND は選んだタグをすべて持つコンボ、OR はどれか1つでも持つコンボを表示します','MOVE LIST と右側の境界をドラッグして、技リストの幅を変えられるようにしました。ダブルクリックで既定の幅に戻り、幅は次回起動時にも引き継がれます。広げると技カードが自動で2列・3列に増えるため、大きな画面ほど一覧性が上がります','【不具合修正】メモタブを開いたままキャラクターを切り替えると、切替前のキャラのメモが表示されたまま残り、その状態で「💾 メモ保存」を押すと切替先のキャラのメモを上書きしてしまう問題を修正しました。切替時には未保存のメモを元のキャラへ保存したうえで、切替先のメモを読み直すようにしています。キャラクターの追加・データの読み込みでも同様に処理します'], en:['Added a search box to MOVE LIST that filters by move name and input. Separating words with spaces performs an AND search, and case and full-/half-width characters are treated the same (SA1／ＳＡ１, キック／ｷｯｸ)','Added Auto-save under ⚙ Settings (on by default). Changes are saved automatically about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to press Save. The top bar shows the time of the last save. Turn it off to keep the previous behaviour, where only Save writes your data and reloading beforehand discards changes','FILTER tags can now be multi-selected. Each tag toggles on and off, and selecting two or more reveals an AND/OR switch: AND shows combos carrying every selected tag, OR shows combos carrying any of them','You can now drag the divider between MOVE LIST and the right-hand panel to resize the move list. Double-click resets it to the default width, and the width is remembered next time. Widening it flows the move cards into two or three columns, so larger screens show more at once','[Bug fix] Switching characters while the MEMO tab was open left the previous character\'s memo on screen, and pressing Save memo from there overwrote the new character\'s memo. Switching now stores any unsaved memo against the character it belongs to and reloads the memo for the character you switched to. Adding a character and importing data are handled the same way'] },
   { version:'1.3.1', date:'2026.08.09', ja:['2026.08.03 バランス調整を反映。27キャラクター・122技のフレームデータを公式フレーム表の値に更新しました','リュウ・JP・エドは、判定やコンボ補正などフレーム表に現れない調整のみのため数値の変更はありません'], en:['Applied the 2026.08.03 balance update: refreshed frame data for 122 moves across 27 characters to match the official frame tables','Ryu, JP and Ed have no numeric changes — their adjustments only cover hitboxes and combo scaling, which the frame tables do not list'] },
   { version:'1.3.0', date:'2026.08.08', ja:['新キャラクター「ヤスミン」の技データ(82技)を追加','⚙ 設定の表示モードに「タブレット表示」を追加。配置はPCレイアウトのまま、操作だけスマホと同じタップ中心になります','スマホ・タブレットで、コンボを長押しすると技追加モードに切り替えられるようにしました。モードに入ってから技をタップすると、そのコンボに追加されます','技追加モード中は、技と技の隙間に挿入位置（キャレット）が表示されます。ゴールドに光っている位置に次の技が入り、隙間をタップすれば位置を変えられるので、コンボの途中にも技を差し込めます。既定は末尾で、技を1つ入れるとキャレットが自動で1つ右へ進むため、続けてタップするだけでコンボを組み立てられます','スマホ・タブレットで、コンボ内の技チップを長押しすると「移動中」になり、貼り付け先の隙間をタップして技を移動できるようにしました。同じコンボ内の並び替えだけでなく別のコンボへも移せます。まとめ表示（×3）のチップはまとまりごと、ヒット状況（C/PC/D/G）も一緒に移動します','コンボの編集中に ◀ ▶ ボタンを追加しました。▶ でそのコンボをすぐ上のコンボの分岐にでき、◀ で親と同じ階層へ出せます（トップレベルまで上げるとルートに戻ります）。配下の分岐ツリーもまとめて移動するので、グリップのドラッグ&ドロップが使えない環境でも階層を組み替えられます'], en:['Added move data for the new character Yasmine (82 moves)','Added a Tablet display mode under ⚙ Settings: it keeps the desktop layout while switching to mobile-style tap controls','On phones and tablets you can now long-press a combo to toggle add mode. Once in add mode, tapping a move adds it to that combo','While in add mode, an insertion caret appears in the gaps between moves. The next move goes wherever the gold caret sits, and tapping a gap moves it, so you can insert moves in the middle of a combo. It defaults to the end and steps one position to the right after each move, so you can build a combo by tapping straight through','On phones and tablets you can now long-press a move chip inside a combo to pick it up, then tap a gap to move it there — either reordering within the combo or moving it to a different one. Grouped chips like ×3 move as a whole and carry their hit states with them','Added ◀ ▶ buttons while editing a combo: ▶ turns it into a branch of the combo directly above, and ◀ moves it out to its parent level (keep going and it returns to the top level). Its own branch tree moves with it, so you can restructure the hierarchy without the drag-and-drop grip'] },
   { version:'1.2.0', date:'2026.06.27', ja:['ルート図 にコンボ単位の表示／非表示トグルを追加。コンボ一覧 各コンボの「📋 コマンド出力」ボタン左にある「🕸 表示／🕸 非表示」ボタンで、そのコンボをグラフに出すかどうかを個別に切り替えられます（コンボごとに保存）'], en:['Added a per-combo show/hide toggle for ROUTE GRAPH. Each combo in COMBO LIST now has a "🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation" to include or exclude it from the graph (saved per combo)'] },
@@ -3528,14 +3595,95 @@ let savedSnapshot=JSON.stringify(db);
 let memoDirty=false; // メモ欄に未保存の変更があるか（dbとは別に手動保存されるため独立して追跡）
 function isDbDirty(){try{return JSON.stringify(db)!==savedSnapshot;}catch(e){return false;}}
 function hasUnsavedChanges(){return isDbDirty()||memoDirty;}
+
+// ── 自動保存 ──
+// 変更のたびにタイマーを引き直し、入力が止まってから AUTOSAVE_DELAY 後に一度だけ書き込む。
+// localStorage.setItem は同期なので、キー入力ごとに保存すると打鍵が引っかかるため必ず間引く。
+const AUTOSAVE_DELAY=1500;
+let autoSave=(()=>{try{return localStorage.getItem('sf6_autoSave')!=='0';}catch(e){return true;}})(); // 既定ON
+let autoSaveTimer=null,lastSavedAt=null,lastSaveErrAt=0;
+function setAutoSave(on){
+  autoSave=!!on;
+  try{localStorage.setItem('sf6_autoSave',autoSave?'1':'0');}catch(e){}
+  if(autoSave)scheduleAutoSave();      // ONにした時点で未保存分を拾う
+  else if(autoSaveTimer){clearTimeout(autoSaveTimer);autoSaveTimer=null;}
+  updateSavedIndicator();openSettingsModal();
+}
+function scheduleAutoSave(){
+  if(!autoSave)return;
+  if(autoSaveTimer)clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(runAutoSave,AUTOSAVE_DELAY);
+}
+// 保留中の保存を今すぐ実行する（離脱時・バックグラウンド化時用）
+function flushAutoSave(){
+  if(autoSaveTimer){clearTimeout(autoSaveTimer);autoSaveTimer=null;}
+  if(autoSave)runAutoSave();
+}
+function runAutoSave(){
+  autoSaveTimer=null;
+  if(!autoSave)return;
+  let done=false;
+  if(isDbDirty()){
+    try{persistDb();done=true;}
+    catch(e){
+      // 容量超過などで失敗したとき。変更のたびに出すとうるさいので30秒に1回までにする
+      const now=Date.now();
+      if(now-lastSaveErrAt>30000){lastSaveErrAt=now;showToast(t('autoSaveFail')+e.message,'err');}
+      return;
+    }
+  }
+  if(memoDirty){flushMemo();done=true;} // メモも同じタイミングで確定させる
+  if(done)lastSavedAt=new Date();
+  updateSavedIndicator();
+}
+function fmtClock(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 function updateSavedIndicator(){
-  const d=document.getElementById('unsavedDot');if(!d)return;
-  d.classList.toggle('show',isDbDirty());
+  const dirty=isDbDirty();
+  const d=document.getElementById('unsavedDot');
+  if(d){
+    d.classList.toggle('show',dirty);
+    d.title=t(autoSave?'dotTitleAuto':'dotTitleManual');
+  }
+  const s=document.getElementById('saveState');
+  if(s){
+    // 自動保存ONのときだけ最終保存時刻を出す。OFFなら💾ボタンが唯一の保存手段なので表示しない
+    const show=autoSave&&!!lastSavedAt;
+    s.classList.toggle('show',show);
+    s.textContent=show?('✓ '+fmtClock(lastSavedAt)):'';
+  }
+  // 未保存が残っているときだけ次回を予約する。保存済みでも予約すると
+  // runAutoSave → updateSavedIndicator → 予約 … と延々タイマーが回り続けてしまう
+  if(dirty||memoDirty)scheduleAutoSave();
 }
 
 // ===== [S:state] グローバル状態 =====
 let dragSrc={type:null,moveId:null,comboId:null,idx:null};
-let activeTag='ALL', activeSort='ALL', activeTab='combo', currentScale=1.0;
+let activeSort='ALL', activeTab='combo', currentScale=1.0;
+// ★ タグフィルタは複数選択。空 = すべて表示（従来の 'ALL' に相当）。
+//   2つ以上選んだときの意味は tagMatchMode で切り替える（AND=すべて含む / OR=どれか含む）
+let activeTags=new Set();
+let tagMatchMode=(()=>{try{return localStorage.getItem('sf6_tagMode')==='or'?'or':'and';}catch(e){return'and';}})(); // 既定AND
+function setTagMatchMode(m){
+  tagMatchMode=(m==='or')?'or':'and';
+  try{localStorage.setItem('sf6_tagMode',tagMatchMode);}catch(e){}
+  renderFilterBar();renderCombos();
+}
+function comboMatchesTags(c){
+  if(!activeTags.size)return true;
+  const tags=c.tags||[];
+  for(const t of activeTags){
+    const has=tags.includes(t);
+    if(tagMatchMode==='and'){if(!has)return false;}
+    else if(has)return true;
+  }
+  return tagMatchMode==='and';
+}
+function toggleTagFilter(tag){
+  if(activeTags.has(tag))activeTags.delete(tag);else activeTags.add(tag);
+  renderFilterBar();renderCombos();
+}
+function clearTagFilter(){activeTags.clear();renderFilterBar();renderCombos();}
+let moveQuery=''; // ★ MOVE LIST の検索語。カテゴリピル(activeSort)とはAND条件で効く
 let activeAddCombo=null; // スマホのタップ追加モードで対象になっているコンボID
 // ★ タップ追加モードの挿入位置（moves配列の「境界」インデックス。0=先頭の前、moves.length=末尾）。
 //   追加モード外では null。既定は末尾なので、位置を指定しなければ従来どおり後ろへ足されていく。
@@ -3802,6 +3950,67 @@ function setDisplayMode(m){
   try{localStorage.setItem('sf6_displayMode',m);}catch(e){}
   autoScale();render();openSettingsModal();
 }
+// ── 左パネル(MOVE LIST)の幅。境界をドラッグして変えられる ──
+// スケール後の見た目ではなく #scaleRoot 上の実寸(px)で保持する。
+const LEFT_W_DEFAULT=260,LEFT_W_MIN=180,LEFT_W_MAX=640;
+let leftWidth=(()=>{
+  try{const v=parseInt(localStorage.getItem('sf6_leftW'),10);
+    return (v>=LEFT_W_MIN&&v<=LEFT_W_MAX)?v:LEFT_W_DEFAULT;}catch(e){return LEFT_W_DEFAULT;}
+})();
+function applyLeftWidth(){
+  const l=document.querySelector('.left');if(!l)return;
+  // モバイルは縦積み(width:100%)なので、インライン幅を外してCSS側に任せる
+  if(isMobile()){l.style.width='';return;}
+  l.style.width=leftWidth+'px';
+  const r=document.getElementById('colResizer');
+  if(r){
+    r.setAttribute('aria-valuenow',String(leftWidth));
+    r.setAttribute('aria-valuemin',String(LEFT_W_MIN));
+    r.setAttribute('aria-valuemax',String(LEFT_W_MAX));
+    r.title=t('resizerTitle');
+    r.setAttribute('aria-label',t('resizerTitle'));
+  }
+}
+function setLeftWidth(px,persist){
+  leftWidth=Math.round(Math.min(LEFT_W_MAX,Math.max(LEFT_W_MIN,px)));
+  applyLeftWidth();
+  if(persist){try{localStorage.setItem('sf6_leftW',String(leftWidth));}catch(e){}}
+}
+function initColResizer(){
+  const r=document.getElementById('colResizer');if(!r)return;
+  let startX=0,startW=0,active=false;
+  r.addEventListener('pointerdown',e=>{
+    if(isMobile())return;
+    active=true;startX=e.clientX;startW=leftWidth;
+    r.classList.add('dragging');document.body.classList.add('resizing');
+    try{r.setPointerCapture(e.pointerId);}catch(_){}
+    e.preventDefault();
+  });
+  r.addEventListener('pointermove',e=>{
+    if(!active)return;
+    // #scaleRoot は transform:scale されているため、画面上の移動量をスケールで割って実寸に直す。
+    // これを入れないと縮小表示のときにポインタとハンドルがずれていく。
+    const sc=currentScale||1;
+    setLeftWidth(startW+(e.clientX-startX)/sc,false);
+  });
+  const end=e=>{
+    if(!active)return;
+    active=false;
+    r.classList.remove('dragging');document.body.classList.remove('resizing');
+    try{r.releasePointerCapture(e.pointerId);}catch(_){}
+    setLeftWidth(leftWidth,true); // 保存はドラッグ終了時に1回だけ
+  };
+  r.addEventListener('pointerup',end);
+  r.addEventListener('pointercancel',end);
+  r.addEventListener('dblclick',()=>setLeftWidth(LEFT_W_DEFAULT,true)); // ダブルクリックで既定幅へ
+  // キーボードでも動かせるようにする（ハンドルは role="separator" tabindex="0"）
+  r.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'){setLeftWidth(leftWidth-16,true);e.preventDefault();}
+    else if(e.key==='ArrowRight'){setLeftWidth(leftWidth+16,true);e.preventDefault();}
+    else if(e.key==='Home'){setLeftWidth(LEFT_W_MIN,true);e.preventDefault();}
+    else if(e.key==='End'){setLeftWidth(LEFT_W_MAX,true);e.preventDefault();}
+  });
+}
 function applyMobileClass(){
   const m=isMobile();
   const tm=isTouchMode();
@@ -3810,6 +4019,7 @@ function applyMobileClass(){
   document.documentElement.classList.toggle('mobile-root',m);
   if(!tm){endAddMode();cancelPickMove(true);}   // タップ操作モードでなくなったら追加モード・移動中を解除
   applyMoveListCollapsed();
+  applyLeftWidth(); // PC⇄モバイルの切替時にインライン幅を付け外しする
 }
 // ── MOVE LIST 折り畳み（モバイルのみ）──
 let moveListCollapsed=(()=>{try{return localStorage.getItem('sf6_mlCollapsed')==='1';}catch(e){return false;}})();
@@ -3962,7 +4172,20 @@ function blobToDataURL(blob){return new Promise((res,rej)=>{const r=new FileRead
 function dataURLToBlob(dataURL){const parts=dataURL.split(',');const mime=(parts[0].match(/:(.*?);/)||[])[1]||'image/png';const bin=atob(parts[1]);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
 
 // ===== [S:io] 保存・読み込み・書き出し =====
-function saveToStorage(){try{localStorage.setItem('sf6_v5',JSON.stringify(db));savedSnapshot=JSON.stringify(db);updateSavedIndicator();showToast(t('savedToast'));}catch(e){showToast(t('saveFail')+e.message,'err');}}
+// dbをlocalStorageへ書き、保存済みスナップショットを更新する（手動保存・自動保存で共用）
+function persistDb(){
+  const s=JSON.stringify(db);
+  localStorage.setItem('sf6_v5',s);
+  savedSnapshot=s;
+}
+function saveToStorage(){
+  try{
+    persistDb();
+    if(memoDirty)flushMemo(); // 💾保存でメモも一緒に確定させる
+    lastSavedAt=new Date();
+    updateSavedIndicator();showToast(t('savedToast'));
+  }catch(e){showToast(t('saveFail')+e.message,'err');}
+}
 async function exportJSON(){
   try{
     // db本体（thumbは画像キー）を複製し、参照されている画像をIDBから集めて
@@ -3989,11 +4212,14 @@ function importJSON(input){
       // 同梱画像（_images: {キー: dataURL}）があればIDBへ書き戻す。
       const images=d._images||null;delete d._images;delete d._imgFormat;
       if(images){for(const k of Object.keys(images)){try{await idbPutImage(k,dataURLToBlob(images[k]));}catch(err){}}}
+      flushMemo(); // 読み込みでキャラが入れ替わる前に、未保存メモを元のキャラへ書き戻す
       db=d;if(!db.currentChar||!db.chars[db.currentChar])db.currentChar=Object.keys(db.chars)[0];
       migrateSeed(db);
       // 既存のObjectURLキャッシュを破棄して、新データの画像を取り直す。
       thumbURLs.forEach(u=>URL.revokeObjectURL(u));thumbURLs.clear();
-      activeTag='ALL';activeSort='ALL';render();showToast(t('importDone'));
+      activeTags.clear();activeSort='ALL';resetMoveSearch();render();
+      loadedMemoKey=null;memoDirty=false;if(activeTab==='memo')loadMemo(); // 表示中のメモを読み込み後のキャラのものへ更新
+      showToast(t('importDone'));
     }catch(err){showToast(t('importFail')+err.message,'err');}
   };r.readAsText(f);input.value='';
 }
@@ -4026,7 +4252,18 @@ function openSettingsModal(){
       <span style="display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;">${desc}</span>
     </button>`;
   };
+  const asOpt=(on,label,desc)=>{
+    const sel=autoSave===on;
+    return `<button onclick="setAutoSave(${on})" style="display:block;width:100%;text-align:left;margin-bottom:8px;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;background:${sel?'#2e1f08':'var(--bg3)'};border:1px solid ${sel?'var(--gold)':'var(--bd2)'};color:${sel?'var(--gold)':'var(--text)'};">
+      <span style="font-weight:700;">${sel?'● ':'○ '}${label}</span>
+      <span style="display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;">${desc}</span>
+    </button>`;
+  };
   showModal(`<div class="modal-title-bar">${t('settingsTitle')}</div>
+    <div style="font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:8px;">${t('secAutoSave')}</div>
+    ${asOpt(true,t('asOn'),t('asOnDesc'))}
+    ${asOpt(false,t('asOff'),t('asOffDesc'))}
+    <div style="height:1px;background:var(--bd);margin:14px 0;"></div>
     <div style="font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:8px;">${t('secLanguage')}</div>
     ${langOpt('ja',t('langJa'),t('langJaDesc'))}
     ${langOpt('en',t('langEn'),t('langEnDesc'))}
@@ -4101,9 +4338,10 @@ function doReset(){
   const chars={};
   Object.entries(CHARS).forEach(([id,cfg])=>{chars[id]=buildSeedChar(cfg);});
   db={currentChar:'リュウ',chars};
-  activeTag='ALL';activeSort='ALL';
+  activeTags.clear();activeSort='ALL';resetMoveSearch();
   closeModal();switchTab('combo');render();
   const ta=document.getElementById('memoArea');if(ta)ta.value='';
+  loadedMemoKey=null;memoDirty=false; // 初期化後も未保存フラグが残ると離脱警告が出続けるため落とす
   showToast(t('resetDoneToast'));
 }
 
@@ -4131,15 +4369,27 @@ function loadMemo(){
   ta.value=localStorage.getItem(key)||'';
   ta.style.borderColor='var(--bd2)';
   memoDirty=false;loadedMemoKey=key;
-  ta.oninput=()=>{ta.style.borderColor='#4a4a20';memoDirty=true;};
+  ta.oninput=()=>{ta.style.borderColor='#4a4a20';memoDirty=true;scheduleAutoSave();};
 }
 function saveMemo(){
   const ta=document.getElementById('memoArea');if(!ta)return;
-  localStorage.setItem(getMemoKey(),ta.value);
-  memoDirty=false;loadedMemoKey=getMemoKey();
+  // 保存先は「今表示しているキャラ」ではなく「textareaの中身を読み込んだキャラ」。
+  // 両者がズレた状態（キャラ切替直後など）で getMemoKey() に書くと切替先のメモを潰すため。
+  const key=loadedMemoKey||getMemoKey();
+  localStorage.setItem(key,ta.value);
+  memoDirty=false;loadedMemoKey=key;
   ta.style.borderColor='var(--gold)';
   showToast(t('memoSavedToast'));
   setTimeout(()=>{if(ta)ta.style.borderColor='var(--bd2)';},1500);
+}
+// キャラ切替・データ読み込みの直前に呼ぶ。未保存のメモを「今の持ち主のキャラ」へ黙って書き戻す。
+// これを挟まないと、textareaに前キャラの本文が残ったまま切替先のキーへ保存されてしまう。
+function flushMemo(){
+  const ta=document.getElementById('memoArea');
+  if(!ta||!memoDirty||!loadedMemoKey)return;
+  try{localStorage.setItem(loadedMemoKey,ta.value);}catch(e){}
+  memoDirty=false;
+  ta.style.borderColor='var(--bd2)';
 }
 
 // ─ TUTORIAL ─
@@ -4237,12 +4487,87 @@ function renderSortBar(){
     bar.appendChild(p);
   });
 }
+// ★ 検索用の正規化。NFKCで全角英数・半角カナを揃え、小文字化する。
+//   これで「ＳＡ1」「sa1」「SA1」、「ﾊﾟﾝﾁ」「パンチ」が同じ語として一致する。
+function normSearch(s){
+  const v=String(s==null?'':s);
+  try{return v.normalize('NFKC').toLowerCase();}catch(e){return v.toLowerCase();}
+}
+// 正規化結果は技ごとにキャッシュする。WeakMapに置くので db には載らず、
+// 保存JSON・書き出しファイル・未保存判定(JSON.stringify比較)を汚さない。
+// 技名/コマンドが編集されたときは値が変わるので作り直す。
+const _hayCache=new WeakMap();
+function moveHaystack(m){
+  const c=_hayCache.get(m);
+  if(c&&c.n===m.name&&c.i===m.inputStr)return c.h;
+  const h=normSearch(m.name)+' '+normSearch(m.inputStr);
+  _hayCache.set(m,{n:m.name,i:m.inputStr,h});
+  return h;
+}
+// 空白区切りの語をすべて含むものだけを通す（AND条件）。例:「立ち 強P」
+function moveSearchTerms(){return normSearch(moveQuery).split(/\s+/).filter(Boolean);}
+function moveMatches(m,terms){
+  if(!terms.length)return true;
+  const hay=moveHaystack(m);
+  return terms.every(w=>hay.indexOf(w)>=0);
+}
+function onMoveSearchInput(e){
+  // IME変換中(isComposing)は中間の文字で絞り込まない。確定は compositionend で拾う
+  if(e&&e.isComposing)return;
+  applyMoveSearch();
+}
+function applyMoveSearch(){
+  const inp=document.getElementById('moveSearch');
+  moveQuery=inp?inp.value:'';
+  syncMoveSearchUI();
+  renderMoveList(); // 入力欄は #moveList の外にあるので、ここを描き替えてもフォーカスは外れない
+}
+function clearMoveSearch(){
+  const inp=document.getElementById('moveSearch');
+  if(inp){inp.value='';inp.focus();}
+  moveQuery='';syncMoveSearchUI();renderMoveList();
+}
+// 0件表示から呼ぶ。検索語とカテゴリの両方を戻す
+function clearMoveFilters(){
+  activeSort='ALL';
+  const inp=document.getElementById('moveSearch');if(inp)inp.value='';
+  moveQuery='';syncMoveSearchUI();renderSortBar();renderMoveList();
+}
+// キャラ切替・データ読み込み時に検索語を持ち越さない（activeSort/activeTags と同じ扱い）
+function resetMoveSearch(){
+  moveQuery='';
+  const inp=document.getElementById('moveSearch');if(inp)inp.value='';
+  syncMoveSearchUI();
+}
+function syncMoveSearchUI(){
+  const w=document.getElementById('mlSearch');if(w)w.classList.toggle('has-q',!!moveQuery);
+  const b=document.getElementById('moveSearchClear');
+  if(b){b.title=t('moveSearchClear');b.setAttribute('aria-label',t('moveSearchClear'));}
+}
+// compositionend は oncompositionend 属性では拾えない（HTMLの標準イベントハンドラ属性ではない）ため、
+// 検索欄のイベントはまとめて addEventListener で登録する
+function initMoveSearch(){
+  const inp=document.getElementById('moveSearch');if(!inp)return;
+  inp.addEventListener('input',onMoveSearchInput);
+  inp.addEventListener('compositionend',applyMoveSearch);
+  inp.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();clearMoveSearch();}});
+  syncMoveSearchUI();
+}
 function renderMoveList(){
   const el=document.getElementById('moveList');
-  let moves=cur().moves;
+  const all=cur().moves;
+  let moves=all;
   if(activeSort!=='ALL')moves=moves.filter(m=>m.type===activeSort);
-  document.getElementById('moveCount').textContent=movesUnit(moves.length);
-  if(!moves.length){el.innerHTML='<div style="color:#7a7a8a;font-size:11px;padding:10px;text-align:center;">'+esc(t('noMoves'))+'</div>';}
+  const terms=moveSearchTerms();
+  if(terms.length)moves=moves.filter(m=>moveMatches(m,terms));
+  // 絞り込み中は「該当数 / 全体数」を出して、隠れている技があることが分かるようにする
+  const narrowed=terms.length>0||activeSort!=='ALL';
+  document.getElementById('moveCount').textContent=narrowed?(moves.length+' / '+movesUnit(all.length)):movesUnit(all.length);
+  if(!moves.length){
+    el.innerHTML=all.length===0
+      ?'<div class="ml-empty">'+esc(t('noMoves'))+'</div>'
+      :'<div class="ml-empty">'+esc(t('noMoveHits'))+'<br><button type="button" class="btn" style="margin-top:8px;" onclick="clearMoveFilters()">'+esc(t('clearFilters'))+'</button></div>';
+  }
   else{
     // カードごとに createElement/appendChild するより、1回の innerHTML 代入でまとめて構築する方が軽い
     el.innerHTML=moves.map(m=>{
@@ -4274,22 +4599,45 @@ function renderFilterBar(){
   const bar=document.getElementById('filterBar');
   bar.innerHTML='<span style="font-size:10px;color:#8e8e9c;letter-spacing:1px;white-space:nowrap;">'+esc(t('filterLabel'))+'</span>';
   const ALLC={bg:'#23232e',fg:'#cfcfe0',abg:'#3a3a4a',afg:'#ffffff'};
-  ['ALL',...(cur().tags||[])].forEach((tag)=>{
-    const tc=tag==='ALL'?ALLC:tagColor(tag);const on=activeTag===tag;
-    const p=document.createElement('div');p.className='tag-pill';p.textContent=tag;
+  // ALLピル: 選択を全解除する。どのタグも選ばれていないときが選択状態
+  const allOn=activeTags.size===0;
+  const ap=document.createElement('div');ap.className='tag-pill';ap.textContent='ALL';
+  ap.style.cssText=`background:${allOn?ALLC.abg:ALLC.bg};color:${allOn?ALLC.afg:ALLC.fg};border-color:${allOn?ALLC.afg:'transparent'};`;
+  ap.onclick=()=>clearTagFilter();
+  bar.appendChild(ap);
+  (cur().tags||[]).forEach((tag)=>{
+    const tc=tagColor(tag);const on=activeTags.has(tag);
+    const p=document.createElement('div');p.className='tag-pill';
+    // 複数選択では色だけだと選択状態が分かりにくいので、選択中は✓を付ける
+    p.textContent=(on?'✓ ':'')+tag;
     p.style.cssText=`background:${on?tc.abg:tc.bg};color:${on?tc.afg:tc.fg};border-color:${on?tc.afg:'transparent'};`;
-    p.onclick=()=>{activeTag=tag;renderFilterBar();renderCombos();};
-    // ★ ALL以外のタグはコンボへドラッグ&ドロップして付与できる
-    if(tag!=='ALL'){
-      p.setAttribute('draggable','true');
-      p.title=t('tagDragTitle');
-      p.addEventListener('dragstart',e=>{tagDragName=tag;if(e.dataTransfer){e.dataTransfer.effectAllowed='copy';try{e.dataTransfer.setData('text/plain','tag:'+tag);}catch(_){}}});
-      p.addEventListener('dragend',()=>{tagDragName=null;document.querySelectorAll('.combo-block.tagdrop-target').forEach(el=>el.classList.remove('tagdrop-target'));});
-    }
+    p.onclick=()=>toggleTagFilter(tag);
+    // ★ タグはコンボへドラッグ&ドロップして付与できる
+    p.setAttribute('draggable','true');
+    p.title=t('tagDragTitle');
+    p.addEventListener('dragstart',e=>{tagDragName=tag;if(e.dataTransfer){e.dataTransfer.effectAllowed='copy';try{e.dataTransfer.setData('text/plain','tag:'+tag);}catch(_){}}});
+    p.addEventListener('dragend',()=>{tagDragName=null;document.querySelectorAll('.combo-block.tagdrop-target').forEach(el=>el.classList.remove('tagdrop-target'));});
     bar.appendChild(p);
   });
+  // AND/OR切替は2つ以上選んだときだけ意味を持つので、そのときだけ出す
+  if(activeTags.size>=2){
+    const mb=document.createElement('button');
+    mb.className='btn gold tag-mode-btn';
+    mb.textContent=t(tagMatchMode==='and'?'tagModeAnd':'tagModeOr');
+    mb.title=t(tagMatchMode==='and'?'tagModeAndTitle':'tagModeOrTitle');
+    mb.onclick=()=>setTagMatchMode(tagMatchMode==='and'?'or':'and');
+    bar.appendChild(mb);
+  }
   const ab=document.createElement('button');ab.className='btn';ab.textContent=t('addTag');ab.style.cssText='font-size:10px;padding:2px 7px;';
   ab.onclick=()=>openAddTagModal();bar.appendChild(ab);
+  // 絞り込み中は「該当数 / 全体数」を出す（MOVE LISTの検索と同じ考え方）
+  if(activeTags.size){
+    const all=(cur().combos||[]);
+    const n=all.filter(comboMatchesTags).length;
+    const cnt=document.createElement('span');
+    cnt.className='tag-count';cnt.textContent=n+' / '+all.length;
+    bar.appendChild(cnt);
+  }
 }
 // コンボの「親子関係・深さ」を描画前に一度だけ索引化する。
 // これにより各ブロック描画時の char.combos.find / filter（コンボ数の2乗オーダー）を
@@ -4321,8 +4669,14 @@ function renderCombos(){
   const char=cur();
   if(char&&Array.isArray(char.combos))char.combos=NormalizeComboOrder(char.combos); // 親子を必ず隣接させる
   _buildComboIndex(char.combos||[]); // ★ 親子・深さを一度だけ索引化（以降の描画はMap参照で軽量）
-  const combos=(char.combos||[]).filter(c=>activeTag==='ALL'||c.tags.includes(activeTag));
-  if(!combos.length){area.innerHTML='<div class="no-combos">'+esc(t('noCombos'))+'<br><span style="font-size:11px;color:#6f6f82;">'+esc(t('noCombosHint'))+'</span></div>';updateSavedIndicator();return;}
+  const combos=(char.combos||[]).filter(comboMatchesTags);
+  if(!combos.length){
+    // 絞り込みで0件なのか、そもそもコンボが無いのかを書き分ける
+    area.innerHTML=(char.combos||[]).length&&activeTags.size
+      ?'<div class="no-combos">'+esc(t('noComboHits'))+'<br><button type="button" class="btn" style="margin-top:8px;" onclick="clearTagFilter()">'+esc(t('clearTagFilter'))+'</button></div>'
+      :'<div class="no-combos">'+esc(t('noCombos'))+'<br><span style="font-size:11px;color:#6f6f82;">'+esc(t('noCombosHint'))+'</span></div>';
+    updateSavedIndicator();return;
+  }
   combos.forEach(c=>renderComboBlock(area,c));
   updateSavedIndicator();
 }
@@ -5226,7 +5580,14 @@ async function saveMove(editId){
     condition:(document.getElementById('fi-cond')?document.getElementById('fi-cond').value:'')||'',
   };
   if(editId){const i=char.moves.findIndex(m=>m.id===editId);if(i>=0)char.moves[i]=mv2;}
-  else char.moves.push(mv2);
+  else{
+    char.moves.push(mv2);
+    // 追加した技が絞り込みに隠れると「追加できていない」ように見えるため、
+    // 現在の検索語・カテゴリに一致しないときだけ条件を戻す
+    if(!moveMatches(mv2,moveSearchTerms())||(activeSort!=='ALL'&&mv2.type!==activeSort)){
+      activeSort='ALL';resetMoveSearch();
+    }
+  }
   closeModal();render();
 }
 function deleteMove(id){
@@ -5307,7 +5668,9 @@ function createCharFromPending(withPreset){
   const name=_pendingCharName;if(!name)return;
   const id=name.toLowerCase().replace(/[^a-z0-9]/g,'_')+Date.now();
   db.chars[id]={name:name.toUpperCase(),moves:withPreset?presetMoves():[],combos:[],tags:['SA1','SA2','SA3','パニカン','カウンター','中央','画面端']};
-  db.currentChar=id;activeTag='ALL';activeSort='ALL';_pendingCharName='';closeModal();render();
+  flushMemo(); // 追加したキャラへ自動で切り替わるため、切替前のキャラへ未保存メモを書き戻す
+  db.currentChar=id;activeTags.clear();activeSort='ALL';resetMoveSearch();_pendingCharName='';closeModal();render();
+  if(activeTab==='memo')loadMemo();
 }
 function deleteCurrentChar(){
   const ids=Object.keys(db.chars);if(ids.length<=1){showToast(t('cannotDelLastChar'),'err');return;}
@@ -5333,10 +5696,15 @@ function confirmDeleteChar(){
   const memoKey='sf6_memo_'+delId;
   try{localStorage.removeItem(memoKey);}catch(e){}
   if(loadedMemoKey===memoKey){loadedMemoKey=null;memoDirty=false;}
-  delete db.chars[delId];db.currentChar=Object.keys(db.chars)[0];activeTag='ALL';activeSort='ALL';closeModal();render();
+  delete db.chars[delId];db.currentChar=Object.keys(db.chars)[0];activeTags.clear();activeSort='ALL';resetMoveSearch();closeModal();render();
   if(activeTab==='memo')loadMemo(); // メモタブ表示中に削除した場合、切替先キャラのメモへ表示を更新する
 }
-function switchChar(id){endAddMode();cancelPickMove(true);editingCombos.clear();db.currentChar=id;activeTag='ALL';activeSort='ALL';render();}
+function switchChar(id){
+  endAddMode();cancelPickMove(true);editingCombos.clear();
+  flushMemo();                                  // 切替前のキャラへ未保存メモを書き戻す
+  db.currentChar=id;activeTags.clear();activeSort='ALL';resetMoveSearch();render();
+  if(activeTab==='memo')loadMemo();             // メモタブ表示中なら切替先の本文へ差し替える
+}
 // モバイル：ヘッダーの操作ボタン群を折りたたみ/展開
 function toggleTopbarMenu(){
   const tb=document.getElementById('topbar');if(!tb)return;
@@ -5359,7 +5727,7 @@ function renderTagList(){
   tl.querySelectorAll('.tag-del-chip').forEach(el=>el.addEventListener('click',()=>deleteTag(el.dataset.tag)));
 }
 function saveTag(){const v=document.getElementById('ti-name').value.trim();if(!v)return;const char=cur();if(!char.tags)char.tags=[];if(!char.tags.includes(v))char.tags.push(v);document.getElementById('ti-name').value='';updateSavedIndicator();renderTagList();renderFilterBar();}
-function deleteTag(tag){const char=cur();char.tags=char.tags.filter(t=>t!==tag);char.combos.forEach(c=>{c.tags=c.tags.filter(t=>t!==tag);});if(activeTag===tag)activeTag='ALL';updateSavedIndicator();renderTagList();renderFilterBar();renderCombos();}
+function deleteTag(tag){const char=cur();char.tags=char.tags.filter(t=>t!==tag);char.combos.forEach(c=>{c.tags=c.tags.filter(t=>t!==tag);});activeTags.delete(tag);updateSavedIndicator();renderTagList();renderFilterBar();renderCombos();}
 // ★ フィルターのタグをコンボへドラッグ&ドロップで付与する
 function addTagToCombo(comboId,tag){
   const char=cur();const c=(char.combos||[]).find(x=>x.id===comboId);
@@ -5436,9 +5804,19 @@ function setupDragWheelScroll(){
 document.documentElement.lang=LANG;
 applyStaticI18n();
 applyCompactMoves();
+initMoveSearch();
+initColResizer();
 setupDragWheelScroll();
-// 未保存のコンボ／メモがある状態でタブを閉じる・離脱する際に確認ダイアログを出す
-window.addEventListener('beforeunload',e=>{if(hasUnsavedChanges()){e.preventDefault();e.returnValue='';}});
+// 未保存のコンボ／メモがある状態でタブを閉じる・離脱する際に確認ダイアログを出す。
+// 自動保存ONなら、保留中の変更をここで書き切ってから判定するので通常は警告が出ない。
+window.addEventListener('beforeunload',e=>{
+  flushAutoSave();
+  if(hasUnsavedChanges()){e.preventDefault();e.returnValue='';}
+});
+// モバイルではタブを閉じる際に beforeunload が発火しないことがあるため、
+// バックグラウンドへ回った時点でも保留分を確定させる
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAutoSave();});
+window.addEventListener('pagehide',()=>{flushAutoSave();});
 autoScale();render();
 </script>
 </body>
