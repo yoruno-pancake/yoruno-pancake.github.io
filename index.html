@@ -321,6 +321,28 @@ body.mobile .tree-hit-legend .lg-grid{grid-template-columns:auto auto;}
 .form-row{display:grid;gap:8px;}
 .thumb-wrap{width:100%;aspect-ratio:16/9;border-radius:7px;overflow:hidden;position:relative;cursor:pointer;border:1.5px dashed var(--bd2);transition:border-color .15s;background:var(--bg3);}
 .thumb-wrap:hover{border-color:var(--gold);}
+/* ── サムネイル一括登録ウィザード ── */
+.wiz-lead{font-size:12px;color:var(--text);line-height:1.6;margin-bottom:10px;}
+.wiz-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;}
+.wiz-opt{display:block;width:100%;text-align:left;margin-bottom:8px;padding:11px 13px;border-radius:8px;cursor:pointer;font-family:inherit;background:var(--bg3);border:1px solid var(--bd2);color:var(--text);}
+.wiz-opt:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
+.wiz-opt:disabled{opacity:.4;cursor:default;}
+.wiz-opt-t{display:block;font-size:13px;font-weight:700;}
+.wiz-opt-d{display:block;font-size:11px;color:var(--muted);margin-top:3px;}
+.wiz-bar{height:4px;border-radius:2px;background:var(--bg3);overflow:hidden;margin-bottom:5px;}
+.wiz-bar-in{height:100%;background:var(--gold);transition:width .2s;}
+.wiz-count{font-size:10px;color:var(--dim);text-align:right;margin-bottom:10px;letter-spacing:1px;}
+.wiz-move{background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;padding:12px;margin-bottom:10px;text-align:center;}
+.wiz-cat{display:inline-block;font-size:9px;padding:2px 8px;border-radius:8px;letter-spacing:1px;margin-bottom:7px;}
+.wiz-name{font-size:17px;font-weight:700;color:var(--text);line-height:1.4;word-break:break-word;}
+.wiz-inp{font-size:13px;color:var(--gold);margin-top:5px;word-break:break-word;}
+.wiz-prev{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:7px;display:block;margin-bottom:5px;}
+.wiz-pick{display:block;width:100%;padding:13px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;background:#2e1f08;border:1px solid var(--gold);color:var(--gold);}
+.wiz-pick:hover:not(:disabled){background:#3d2a0b;}
+.wiz-pick:disabled{opacity:.5;cursor:default;}
+.wiz-busy{font-size:11px;color:var(--gold);text-align:center;margin-top:8px;}
+body.mobile .wiz-name{font-size:19px;}
+body.mobile .wiz-pick{padding:16px;font-size:15px;}
 .thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
 .thumb-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim);}
 .sep{border:none;border-top:1px solid var(--bd);margin:10px 0;}
@@ -555,7 +577,7 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
   </div>
   <div class="main">
     <div class="left">
-      <div class="panel-hdr" onclick="toggleMoveList()"><span style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="move-list-title">MOVE LIST</span><span id="moveCount" style="color:#8e8e9c;font-size:9px;"></span></span><span class="ml-hdr-right"><button type="button" class="ml-view-btn" id="mlViewToggle" onclick="toggleCompactMoves(event)"></button><span class="ml-toggle" id="mlToggle">▾</span></span></div>
+      <div class="panel-hdr" onclick="toggleMoveList()"><span style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="move-list-title">MOVE LIST</span><span id="moveCount" style="color:#8e8e9c;font-size:9px;"></span></span><span class="ml-hdr-right"><button type="button" class="ml-view-btn" id="mlWizBtn" onclick="event.stopPropagation();openThumbWizard()">🖼＋</button><button type="button" class="ml-view-btn" id="mlViewToggle" onclick="toggleCompactMoves(event)"></button><span class="ml-toggle" id="mlToggle">▾</span></span></div>
       <div class="ml-search" id="mlSearch">
         <span class="ml-search-ico">🔍</span>
         <input type="text" class="ml-search-inp" id="moveSearch" autocomplete="off" spellcheck="false"
@@ -651,6 +673,8 @@ function applyStaticI18n(){
   const tt=document.querySelector('title');if(tt)tt.textContent='SF6 COMBO MEMO';
   updateMlViewToggle();
   syncMoveSearchUI();
+  const wb=document.getElementById('mlWizBtn');
+  if(wb){wb.title=t('wizBtnTitle');wb.setAttribute('aria-label',t('wizBtnTitle'));}
 }
 // 技カテゴリのラベル（UI表示用。技名そのものではないので翻訳する）
 const CAT_LABELS={
@@ -702,6 +726,24 @@ const I18N={
   addingToEn:{ja:'',en:'Adding to '},
   // move list / filter
   noMoves:{ja:'技なし',en:'No moves'},
+  wizBtnTitle:{ja:'サムネイル画像をまとめて登録する',en:'Register thumbnails in bulk'},
+  wizTitle:{ja:'サムネイル一括登録',en:'Bulk thumbnail registration'},
+  wizStartDesc:{ja:'技を1つずつ表示します。表示された技に合う画像をフォルダ（スマホは写真）から選ぶだけで、次の技へ自動で進みます。',en:'Moves are shown one at a time. Just pick the image that matches the move on screen and it advances automatically.'},
+  wizScopeNote:{ja:'※ いまMOVE LISTに表示されている技だけが対象です',en:'Note: only the moves currently shown in MOVE LIST are included'},
+  wizTargetUnset:{ja:'未登録の技だけ',en:'Moves without an image'},
+  wizTargetAll:{ja:'すべての技（登録済みも差し替え）',en:'All moves (replace existing)'},
+  wizNoTarget:{ja:'対象の技がありません',en:'No moves to register'},
+  wizCurrent:{ja:'この技の画像を選んでください',en:'Choose the image for this move'},
+  wizPick:{ja:'📁 画像を選ぶ',en:'📁 Choose image'},
+  wizReplaceNote:{ja:'登録済み。選ぶと差し替えます',en:'Already set — choosing replaces it'},
+  wizProcessing:{ja:'画像を処理しています…',en:'Processing…'},
+  wizSkip:{ja:'スキップ',en:'Skip'},
+  wizBack:{ja:'← 戻る',en:'← Back'},
+  wizQuit:{ja:'中断',en:'Quit'},
+  wizDoneTitle:{ja:'登録が完了しました',en:'All done'},
+  wizDoneDesc:{ja:'%d 技に画像を登録しました。スキップ: %s 技',en:'Registered images for %d move(s). Skipped: %s'},
+  wizRetrySkipped:{ja:'スキップした技をもう一度',en:'Go through the skipped moves again'},
+  wizClose:{ja:'閉じる',en:'Close'},
   secAutoSave:{ja:'自動保存',en:'Auto-save'},
   asOn:{ja:'ON（既定）',en:'On (default)'},
   asOnDesc:{ja:'変更してから約1.5秒後に自動で保存します。💾保存の押し忘れで失う心配がありません。メモ欄も同時に保存されます。',en:'Saves automatically about 1.5s after a change, so nothing is lost if you forget to press Save. The memo field is saved too.'},
@@ -3529,7 +3571,7 @@ const SEED_VERSION = 16; // ★ シード(内蔵技データ)を更新したら�
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
-  { version:'1.3.2', date:'2026.08.09', ja:['MOVE LIST に検索欄を追加しました。技名とコマンドの部分一致で絞り込めます。空白で区切るとAND検索（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１、キック／ｷｯｸ）は区別しません','⚙ 設定に「自動保存」を追加しました（既定ON）。変更してから約1.5秒後に自動で保存し、メモ欄も同時に保存されるため、💾保存の押し忘れで内容を失う心配がありません。トップバーには最終保存時刻を表示します。OFFにすると従来どおり💾保存を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます','FILTER のタグを複数選択できるようにしました。タグは押すたびに選択／解除が切り替わり、2つ以上選ぶと AND／OR の切替ボタンが現れます。AND は選んだタグをすべて持つコンボ、OR はどれか1つでも持つコンボを表示します','MOVE LIST と右側の境界をドラッグして、技リストの幅を変えられるようにしました。ダブルクリックで既定の幅に戻り、幅は次回起動時にも引き継がれます。広げると技カードが自動で2列・3列に増えるため、大きな画面ほど一覧性が上がります','【不具合修正】メモタブを開いたままキャラクターを切り替えると、切替前のキャラのメモが表示されたまま残り、その状態で「💾 メモ保存」を押すと切替先のキャラのメモを上書きしてしまう問題を修正しました。切替時には未保存のメモを元のキャラへ保存したうえで、切替先のメモを読み直すようにしています。キャラクターの追加・データの読み込みでも同様に処理します'], en:['Added a search box to MOVE LIST that filters by move name and input. Separating words with spaces performs an AND search, and case and full-/half-width characters are treated the same (SA1／ＳＡ１, キック／ｷｯｸ)','Added Auto-save under ⚙ Settings (on by default). Changes are saved automatically about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to press Save. The top bar shows the time of the last save. Turn it off to keep the previous behaviour, where only Save writes your data and reloading beforehand discards changes','FILTER tags can now be multi-selected. Each tag toggles on and off, and selecting two or more reveals an AND/OR switch: AND shows combos carrying every selected tag, OR shows combos carrying any of them','You can now drag the divider between MOVE LIST and the right-hand panel to resize the move list. Double-click resets it to the default width, and the width is remembered next time. Widening it flows the move cards into two or three columns, so larger screens show more at once','[Bug fix] Switching characters while the MEMO tab was open left the previous character\'s memo on screen, and pressing Save memo from there overwrote the new character\'s memo. Switching now stores any unsaved memo against the character it belongs to and reloads the memo for the character you switched to. Adding a character and importing data are handled the same way'] },
+  { version:'1.3.2', date:'2026.08.09', ja:['MOVE LIST に検索欄を追加しました。技名とコマンドの部分一致で絞り込めます。空白で区切るとAND検索（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１、キック／ｷｯｸ）は区別しません','⚙ 設定に「自動保存」を追加しました（既定ON）。変更してから約1.5秒後に自動で保存し、メモ欄も同時に保存されるため、💾保存の押し忘れで内容を失う心配がありません。トップバーには最終保存時刻を表示します。OFFにすると従来どおり💾保存を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます','FILTER のタグを複数選択できるようにしました。タグは押すたびに選択／解除が切り替わり、2つ以上選ぶと AND／OR の切替ボタンが現れます。AND は選んだタグをすべて持つコンボ、OR はどれか1つでも持つコンボを表示します','MOVE LIST と右側の境界をドラッグして、技リストの幅を変えられるようにしました。ダブルクリックで既定の幅に戻り、幅は次回起動時にも引き継がれます。広げると技カードが自動で2列・3列に増えるため、大きな画面ほど一覧性が上がります','MOVE LIST に「🖼＋」ボタンを追加し、サムネイル画像をまとめて登録できるようにしました。技を1つずつ表示するので、表示された技に合う画像を選ぶだけで次の技へ自動で進みます。対象を「未登録の技だけ」にしておけば、途中で中断しても次に開いたときに続きから再開できます。スキップ・戻るにも対応しています。また登録時に画像を自動で縮小するようにしたため、たくさん登録しても書き出しファイルが極端に大きくなりません','【不具合修正】メモタブを開いたままキャラクターを切り替えると、切替前のキャラのメモが表示されたまま残り、その状態で「💾 メモ保存」を押すと切替先のキャラのメモを上書きしてしまう問題を修正しました。切替時には未保存のメモを元のキャラへ保存したうえで、切替先のメモを読み直すようにしています。キャラクターの追加・データの読み込みでも同様に処理します'], en:['Added a search box to MOVE LIST that filters by move name and input. Separating words with spaces performs an AND search, and case and full-/half-width characters are treated the same (SA1／ＳＡ１, キック／ｷｯｸ)','Added Auto-save under ⚙ Settings (on by default). Changes are saved automatically about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to press Save. The top bar shows the time of the last save. Turn it off to keep the previous behaviour, where only Save writes your data and reloading beforehand discards changes','FILTER tags can now be multi-selected. Each tag toggles on and off, and selecting two or more reveals an AND/OR switch: AND shows combos carrying every selected tag, OR shows combos carrying any of them','You can now drag the divider between MOVE LIST and the right-hand panel to resize the move list. Double-click resets it to the default width, and the width is remembered next time. Widening it flows the move cards into two or three columns, so larger screens show more at once','Added a 🖼＋ button to MOVE LIST for registering thumbnails in bulk. Moves are presented one at a time, so picking the image that matches the move on screen advances to the next one automatically. Target only the moves without an image and you can stop at any point - reopening simply resumes where you left off - and Skip and Back are both available. Images are also downscaled as they are registered, so export files stay a reasonable size however many you add','[Bug fix] Switching characters while the MEMO tab was open left the previous character\'s memo on screen, and pressing Save memo from there overwrote the new character\'s memo. Switching now stores any unsaved memo against the character it belongs to and reloads the memo for the character you switched to. Adding a character and importing data are handled the same way'] },
   { version:'1.3.1', date:'2026.08.09', ja:['2026.08.03 バランス調整を反映。27キャラクター・122技のフレームデータを公式フレーム表の値に更新しました','リュウ・JP・エドは、判定やコンボ補正などフレーム表に現れない調整のみのため数値の変更はありません'], en:['Applied the 2026.08.03 balance update: refreshed frame data for 122 moves across 27 characters to match the official frame tables','Ryu, JP and Ed have no numeric changes — their adjustments only cover hitboxes and combo scaling, which the frame tables do not list'] },
   { version:'1.3.0', date:'2026.08.08', ja:['新キャラクター「ヤスミン」の技データ(82技)を追加','⚙ 設定の表示モードに「タブレット表示」を追加。配置はPCレイアウトのまま、操作だけスマホと同じタップ中心になります','スマホ・タブレットで、コンボを長押しすると技追加モードに切り替えられるようにしました。モードに入ってから技をタップすると、そのコンボに追加されます','技追加モード中は、技と技の隙間に挿入位置（キャレット）が表示されます。ゴールドに光っている位置に次の技が入り、隙間をタップすれば位置を変えられるので、コンボの途中にも技を差し込めます。既定は末尾で、技を1つ入れるとキャレットが自動で1つ右へ進むため、続けてタップするだけでコンボを組み立てられます','スマホ・タブレットで、コンボ内の技チップを長押しすると「移動中」になり、貼り付け先の隙間をタップして技を移動できるようにしました。同じコンボ内の並び替えだけでなく別のコンボへも移せます。まとめ表示（×3）のチップはまとまりごと、ヒット状況（C/PC/D/G）も一緒に移動します','コンボの編集中に ◀ ▶ ボタンを追加しました。▶ でそのコンボをすぐ上のコンボの分岐にでき、◀ で親と同じ階層へ出せます（トップレベルまで上げるとルートに戻ります）。配下の分岐ツリーもまとめて移動するので、グリップのドラッグ&ドロップが使えない環境でも階層を組み替えられます'], en:['Added move data for the new character Yasmine (82 moves)','Added a Tablet display mode under ⚙ Settings: it keeps the desktop layout while switching to mobile-style tap controls','On phones and tablets you can now long-press a combo to toggle add mode. Once in add mode, tapping a move adds it to that combo','While in add mode, an insertion caret appears in the gaps between moves. The next move goes wherever the gold caret sits, and tapping a gap moves it, so you can insert moves in the middle of a combo. It defaults to the end and steps one position to the right after each move, so you can build a combo by tapping straight through','On phones and tablets you can now long-press a move chip inside a combo to pick it up, then tap a gap to move it there — either reordering within the combo or moving it to a different one. Grouped chips like ×3 move as a whole and carry their hit states with them','Added ◀ ▶ buttons while editing a combo: ▶ turns it into a branch of the combo directly above, and ◀ moves it out to its parent level (keep going and it returns to the top level). Its own branch tree moves with it, so you can restructure the hierarchy without the drag-and-drop grip'] },
   { version:'1.2.0', date:'2026.06.27', ja:['ルート図 にコンボ単位の表示／非表示トグルを追加。コンボ一覧 各コンボの「📋 コマンド出力」ボタン左にある「🕸 表示／🕸 非表示」ボタンで、そのコンボをグラフに出すかどうかを個別に切り替えられます（コンボごとに保存）'], en:['Added a per-combo show/hide toggle for ROUTE GRAPH. Each combo in COMBO LIST now has a "🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation" to include or exclude it from the graph (saved per combo)'] },
@@ -4169,6 +4211,57 @@ function loadThumbsForCurrentChar(){
   })();
 }
 function blobToDataURL(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(blob);});}
+
+// ── サムネイル画像の縮小 ──
+// 表示は16:9の小さなカードなので原寸を保つ意味がなく、無加工だと4Kのスクショ1枚で数MB、
+// 数十技ぶん登録するとIDBが数百MBに膨らみ、書き出しJSON（base64同梱で約1.33倍）が実用外になる。
+// 長辺640pxへ縮小してWebP再エンコードすると1枚30KB前後に収まる。
+const THUMB_MAX=640, THUMB_Q=0.82, THUMB_SKIP_BYTES=200*1024;
+function loadBitmap(file){
+  if(window.createImageBitmap)return createImageBitmap(file);
+  // createImageBitmap 非対応環境（古いSafari等）へのフォールバック
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);const im=new Image();
+    im.onload=()=>{URL.revokeObjectURL(url);res(im);};
+    im.onerror=e=>{URL.revokeObjectURL(url);rej(e);};
+    im.src=url;
+  });
+}
+function canvasToBlob(cv,type,q){
+  return new Promise(res=>{
+    if(!cv.toBlob){res(null);return;}
+    try{cv.toBlob(b=>res(b),type,q);}catch(e){res(null);}
+  });
+}
+async function shrinkImage(file){
+  if(!file||!file.type||file.type.indexOf('image/')!==0)return file;
+  if(file.type==='image/gif')return file; // アニメGIFは1コマ目に潰れてしまうので無加工
+  try{
+    const bmp=await loadBitmap(file);
+    const bw=bmp.width||bmp.naturalWidth, bh=bmp.height||bmp.naturalHeight;
+    if(!bw||!bh)return file;
+    const sc=Math.min(1,THUMB_MAX/bw,THUMB_MAX/bh);
+    // 元から小さくファイルも軽いものは触らない（再エンコードで劣化させない）
+    if(sc>=1&&file.size<=THUMB_SKIP_BYTES){if(bmp.close)bmp.close();return file;}
+    const w=Math.max(1,Math.round(bw*sc)), h=Math.max(1,Math.round(bh*sc));
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+    cv.getContext('2d').drawImage(bmp,0,0,w,h);
+    if(bmp.close)bmp.close();
+    let out=await canvasToBlob(cv,'image/webp',THUMB_Q);
+    if(!out)out=await canvasToBlob(cv,'image/jpeg',THUMB_Q); // WebP非対応環境
+    return (out&&out.size<file.size)?out:file; // 逆に太ったら元のまま
+  }catch(e){return file;} // 縮小に失敗しても登録自体は通す
+}
+// 1技分のサムネイルを確定させる（縮小 → IDB保存 → 表示用URL差し替え）
+async function setMoveThumb(move,file){
+  const key=db.currentChar+'_'+move.id; // saveMove() と同じ命名規則
+  const blob=await shrinkImage(file);
+  await idbPutImage(key,blob);
+  if(thumbURLs.has(key))URL.revokeObjectURL(thumbURLs.get(key));
+  thumbURLs.set(key,URL.createObjectURL(blob));
+  move.thumb=key;
+  return blob.size;
+}
 function dataURLToBlob(dataURL){const parts=dataURL.split(',');const mime=(parts[0].match(/:(.*?);/)||[])[1]||'image/png';const bin=atob(parts[1]);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
 
 // ===== [S:io] 保存・読み込み・書き出し =====
@@ -4406,51 +4499,51 @@ function openTutorial(){
   const bodyJa=
     CAT('はじめに')+
     H('var(--gold)','🎮 基本操作')+
-    D(`① 上部プルダウンで使用キャラを選択（${b('＋ キャラ')}で追加、${b('✎ キャラ名')}で名前を変更）<br>② PCは左の技リストから右のコンボ枠へ${b('ドラッグ＆ドロップ')}。コンボ内の技もドラッグで並び替え可能で、${b('ドロップ位置のゴールドの縦線')}が挿入先になります（先頭・中間・末尾のどこにでも差し込めます）<br>③ コンボの${b('✎ 編集')}を押すと編集モードになり、分岐追加・複製・削除・並び替え（▲▼）などが行えます<br>④ 技カードをクリックでフレームデータ詳細を表示`)+
+    D(`① 上部プルダウンで使用キャラを選択（${b('＋ キャラ')}で追加、${b('✎ キャラ名')}で名前を変更、${b('キャラ削除')}でそのキャラのコンボ・技・メモ・登録画像をまとめて削除）<br>② PCは左の技リストから右のコンボ枠へ${b('ドラッグ＆ドロップ')}。コンボ内の技もドラッグで並び替え可能で、${b('ドロップ位置のゴールドの縦線')}が挿入先になります（先頭・中間・末尾のどこにでも差し込めます）<br>③ コンボの${b('✎ 編集')}を押すと編集モードになり、分岐追加・複製・削除・並び替え（▲▼）などが行えます<br>④ 技カードをクリックでフレームデータ詳細を表示`)+
     H('#e84393','📑 タブ')+
     D(`• ${b('コンボ一覧')} — コンボの作成・編集メイン画面<br>• ${b('始動技別')} — 始動技ごとにコンボをツリー表示<br>• ${b('ルート図')} — 登録済みコンボの技のつながりを俯瞰するグラフ<br>• ${b('📝 メモ')} — キャラごとの自由メモ（個別保存）`)+
     CAT('コンボを作る')+
     H('#3498db','📋 コンボ管理')+
-    D(`• ${b('＋ NEW COMBO')} — 新しいコンボを追加<br>• ${b('DMG欄 / DG欄')} — ダメージは手動入力。ドライブゲージ消費は自動計算され、${b('編集中はDG欄に数値を入れて手動修正')}も可能（空欄で自動計算に戻る。OD→OD派生など自動計算が合わない場合に）<br>• ${b('FRAME欄')} — コンボ終了時の有利/不利フレームを手動入力<br>• ${b('▲▼ 並び替え')} — 編集中に表示順を変更（親子コンボはまとまって移動）<br>• ${b('◀▶ 階層の変更')} — 編集中、${b('▶')} ですぐ上のコンボの分岐にし、${b('◀')} で親と同じ階層へ出せます（詳しくは「🌿 分岐コンボ」）<br>• ${b('技の複製（⧉）')} — 編集中、コンボ内の各技にある⧉ボタンで、その技の直後に同じ技をもう1つ追加（弱P→弱P 弱P のように）<br>• ${b('コンボの複製')} — 編集中のコンボを丸ごと複製（${b('分岐ツリーも一緒に')}コピーし、すぐ下に同じ階層で追加）。似た派生の量産に便利<br>• ${b('📋 コマンド出力')} — コンボのコマンドをクリップボードへコピー（外部に貼り付け可）<br>• ${b('同じ技のまとめ表示')} — コンボ一覧 / 始動技別 で同じ技が連続するとき「弱P×3」のようにまとめて表示します（${b('⚙ 設定')}でON/OFF切替。${b('📋 コマンド出力')}も同じく「×3」でコピーされます）。${b('コンボの編集中')}は1つずつの表示に戻り、より細かく並び替えできます<br>• ${b('タグ')} — コンボにタグを付けてフィルター。${b('コンボ一覧 上部のフィルターのタグを掴んでコンボへドラッグ&ドロップ')}すると、編集モードでなくてもそのタグを付与できます（PC）`)+
+    D(`• ${b('＋ NEW COMBO')} — 新しいコンボを追加<br>• ${b('DMG欄 / DG欄')} — ダメージは手動入力。ドライブゲージ消費は自動計算され、${b('編集中はDG欄に数値を入れて手動修正')}も可能（空欄で自動計算に戻る。OD→OD派生など自動計算が合わない場合に）<br>• ${b('FRAME欄')} — コンボ終了時の有利/不利フレームを手動入力<br>• ${b('▲▼ 並び替え')} — 編集中に表示順を変更（親子コンボはまとまって移動）<br>• ${b('◀▶ 階層の変更')} — 編集中、${b('▶')} ですぐ上のコンボの分岐にし、${b('◀')} で親と同じ階層へ出せます（詳しくは「🌿 分岐コンボ」）<br>• ${b('技の複製（⧉）')} — 編集中、コンボ内の各技にある⧉ボタンで、その技の直後に同じ技をもう1つ追加（弱P→弱P 弱P のように）<br>• ${b('コンボの複製')} — 編集中のコンボを丸ごと複製（${b('分岐ツリーも一緒に')}コピーし、すぐ下に同じ階層で追加）。似た派生の量産に便利<br>• ${b('📋 コマンド出力')} — コンボのコマンドをクリップボードへコピー（外部に貼り付け可）<br>• ${b('同じ技のまとめ表示')} — コンボ一覧 / 始動技別 で同じ技が連続するとき「弱P×3」のようにまとめて表示します（${b('⚙ 設定')}でON/OFF切替。${b('📋 コマンド出力')}も同じく「×3」でコピーされます）。${b('コンボの編集中')}は1つずつの表示に戻り、より細かく並び替えできます<br>• ${b('メモ欄')} — コンボごとに一言メモを書けます（${b('✎ 編集')}中に入力可。空欄なら表示されません）<br>• ${b('タグ')} — コンボにタグを付けてフィルター。${b('コンボ一覧 上部のフィルターのタグを掴んでコンボへドラッグ&ドロップ')}すると、編集モードでなくてもそのタグを付与できます（PC）<br>• ${b('タグの複数選択')} — フィルターのタグは押すたびに選択／解除が切り替わり、複数選べます。2つ以上選ぶと ${b('AND / OR')} の切替ボタンが現れ、${b('AND')} は選んだタグを${b('すべて')}持つコンボ、${b('OR')} は${b('どれか1つでも')}持つコンボを表示します（${b('ALL')} で選択を全解除）`)+
     H('#1abc9c','🌿 分岐コンボ')+
     D(`• ${b('分岐追加')} — 既存コンボから派生ルートを作成。元コンボの${b('すぐ下')}に追加されます<br>• ${b('↳ 表示')} — 親子関係をインデントと矢印で表示<br>• ${b('差分の色分け')} — 親と共通する技は淡色、分岐後の技はオレンジで強調（境目に ⎇ マーク）<br>• ${b('作成直後')}は親と同じ内容なので通常表示のまま「まだ差分がありません」と案内します。技を変更・追加すると、その時点から差分の色分け（⎇）が始まります<br>• ${b('◀ ▶ 階層の変更')} — 編集中に表示される ${b('▶')} でそのコンボを${b('すぐ上のコンボの分岐')}にでき、${b('◀')} で${b('親と同じ階層へ出す')}ことができます（トップレベルまで上げるとルートに戻ります）。配下の分岐ツリーもまとめて移動します<br>• ${b('親の付け替え（PC）')} — 各コンボ左端の ${b('⠿')} を掴んで別コンボの上にドロップ→そのコンボの分岐に変更（${b('配下のツリーごと')}移動）。一覧の${b('空き領域')}にドロップで${b('ルートへ')}戻せます<br>• 始動技別 でも同じ差分表示で確認できます`)+
     H('#9b59b6','🎯 ヒット状況（C / PC / D / G）')+
     D(`コンボ内の各技に、当てたときの状況を色付きで記録できます。${b('✎ 編集')}中、各技チップの ${b('✕ ボタンの手前のボタン')}を押すたびに切り替わります（${b('通常 → C → PC → D → G → 通常')} の順で循環）。<br>• <span class="ctr-badge ctr-c">C</span> ${b('カウンター')}（黄）— 相手の技に割り込んでヒット<br>• <span class="ctr-badge ctr-pc">PC</span> ${b('パニッシュカウンター')}（橙）— 確定反撃でヒット<br>• <span class="ctr-badge ctr-d">D</span> ${b('ディレイ')}（紫）— 入力を遅らせて繋ぐ技<br>• <span class="ctr-badge ctr-g">G</span> ${b('ガード')}（青）— ガードされた（ブロック）状況<br>設定すると非編集時も技の右側に${b('バッジ表示')}され、${b('始動技別')} や ${b('📋 コマンド出力')}（例: 中P(PC)）にも反映されます。${b('もう一度押して通常')}に戻すと解除できます。`)+
     CAT('技とビュー')+
     H('#2ecc71','🔧 技の管理')+
-    D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能<br>• ${b('表示切替（🖼 / ☰）')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイル大表示とリスト（コンパクト）表示をワンタップで切替（モバイルでは折りたたみボタンの左に表示）<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
+    D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能。登録時に自動で縮小されるので、大きなスクリーンショットをそのまま選んでも書き出しファイルが膨らみません<br>• ${b('🖼＋ 一括登録')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイルをまとめて登録できます。技が1つずつ表示されるので、それに合う画像を選ぶだけで次の技へ自動で進みます。対象は${b('未登録の技だけ')}／すべて（登録済みも差し替え）から選べ、${b('スキップ')}と${b('戻る')}も可能。未登録のみにしておけば、中断しても次に開いたときに続きから再開できます<br>• ${b('🔍 検索')} — MOVE LIST 上部の検索欄で、技名とコマンドから絞り込めます。空白で区切ると${b('AND検索')}（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１）は区別しません。ソートバーとの併用も可能<br>• ${b('表示切替（🖼 / ☰）')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイル大表示とリスト（コンパクト）表示をワンタップで切替（モバイルでは折りたたみボタンの左に表示）<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('パネル幅の変更')} — PCでは、MOVE LIST と右側の${b('境界をドラッグ')}して技リストの幅を変えられます（${b('ダブルクリック')}で既定幅に戻り、幅は次回も引き継がれます）。広げると技カードが自動で2列・3列に増えます<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
     H('#6fd0e6','🕸 ルート図')+
     D(`登録したコンボの技を${b('「位置（手目）」ごとに左から右へ')}並べ、技のつながりを1枚で俯瞰できるタブです。<br>• ${b('ノード（技チップ）')} — 1手目・2手目…と列で並びます。${b('同じ位置で同じ技')}を使うコンボは1つのノードにまとめられます<br>• ${b('右上の数字バッジ')} — その技を${b('その位置で使っているコンボの本数')}（共有数）。よく使う中継技ほど数字が大きくなります<br>• ${b('ノードの色')} — MOVE LIST と同じ技タイプ別の色。上辺が${b('白＝始動技')}、${b('ゴールド＝締め（コンボの終端）')}を表します<br>• ${b('締めノード')} — そのコンボの終端には、右側に${b('コンボ名とDMG/DG')}が表示されます。同じ技で締めるコンボが複数あるときは「締め◯件」とまとまり、クリックで下部の情報バーに一覧が出ます<br>• ${b('クリックで強調')} — 技ノードをクリックすると、${b('その技を含む実際のコンボ')}だけがハイライトされ、関係しないノード・線は淡くなります（背景クリックで解除）<br>• ${b('使いどころ')} — 「この始動から何種類に派生しているか」「どの中継技が多くのコンボで共有されているか」を把握するのに向いています<br>• ${b('🕸 表示／非表示')} — コンボ一覧 で各コンボの${b('「📋 コマンド出力」ボタンの左')}にある${b('「🕸 表示／🕸 非表示」')}ボタンで、そのコンボを ルート図 に${b('表示するかを個別に切り替え')}られます。非表示にしたコンボはグラフから除外され、ツールバーに${b('「非表示 ◯件」')}と表示されます（切り替えはコンボごとに保存されます）<br>• ${b('※ 注意')} — 同位置・同技をまとめる都合上、${b('線を目で辿ると実在しない並びに見える')}ことがあります。正確な並びは ${b('コンボ一覧 / 始動技別')} で、特定の技を含むコンボは${b('ノードのクリック')}で確認してください`)+
     CAT('環境・データ')+
     H('#2980b9','📱 モバイル／タブレット表示')+
     D(`• ${b('⚙ 設定')}の表示モードで「自動 / PC / ${b('タブレット')} / モバイル」を切替（${b('タブレット')}は配置はPCレイアウトのまま、操作だけモバイルと同じタップ中心になります）<br>• モバイル・タブレットでは、${b('コンボを長押し')}するか、編集中に${b('＋ 技を追加')}を押すと${b('技追加モード')}になります。モードに入ってから技をタップすると、そのコンボに追加されます（画面下部のバー、または追加モード中のコンボをもう一度長押しで終了）<br>• 追加モード中は、技と技の${b('隙間に挿入位置（｜）')}が表示されます。ゴールドに光っている位置に次の技が入るので、${b('隙間をタップ')}して位置を変えれば、コンボの${b('途中にも技を差し込めます')}（既定は末尾。入れた直後にキャレットは1つ右へ進むので、そのまま続けて並べられます）<br>• 並び替えたいときは、コンボ内の${b('技チップを長押し')}すると${b('移動中')}になります。全コンボの隙間に貼り付け先が出るので、置きたい${b('隙間をタップ')}すれば移動できます（${b('別のコンボへも移せます')}。まとめ表示（×3）のチップは${b('まとまりごと')}、ヒット状況（C/PC/D/G）も一緒に移動します。つまんだチップをもう一度タップ、または画面下部の${b('完了')}で解除）<br>• ${b('MOVE LIST のヘッダーをタップ')}で技リストを折りたたみ、画面を広く使えます（${b('モバイルのみ')}。タブレットはPCと同じ常時表示）<br>• ${b('≡ メニュー')} — ヘッダーの操作ボタン（キャラ追加・技追加・保存・書き出しなど）を折りたたみ/展開できます（${b('モバイルのみ')}）`)+
     H('#f1c40f','💾 保存・共有')+
-    D(`• ${b('💾 保存')} — ブラウザのローカルストレージに保存<br>• ${b('📤 書き出し')} — JSON形式でエクスポート（外部共有可）<br>• ${b('📥 読み込み')} — JSONファイルをインポート<br>• ${b('⚙ 設定')} — 表示モード・言語（日本語/English）・${b('同じ技のまとめ表示')}の切替・データ初期化<br>• ${b('Auto / ±')} — 表示サイズの拡大縮小（PC表示）`);
+    D(`• ${b('自動保存')} — 既定でONです。変更してから約1.5秒後に自動で保存され、メモ欄も同時に保存されるので、保存を押し忘れて内容を失う心配がありません。トップバーには最終保存時刻（✓ 14:32）が出ます。${b('⚙ 設定')}でOFFにすると、${b('💾 保存')}を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます<br>• ${b('💾 保存')} — ブラウザのローカルストレージに保存（自動保存ONでも手動で保存できます）<br>• ${b('📤 書き出し')} — JSON形式でエクスポート（外部共有可）<br>• ${b('📥 読み込み')} — JSONファイルをインポート<br>• ${b('⚙ 設定')} — ${b('自動保存')}・表示モード・言語（日本語/English）・${b('同じ技のまとめ表示')}の切替・データ初期化<br>• ${b('Auto / ±')} — 表示サイズの拡大縮小（PC表示）`);
   const tocJa=_tutMeta.map(m=>`<button type="button" class="tut-toc-btn" data-tutjump="${m.id}" style="border-color:${m.color};color:${m.color};">${m.title}</button>`).join('');
   _tutIdx=0;_tutMeta=[];
   const bodyEn=
     CAT('Getting started')+
     H('var(--gold)','🎮 Basics')+
-    D(`① Choose your character from the dropdown at the top (add one with ${b('＋ Character')}, rename with ${b('✎ Rename')})<br>② On desktop, ${b('drag & drop')} a move from the list on the left into a combo slot on the right. Moves inside a combo can also be reordered by dragging — the ${b('gold vertical line at the drop position')} shows where it will be inserted (you can drop at the start, middle, or end)<br>③ Press ${b('✎ Edit')} on a combo to enter edit mode, where you can add branches, duplicate, delete, reorder (▲▼), and more<br>④ Click a move card to view its frame-data details`)+
+    D(`① Choose your character from the dropdown at the top (add one with ${b('＋ Character')}, rename with ${b('✎ Rename')}, or use ${b('Delete char')} to remove that character along with its combos, moves, memo and registered images)<br>② On desktop, ${b('drag & drop')} a move from the list on the left into a combo slot on the right. Moves inside a combo can also be reordered by dragging — the ${b('gold vertical line at the drop position')} shows where it will be inserted (you can drop at the start, middle, or end)<br>③ Press ${b('✎ Edit')} on a combo to enter edit mode, where you can add branches, duplicate, delete, reorder (▲▼), and more<br>④ Click a move card to view its frame-data details`)+
     H('#e84393','📑 Tabs')+
     D(`• ${b('COMBO LIST')} — The main screen for creating and editing combos<br>• ${b('STARTER TREE')} — Combos shown as a tree grouped by starter move<br>• ${b('ROUTE GRAPH')} — An at-a-glance graph of how moves connect across your saved combos<br>• ${b('📝 MEMO')} — Free notes per character (saved individually)`)+
     CAT('Building combos')+
     H('#3498db','📋 Managing combos')+
-    D(`• ${b('＋ NEW COMBO')} — Add a new combo<br>• ${b('DMG / DG fields')} — Enter damage manually; Drive Gauge cost is auto-calculated, and ${b('you can override it by typing a number in the DG field while editing')} (leave blank to revert to auto — useful when auto-calc is off, e.g. OD→OD derivations)<br>• ${b('FRAME field')} — Manually enter the frame advantage/disadvantage at combo end<br>• ${b('▲▼ Reorder')} — Change the display order while editing (parent/child combos move together)<br>• ${b('◀▶ Change the level')} — While editing, ${b('▶')} makes the combo a branch of the one directly above it and ${b('◀')} moves it out to its parent level (see "🌿 Branch combos")<br>• ${b('Duplicate a move (⧉)')} — While editing, the ⧉ button on each move in a combo inserts another copy of that move right after it (e.g. LP → LP LP)<br>• ${b('Duplicate a combo')} — Copy the combo being edited in full (${b('including its branch tree')}), inserted just below at the same level. Handy for mass-producing similar variants<br>• ${b('📋 Copy notation')} — Copy the combo notation to the clipboard (paste it anywhere)<br>• ${b('Repeated move display')} — In COMBO LIST / STARTER TREE, consecutive identical moves are shown grouped like "LP×3" (toggle ON/OFF in ${b('⚙ Settings')}; ${b('📋 Copy notation')} is copied with "×3" too). ${b('While editing a combo')}, they revert to one-by-one display for finer reordering<br>• ${b('Tags')} — Tag combos and filter by them. ${b('Drag a tag from the filter bar at the top of COMBO LIST and drop it onto a combo')} to add that tag without entering edit mode (desktop)`)+
+    D(`• ${b('＋ NEW COMBO')} — Add a new combo<br>• ${b('DMG / DG fields')} — Enter damage manually; Drive Gauge cost is auto-calculated, and ${b('you can override it by typing a number in the DG field while editing')} (leave blank to revert to auto — useful when auto-calc is off, e.g. OD→OD derivations)<br>• ${b('FRAME field')} — Manually enter the frame advantage/disadvantage at combo end<br>• ${b('▲▼ Reorder')} — Change the display order while editing (parent/child combos move together)<br>• ${b('◀▶ Change the level')} — While editing, ${b('▶')} makes the combo a branch of the one directly above it and ${b('◀')} moves it out to its parent level (see "🌿 Branch combos")<br>• ${b('Duplicate a move (⧉)')} — While editing, the ⧉ button on each move in a combo inserts another copy of that move right after it (e.g. LP → LP LP)<br>• ${b('Duplicate a combo')} — Copy the combo being edited in full (${b('including its branch tree')}), inserted just below at the same level. Handy for mass-producing similar variants<br>• ${b('📋 Copy notation')} — Copy the combo notation to the clipboard (paste it anywhere)<br>• ${b('Repeated move display')} — In COMBO LIST / STARTER TREE, consecutive identical moves are shown grouped like "LP×3" (toggle ON/OFF in ${b('⚙ Settings')}; ${b('📋 Copy notation')} is copied with "×3" too). ${b('While editing a combo')}, they revert to one-by-one display for finer reordering<br>• ${b('Note field')} — Add a short note to each combo (editable while in ${b('✎ Edit')}; hidden when blank)<br>• ${b('Tags')} — Tag combos and filter by them. ${b('Drag a tag from the filter bar at the top of COMBO LIST and drop it onto a combo')} to add that tag without entering edit mode (desktop)<br>• ${b('Multi-select tags')} — Each tag in the filter bar toggles on and off, so you can select several. Selecting two or more reveals an ${b('AND / OR')} switch: ${b('AND')} shows combos carrying ${b('every')} selected tag, ${b('OR')} shows combos carrying ${b('any')} of them (${b('ALL')} clears the selection)`)+
     H('#1abc9c','🌿 Branch combos')+
     D(`• ${b('Add branch')} — Create a derived route from an existing combo. It is added ${b('right below')} the original<br>• ${b('↳ display')} — Parent/child relationships are shown with indentation and an arrow<br>• ${b('Diff coloring')} — Moves shared with the parent are dimmed; moves after the branch are highlighted in orange (with a ⎇ mark at the split)<br>• ${b('Right after creation')} the branch is identical to its parent, so it stays in normal display with a "no difference yet" notice. Once you change or add a move, diff coloring (⎇) begins from that point<br>• ${b('◀ ▶ Change the level')} — While editing, ${b('▶')} turns the combo into a ${b('branch of the combo directly above it')}, and ${b('◀')} moves it out to ${b('its parent level')} (keep going and it returns to the top level). Its own branch tree moves with it<br>• ${b('Re-parenting (desktop)')} — Grab the ${b('⠿')} on the left edge of a combo and drop it onto another combo to make it a branch of that one (${b('the whole subtree moves with it')}). Drop it on ${b('empty space')} in the list to send it ${b('back to root')}<br>• The same diff display is also available in STARTER TREE`)+
     H('#9b59b6','🎯 Hit state (C / PC / D / G)')+
     D(`You can record, in color, the situation in which each move in a combo lands. While in ${b('✎ Edit')}, pressing ${b('the button just before the ✕ button')} on each move chip cycles it (${b('Normal → C → PC → D → G → Normal')}).<br>• <span class="ctr-badge ctr-c">C</span> ${b('Counter')} (yellow) — Hit by interrupting the opponent's move<br>• <span class="ctr-badge ctr-pc">PC</span> ${b('Punish Counter')} (orange) — Hit as a guaranteed punish<br>• <span class="ctr-badge ctr-d">D</span> ${b('Delay')} (purple) — A move linked by delaying the input<br>• <span class="ctr-badge ctr-g">G</span> ${b('Guard')} (blue) — The move was guarded (blocked)<br>Once set, a ${b('badge')} also shows on the right of the move outside edit mode, and it carries over to ${b('STARTER TREE')} and ${b('📋 Copy notation')} (e.g. 中P(PC)). ${b('Press again to return to Normal')} to clear it.`)+
     CAT('Moves & views')+
     H('#2ecc71','🔧 Managing moves')+
-    D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move<br>• ${b('View toggle (🖼 / ☰)')} — Use the ${b('button in the MOVE LIST header')} to switch between large-thumbnail and compact list view with one tap (on mobile it sits to the left of the collapse toggle)<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
+    D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move. Images are downscaled automatically on registration, so you can pick a full-size screenshot without bloating your export file<br>• ${b('🖼＋ Bulk registration')} — The ${b('button in the MOVE LIST header')} registers thumbnails in bulk. Moves are shown one at a time, so choosing the matching image advances to the next automatically. Target ${b('only moves without an image')} or all moves (replacing existing ones), with ${b('Skip')} and ${b('Back')} available. With the first option you can stop at any point and simply resume where you left off<br>• ${b('🔍 Search')} — The search box at the top of MOVE LIST filters by move name and input. Separating words with spaces performs an ${b('AND search')}, and case and full-/half-width characters are treated the same (SA1 / ＳＡ１). Works alongside the sort bar<br>• ${b('View toggle (🖼 / ☰)')} — Use the ${b('button in the MOVE LIST header')} to switch between large-thumbnail and compact list view with one tap (on mobile it sits to the left of the collapse toggle)<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Panel width')} — On desktop, ${b('drag the divider')} between MOVE LIST and the right-hand panel to resize the move list (${b('double-click')} resets it, and the width is remembered next time). Widening it flows the move cards into two or three columns<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
     H('#6fd0e6','🕸 ROUTE GRAPH')+
     D(`Lays out the moves of your saved combos ${b('by position (1st, 2nd, …) from left to right')}, so you can see how moves connect across combos in one view.<br>• ${b('Nodes (move chips)')} — Arranged in columns by position. Combos that use ${b('the same move at the same position')} are merged into a single node<br>• ${b('Number badge (top-right)')} — How many ${b('combos use that move at that position')} (shared count). The more a connector move is reused, the higher the number<br>• ${b('Node color')} — The same move-type colors as MOVE LIST. A ${b('white top edge = starter')}, ${b('gold = finisher (combo end)')}<br>• ${b('Finisher nodes')} — Show the ${b('combo name and DMG/DG')} on the right. When several combos end on the same move they are grouped as "N combos end here"; click to list them in the info bar below<br>• ${b('Click to highlight')} — Clicking a move node highlights ${b('only the actual combos that include it')} and dims unrelated nodes and lines (click the background to clear)<br>• ${b('When to use it')} — Handy for grasping "how many variants branch from this starter" and "which connector moves are shared by many combos"<br>• ${b('🕸 Show / hide per combo')} — In COMBO LIST, each combo has a ${b('"🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation"')}. Use it to ${b('include or exclude that combo from ROUTE GRAPH individually')}. Hidden combos are dropped from the graph and the toolbar shows ${b('"N hidden"')} (the choice is saved per combo)<br>• ${b('Note')} — Because same-position/same-move chips are merged, ${b('tracing the lines by eye can suggest sequences that do not exist')}. Check exact sequences in ${b('COMBO LIST / STARTER TREE')}, and use ${b('a node click')} to see which combos actually include a given move`)+
     CAT('Environment & data')+
     H('#2980b9','📱 Mobile / Tablet display')+
     D(`• Switch between "Auto / Desktop / ${b('Tablet')} / Mobile" via the display mode in ${b('⚙ Settings')} (${b('Tablet')} keeps the desktop layout, but switches the controls to the same tap-centric style as Mobile)<br>• On mobile and tablet, ${b('long-press a combo')}, or press ${b('＋ Add move')} while editing, then tap moves to add them (finish via the bar at the bottom of the screen; long-pressing a combo that's already in add mode ends it again)<br>• While in add mode, an ${b('insertion point (|)')} appears in the gaps between moves. The next move goes wherever the gold caret is, so ${b('tap a gap')} to move it and you can ${b('insert moves mid-combo')} (it defaults to the end, and steps one to the right after each move so you can keep adding in order)<br>• To reorder, ${b('long-press a move chip')} inside a combo to ${b('pick it up')}. Paste points appear in the gaps of every combo, so ${b('tap a gap')} to move it there (${b('including into another combo')}; grouped chips like ×3 move ${b('as a whole')}, carrying their hit states. Tap the picked chip again, or ${b('Done')} at the bottom of the screen, to drop it)<br>• ${b('Tap the MOVE LIST header')} to collapse the move list and use more of the screen (${b('mobile only')} — tablet always shows it, like desktop)<br>• ${b('≡ Menu')} — Collapse/expand the header action buttons (add character, add move, save, export, etc.) (${b('mobile only')})`)+
     H('#f1c40f','💾 Saving & sharing')+
-    D(`• ${b('💾 Save')} — Save to the browser's local storage<br>• ${b('📤 Export')} — Export as JSON (shareable externally)<br>• ${b('📥 Import')} — Import a JSON file<br>• ${b('⚙ Settings')} — Switch display mode, language (日本語/English) and ${b('repeated move display')} / reset data<br>• ${b('Auto / ±')} — Zoom the display in or out (desktop)`);
+    D(`• ${b('Auto-save')} — On by default. Changes are saved about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to save. The top bar shows the time of the last save (✓ 14:32). Turn it off in ${b('⚙ Settings')} to save only when you press ${b('💾 Save')}, letting you discard changes by reloading beforehand<br>• ${b('💾 Save')} — Save to the browser's local storage (still available with auto-save on)<br>• ${b('📤 Export')} — Export as JSON (shareable externally)<br>• ${b('📥 Import')} — Import a JSON file<br>• ${b('⚙ Settings')} — Toggle ${b('auto-save')}, switch display mode, language (日本語/English) and ${b('repeated move display')} / reset data<br>• ${b('Auto / ±')} — Zoom the display in or out (desktop)`);
   const tocEn=_tutMeta.map(m=>`<button type="button" class="tut-toc-btn" data-tutjump="${m.id}" style="border-color:${m.color};color:${m.color};">${m.title}</button>`).join('');
   const body=(LANG==='ja')?bodyJa:bodyEn;
   const toc=(LANG==='ja')?tocJa:tocEn;
@@ -5504,6 +5597,122 @@ function showMoveModal(id){
   // 技IDをonclick属性へ文字列として埋め込まず、クロージャで直接渡す（読み込みJSON由来の任意IDでも安全）
   const _eb=document.getElementById('mm-edit');if(_eb)_eb.addEventListener('click',()=>openAddMoveModal(id));
 }
+
+// ===== [S:thumb-wizard] サムネイル一括登録ウィザード =====
+// 技を1つずつ提示して画像を選ばせる。ファイル名にも並び順にも依存しないので、
+// リネーム不要で、取り違えも起きない（今どの技を登録中かが常に画面に出ている）。
+let _wiz=null; // {ids:[技id], idx, done, skipped:[技id], replaced:bool, busy}
+function wizVisibleMoves(){
+  // 「いまMOVE LISTに見えている技」を母集団にする（カテゴリピル・検索の絞り込みを引き継ぐ）
+  let ms=cur().moves||[];
+  if(activeSort!=='ALL')ms=ms.filter(m=>m.type===activeSort);
+  const terms=moveSearchTerms();
+  if(terms.length)ms=ms.filter(m=>moveMatches(m,terms));
+  return ms;
+}
+function openThumbWizard(){
+  const vis=wizVisibleMoves();
+  const unset=vis.filter(m=>!m.thumb);
+  if(!vis.length){showToast(t('wizNoTarget'),'err');return;}
+  const narrowed=activeSort!=='ALL'||moveSearchTerms().length>0;
+  showModal(`<div class="modal-title-bar">${t('wizTitle')}</div>
+    <div class="wiz-lead">${esc(t('wizStartDesc'))}</div>
+    ${narrowed?`<div class="wiz-note">${esc(t('wizScopeNote'))}</div>`:''}
+    <button class="wiz-opt" id="wiz-unset" ${unset.length?'':'disabled'}>
+      <span class="wiz-opt-t">${esc(t('wizTargetUnset'))}</span>
+      <span class="wiz-opt-d">${movesUnit(unset.length)}</span>
+    </button>
+    <button class="wiz-opt" id="wiz-all">
+      <span class="wiz-opt-t">${esc(t('wizTargetAll'))}</span>
+      <span class="wiz-opt-d">${movesUnit(vis.length)}</span>
+    </button>
+    <div class="sep"></div>
+    <div class="flex-btns"><button class="close-btn" onclick="closeModal()">${t('cancel')}</button></div>`);
+  const u=document.getElementById('wiz-unset');
+  if(u&&unset.length)u.addEventListener('click',()=>startThumbWizard(unset.map(m=>m.id),false));
+  document.getElementById('wiz-all').addEventListener('click',()=>startThumbWizard(vis.map(m=>m.id),true));
+}
+function startThumbWizard(ids,replaced){
+  _wiz={ids:ids.slice(),idx:0,done:0,skipped:[],replaced:!!replaced,busy:false};
+  renderThumbWizard();
+}
+function wizCurrentMove(){
+  if(!_wiz||_wiz.idx>=_wiz.ids.length)return null;
+  return (cur().moves||[]).find(m=>m.id===_wiz.ids[_wiz.idx])||null;
+}
+function renderThumbWizard(){
+  if(!_wiz)return;
+  const m=wizCurrentMove();
+  if(!m){renderThumbWizardDone();return;}
+  const total=_wiz.ids.length, pos=_wiz.idx+1;
+  const s=cs(m.type), ts=thumbSrc(m);
+  showModal(`<div class="modal-title-bar">${t('wizTitle')}</div>
+    <div class="wiz-bar"><div class="wiz-bar-in" style="width:${Math.round(_wiz.idx/total*100)}%"></div></div>
+    <div class="wiz-count">${pos} / ${total}</div>
+    <div class="wiz-move">
+      <div class="wiz-cat" style="background:${s.bg};color:${s.fg};">${esc(catLabel(m.type))}</div>
+      <div class="wiz-name">${esc(m.name)}</div>
+      <div class="wiz-inp">${esc(m.inputStr||'')}</div>
+    </div>
+    ${ts?`<img src="${esc(ts)}" class="wiz-prev">`:''}
+    ${m.thumb?`<div class="wiz-note">${esc(t('wizReplaceNote'))}</div>`:''}
+    <div class="wiz-lead">${esc(t('wizCurrent'))}</div>
+    <button class="wiz-pick" id="wiz-pick">${esc(t('wizPick'))}</button>
+    <input type="file" id="wizFile" accept="image/*" style="display:none">
+    <div id="wizBusy"></div>
+    <div class="sep"></div>
+    <div class="flex-btns">
+      <button class="close-btn" id="wiz-back" ${_wiz.idx?'':'disabled'}>${t('wizBack')}</button>
+      <button class="close-btn" id="wiz-skip">${t('wizSkip')}</button>
+      <button class="close-btn" onclick="quitThumbWizard()">${t('wizQuit')}</button>
+    </div>`);
+  const fi=document.getElementById('wizFile');
+  document.getElementById('wiz-pick').addEventListener('click',()=>fi.click());
+  fi.addEventListener('change',()=>{if(fi.files&&fi.files[0])wizAssignFile(fi.files[0]);});
+  document.getElementById('wiz-skip').addEventListener('click',()=>{
+    _wiz.skipped.push(_wiz.ids[_wiz.idx]);_wiz.idx++;renderThumbWizard();
+  });
+  const b=document.getElementById('wiz-back');
+  if(b&&_wiz.idx)b.addEventListener('click',()=>{
+    _wiz.idx--;
+    // 戻り先をスキップ済みにしていたら、その記録を取り消す（やり直せるように）
+    const i=_wiz.skipped.lastIndexOf(_wiz.ids[_wiz.idx]);if(i>=0)_wiz.skipped.splice(i,1);
+    renderThumbWizard();
+  });
+}
+// 現在の技へ1枚割り当てて次へ進む。
+// 大きな画像だと縮小に時間がかかるため、処理中はボタンを止めて表示を出す。
+async function wizAssignFile(file){
+  if(!_wiz||_wiz.busy||!file)return;
+  const mvv=(cur().moves||[]).find(x=>x.id===_wiz.ids[_wiz.idx]);
+  if(!mvv){_wiz.idx++;renderThumbWizard();return;}
+  _wiz.busy=true;
+  const busy=document.getElementById('wizBusy');
+  const pick=document.getElementById('wiz-pick');if(pick)pick.disabled=true;
+  if(busy)busy.innerHTML=`<div class="wiz-busy">${esc(t('wizProcessing'))}</div>`;
+  let ok=false;
+  try{
+    await setMoveThumb(mvv,file);
+    ok=true;_wiz.done++;
+    const sk=_wiz.skipped.lastIndexOf(mvv.id);if(sk>=0)_wiz.skipped.splice(sk,1); // 選び直したらスキップ扱いを解除
+  }catch(e){showToast(t('imgSaveFail')+(e&&e.message||''),'err');}
+  _wiz.busy=false;
+  if(ok)_wiz.idx++;   // 失敗したら同じ技に留まって選び直せるようにする
+  updateSavedIndicator(); // 未保存フラグを立てて自動保存に拾わせる
+  renderMoveList();
+  renderThumbWizard();
+}
+function renderThumbWizardDone(){
+  const done=_wiz?_wiz.done:0, skipped=_wiz?_wiz.skipped.slice():[];
+  showModal(`<div class="modal-title-bar">${t('wizDoneTitle')}</div>
+    <div class="wiz-lead">${esc(t('wizDoneDesc').replace('%d',done).replace('%s',skipped.length))}</div>
+    ${skipped.length?`<button class="wiz-opt" id="wiz-again"><span class="wiz-opt-t">${esc(t('wizRetrySkipped'))}</span><span class="wiz-opt-d">${movesUnit(skipped.length)}</span></button>`:''}
+    <div class="sep"></div>
+    <div class="flex-btns"><button class="close-btn" style="border-color:var(--gold);color:var(--gold);" onclick="quitThumbWizard()">${t('wizClose')}</button></div>`);
+  const a=document.getElementById('wiz-again');
+  if(a)a.addEventListener('click',()=>startThumbWizard(skipped,true));
+}
+function quitThumbWizard(){_wiz=null;closeModal();renderMoveList();}
 
 // ===== [S:move-edit] 技の追加・編集 =====
 function openAddMoveModal(editId){
