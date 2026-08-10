@@ -509,8 +509,17 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
 .rg-legend{display:flex;gap:12px;font-size:11px;color:var(--dim);align-items:center;}
 .rg-legend .ld{display:inline-flex;align-items:center;gap:4px;}
 .rg-legend .lsq{width:9px;height:9px;border-radius:50%;display:inline-block;}
-.rg-scroll{flex:1;min-height:0;overflow:auto;}
-.rg-stage{position:relative;margin:0 auto;}
+.rg-scroll{flex:1;min-height:0;overflow:auto;touch-action:pan-x pan-y;}
+.rg-canvas{position:relative;margin:0 auto;}
+/* ★ 拡大縮小は stage を transform する。左上基点にして外枠(.rg-canvas)の実寸と合わせる */
+.rg-stage{position:relative;transform-origin:0 0;will-change:transform;}
+.rg-zoom{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+.rg-zbtn,.rg-zlabel{background:var(--bg3);border:1px solid var(--bd2);color:var(--text);font-family:inherit;font-size:11px;line-height:1;padding:4px 7px;border-radius:5px;cursor:pointer;}
+.rg-zbtn:hover,.rg-zlabel:hover{border-color:var(--gold);color:var(--gold);}
+.rg-zlabel{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;}
+.rg-zfit{margin-left:4px;}
+body.mobile .rg-zbtn,body.mobile .rg-zlabel{font-size:13px;padding:7px 11px;}
+body.mobile .rg-zlabel{min-width:54px;}
 .rg-edges{position:absolute;left:0;top:0;}
 .rg-node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2;transition:opacity .15s;}
 .rg-node.dim{opacity:.16;}
@@ -726,6 +735,11 @@ const I18N={
   addingToEn:{ja:'',en:'Adding to '},
   // move list / filter
   noMoves:{ja:'技なし',en:'No moves'},
+  rgZoomIn:{ja:'拡大',en:'Zoom in'},
+  rgZoomOut:{ja:'縮小',en:'Zoom out'},
+  rgZoomReset:{ja:'等倍(100%)に戻す',en:'Reset to 100%'},
+  rgZoomFit:{ja:'全体が収まる大きさにする',en:'Fit the whole graph'},
+  rgZoomFitLabel:{ja:'全体',en:'Fit'},
   wizBtnTitle:{ja:'サムネイル画像をまとめて登録する',en:'Register thumbnails in bulk'},
   wizTitle:{ja:'サムネイル一括登録',en:'Bulk thumbnail registration'},
   wizStartDesc:{ja:'技を1つずつ表示します。表示された技に合う画像をフォルダ（スマホは写真）から選ぶだけで、次の技へ自動で進みます。',en:'Moves are shown one at a time. Just pick the image that matches the move on screen and it advances automatically.'},
@@ -4513,7 +4527,7 @@ function openTutorial(){
     H('#2ecc71','🔧 技の管理')+
     D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能。登録時に自動で縮小されるので、大きなスクリーンショットをそのまま選んでも書き出しファイルが膨らみません<br>• ${b('🖼＋ 一括登録')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイルをまとめて登録できます。技が1つずつ表示されるので、それに合う画像を選ぶだけで次の技へ自動で進みます。対象は${b('未登録の技だけ')}／すべて（登録済みも差し替え）から選べ、${b('スキップ')}と${b('戻る')}も可能。未登録のみにしておけば、中断しても次に開いたときに続きから再開できます<br>• ${b('🔍 検索')} — MOVE LIST 上部の検索欄で、技名とコマンドから絞り込めます。空白で区切ると${b('AND検索')}（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１）は区別しません。${b('テンキー表記')}でも引けます（${b('2')}＝↓、${b('236')}＝↓↘→、${b('46')}＝←溜め→）。「236 K」のように空白で区切ると、コマンドとボタンを組み合わせて絞り込めます。ソートバーとの併用も可能<br>• ${b('表示切替（🖼 / ☰）')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイル大表示とリスト（コンパクト）表示をワンタップで切替（モバイルでは折りたたみボタンの左に表示）<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('パネル幅の変更')} — PCでは、MOVE LIST と右側の${b('境界をドラッグ')}して技リストの幅を変えられます（${b('ダブルクリック')}で既定幅に戻り、幅は次回も引き継がれます）。広げると技カードが自動で2列・3列に増えます<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
     H('#6fd0e6','🕸 ルート図')+
-    D(`登録したコンボの技を${b('「位置（手目）」ごとに左から右へ')}並べ、技のつながりを1枚で俯瞰できるタブです。<br>• ${b('ノード（技チップ）')} — 1手目・2手目…と列で並びます。${b('同じ位置で同じ技')}を使うコンボは1つのノードにまとめられます<br>• ${b('右上の数字バッジ')} — その技を${b('その位置で使っているコンボの本数')}（共有数）。よく使う中継技ほど数字が大きくなります<br>• ${b('ノードの色')} — MOVE LIST と同じ技タイプ別の色。上辺が${b('白＝始動技')}、${b('ゴールド＝締め（コンボの終端）')}を表します<br>• ${b('締めノード')} — そのコンボの終端には、右側に${b('コンボ名とDMG/DG')}が表示されます。同じ技で締めるコンボが複数あるときは「締め◯件」とまとまり、クリックで下部の情報バーに一覧が出ます<br>• ${b('クリックで強調')} — 技ノードをクリックすると、${b('その技を含む実際のコンボ')}だけがハイライトされ、関係しないノード・線は淡くなります（背景クリックで解除）<br>• ${b('使いどころ')} — 「この始動から何種類に派生しているか」「どの中継技が多くのコンボで共有されているか」を把握するのに向いています<br>• ${b('🕸 表示／非表示')} — コンボ一覧 で各コンボの${b('「📋 コマンド出力」ボタンの左')}にある${b('「🕸 表示／🕸 非表示」')}ボタンで、そのコンボを ルート図 に${b('表示するかを個別に切り替え')}られます。非表示にしたコンボはグラフから除外され、ツールバーに${b('「非表示 ◯件」')}と表示されます（切り替えはコンボごとに保存されます）<br>• ${b('※ 注意')} — 同位置・同技をまとめる都合上、${b('線を目で辿ると実在しない並びに見える')}ことがあります。正確な並びは ${b('コンボ一覧 / 始動技別')} で、特定の技を含むコンボは${b('ノードのクリック')}で確認してください`)+
+    D(`登録したコンボの技を${b('「位置（手目）」ごとに左から右へ')}並べ、技のつながりを1枚で俯瞰できるタブです。<br>• ${b('ノード（技チップ）')} — 1手目・2手目…と列で並びます。${b('同じ位置で同じ技')}を使うコンボは1つのノードにまとめられます<br>• ${b('右上の数字バッジ')} — その技を${b('その位置で使っているコンボの本数')}（共有数）。よく使う中継技ほど数字が大きくなります<br>• ${b('ノードの色')} — MOVE LIST と同じ技タイプ別の色。上辺が${b('白＝始動技')}、${b('ゴールド＝締め（コンボの終端）')}を表します<br>• ${b('締めノード')} — そのコンボの終端には、右側に${b('コンボ名とDMG/DG')}が表示されます。同じ技で締めるコンボが複数あるときは「締め◯件」とまとまり、クリックで下部の情報バーに一覧が出ます<br>• ${b('クリックで強調')} — 技ノードをクリックすると、${b('その技を含む実際のコンボ')}だけがハイライトされ、関係しないノード・線は淡くなります（背景クリックで解除）<br>• ${b('拡大縮小')} — ツールバーの ${b('− / ＋')} で倒率を変えられます。中央の${b('倒率表示')}を押すと100%に、${b('全体')}を押すとグラフ全体が画面に収まる倒率になります。PCは ${b('Ctrl（⌘）＋ホイール')}、スマホ・タブレットは${b('2本指のピンチ')}でも操作でき、いずれも${b('カーソル（指）の位置を中心')}に拡大縮小します。倒率は次回起動時も引き継がれます<br>• ${b('使いどころ')} — 「この始動から何種類に派生しているか」「どの中継技が多くのコンボで共有されているか」を把握するのに向いています<br>• ${b('🕸 表示／非表示')} — コンボ一覧 で各コンボの${b('「📋 コマンド出力」ボタンの左')}にある${b('「🕸 表示／🕸 非表示」')}ボタンで、そのコンボを ルート図 に${b('表示するかを個別に切り替え')}られます。非表示にしたコンボはグラフから除外され、ツールバーに${b('「非表示 ◯件」')}と表示されます（切り替えはコンボごとに保存されます）<br>• ${b('※ 注意')} — 同位置・同技をまとめる都合上、${b('線を目で辿ると実在しない並びに見える')}ことがあります。正確な並びは ${b('コンボ一覧 / 始動技別')} で、特定の技を含むコンボは${b('ノードのクリック')}で確認してください`)+
     CAT('環境・データ')+
     H('#2980b9','📱 モバイル／タブレット表示')+
     D(`• ${b('⚙ 設定')}の表示モードで「自動 / PC / ${b('タブレット')} / モバイル」を切替（${b('タブレット')}は配置はPCレイアウトのまま、操作だけモバイルと同じタップ中心になります）<br>• モバイル・タブレットでは、${b('コンボを長押し')}するか、編集中に${b('＋ 技を追加')}を押すと${b('技追加モード')}になります。モードに入ってから技をタップすると、そのコンボに追加されます（画面下部のバー、または追加モード中のコンボをもう一度長押しで終了）<br>• 追加モード中は、技と技の${b('隙間に挿入位置（｜）')}が表示されます。ゴールドに光っている位置に次の技が入るので、${b('隙間をタップ')}して位置を変えれば、コンボの${b('途中にも技を差し込めます')}（既定は末尾。入れた直後にキャレットは1つ右へ進むので、そのまま続けて並べられます）<br>• 並び替えたいときは、コンボ内の${b('技チップを長押し')}すると${b('移動中')}になります。全コンボの隙間に貼り付け先が出るので、置きたい${b('隙間をタップ')}すれば移動できます（${b('別のコンボへも移せます')}。まとめ表示（×3）のチップは${b('まとまりごと')}、ヒット状況（C/PC/D/G）も一緒に移動します。つまんだチップをもう一度タップ、または画面下部の${b('完了')}で解除）<br>• ${b('MOVE LIST のヘッダーをタップ')}で技リストを折りたたみ、画面を広く使えます（${b('モバイルのみ')}。タブレットはPCと同じ常時表示）<br>• ${b('≡ メニュー')} — ヘッダーの操作ボタン（キャラ追加・技追加・保存・書き出しなど）を折りたたみ/展開できます（${b('モバイルのみ')}）`)+
@@ -4538,7 +4552,7 @@ function openTutorial(){
     H('#2ecc71','🔧 Managing moves')+
     D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move. Images are downscaled automatically on registration, so you can pick a full-size screenshot without bloating your export file<br>• ${b('🖼＋ Bulk registration')} — The ${b('button in the MOVE LIST header')} registers thumbnails in bulk. Moves are shown one at a time, so choosing the matching image advances to the next automatically. Target ${b('only moves without an image')} or all moves (replacing existing ones), with ${b('Skip')} and ${b('Back')} available. With the first option you can stop at any point and simply resume where you left off<br>• ${b('🔍 Search')} — The search box at the top of MOVE LIST filters by move name and input. Separating words with spaces performs an ${b('AND search')}, and case and full-/half-width characters are treated the same (SA1 / ＳＡ１). ${b('Numpad notation')} works too (${b('2')} = ↓, ${b('236')} = ↓↘→, ${b('46')} = charge ← then →). Combine a motion with a button by separating them, e.g. "236 K". Works alongside the sort bar<br>• ${b('View toggle (🖼 / ☰)')} — Use the ${b('button in the MOVE LIST header')} to switch between large-thumbnail and compact list view with one tap (on mobile it sits to the left of the collapse toggle)<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Panel width')} — On desktop, ${b('drag the divider')} between MOVE LIST and the right-hand panel to resize the move list (${b('double-click')} resets it, and the width is remembered next time). Widening it flows the move cards into two or three columns<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
     H('#6fd0e6','🕸 ROUTE GRAPH')+
-    D(`Lays out the moves of your saved combos ${b('by position (1st, 2nd, …) from left to right')}, so you can see how moves connect across combos in one view.<br>• ${b('Nodes (move chips)')} — Arranged in columns by position. Combos that use ${b('the same move at the same position')} are merged into a single node<br>• ${b('Number badge (top-right)')} — How many ${b('combos use that move at that position')} (shared count). The more a connector move is reused, the higher the number<br>• ${b('Node color')} — The same move-type colors as MOVE LIST. A ${b('white top edge = starter')}, ${b('gold = finisher (combo end)')}<br>• ${b('Finisher nodes')} — Show the ${b('combo name and DMG/DG')} on the right. When several combos end on the same move they are grouped as "N combos end here"; click to list them in the info bar below<br>• ${b('Click to highlight')} — Clicking a move node highlights ${b('only the actual combos that include it')} and dims unrelated nodes and lines (click the background to clear)<br>• ${b('When to use it')} — Handy for grasping "how many variants branch from this starter" and "which connector moves are shared by many combos"<br>• ${b('🕸 Show / hide per combo')} — In COMBO LIST, each combo has a ${b('"🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation"')}. Use it to ${b('include or exclude that combo from ROUTE GRAPH individually')}. Hidden combos are dropped from the graph and the toolbar shows ${b('"N hidden"')} (the choice is saved per combo)<br>• ${b('Note')} — Because same-position/same-move chips are merged, ${b('tracing the lines by eye can suggest sequences that do not exist')}. Check exact sequences in ${b('COMBO LIST / STARTER TREE')}, and use ${b('a node click')} to see which combos actually include a given move`)+
+    D(`Lays out the moves of your saved combos ${b('by position (1st, 2nd, …) from left to right')}, so you can see how moves connect across combos in one view.<br>• ${b('Nodes (move chips)')} — Arranged in columns by position. Combos that use ${b('the same move at the same position')} are merged into a single node<br>• ${b('Number badge (top-right)')} — How many ${b('combos use that move at that position')} (shared count). The more a connector move is reused, the higher the number<br>• ${b('Node color')} — The same move-type colors as MOVE LIST. A ${b('white top edge = starter')}, ${b('gold = finisher (combo end)')}<br>• ${b('Finisher nodes')} — Show the ${b('combo name and DMG/DG')} on the right. When several combos end on the same move they are grouped as "N combos end here"; click to list them in the info bar below<br>• ${b('Click to highlight')} — Clicking a move node highlights ${b('only the actual combos that include it')} and dims unrelated nodes and lines (click the background to clear)<br>• ${b('Zooming')} — Use ${b('− / ＋')} in the toolbar to change the zoom level. Press the ${b('percentage')} in the middle to return to 100%, or ${b('Fit')} to scale the whole graph into view. You can also use ${b('Ctrl (⌘) + wheel')} on desktop and a ${b('two-finger pinch')} on phones and tablets; both zoom ${b('around the pointer (or your fingers)')}. The zoom level is remembered next time<br>• ${b('When to use it')} — Handy for grasping "how many variants branch from this starter" and "which connector moves are shared by many combos"<br>• ${b('🕸 Show / hide per combo')} — In COMBO LIST, each combo has a ${b('"🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation"')}. Use it to ${b('include or exclude that combo from ROUTE GRAPH individually')}. Hidden combos are dropped from the graph and the toolbar shows ${b('"N hidden"')} (the choice is saved per combo)<br>• ${b('Note')} — Because same-position/same-move chips are merged, ${b('tracing the lines by eye can suggest sequences that do not exist')}. Check exact sequences in ${b('COMBO LIST / STARTER TREE')}, and use ${b('a node click')} to see which combos actually include a given move`)+
     CAT('Environment & data')+
     H('#2980b9','📱 Mobile / Tablet display')+
     D(`• Switch between "Auto / Desktop / ${b('Tablet')} / Mobile" via the display mode in ${b('⚙ Settings')} (${b('Tablet')} keeps the desktop layout, but switches the controls to the same tap-centric style as Mobile)<br>• On mobile and tablet, ${b('long-press a combo')}, or press ${b('＋ Add move')} while editing, then tap moves to add them (finish via the bar at the bottom of the screen; long-pressing a combo that's already in add mode ends it again)<br>• While in add mode, an ${b('insertion point (|)')} appears in the gaps between moves. The next move goes wherever the gold caret is, so ${b('tap a gap')} to move it and you can ${b('insert moves mid-combo')} (it defaults to the end, and steps one to the right after each move so you can keep adding in order)<br>• To reorder, ${b('long-press a move chip')} inside a combo to ${b('pick it up')}. Paste points appear in the gaps of every combo, so ${b('tap a gap')} to move it there (${b('including into another combo')}; grouped chips like ×3 move ${b('as a whole')}, carrying their hit states. Tap the picked chip again, or ${b('Done')} at the bottom of the screen, to drop it)<br>• ${b('Tap the MOVE LIST header')} to collapse the move list and use more of the screen (${b('mobile only')} — tablet always shows it, like desktop)<br>• ${b('≡ Menu')} — Collapse/expand the header action buttons (add character, add move, save, export, etc.) (${b('mobile only')})`)+
@@ -5427,6 +5441,11 @@ function renderTree(){
 // コンボの全技を1技ずつノード化し、先頭から数えて同じ位置(深さ)の技が同じものを
 // 同じノードに重ねて表示する読み取り専用ビュー（位置そろえ）。
 // ※「先頭からの並び一致」は STARTER TREE が担うため、ここでは扱わない。
+// ★ ルート図の拡大縮小。再描画やタブ切替で戻らないよう外側に保持し、localStorageにも残す
+const RG_ZOOM_MIN=0.25, RG_ZOOM_MAX=2.5, RG_ZOOM_STEP=1.2;
+let routeZoom=(()=>{try{const v=parseFloat(localStorage.getItem('sf6_rgZoom'));
+  return (v>=RG_ZOOM_MIN&&v<=RG_ZOOM_MAX)?v:1;}catch(e){return 1;}})();
+function saveRouteZoom(){try{localStorage.setItem('sf6_rgZoom',String(routeZoom));}catch(e){}}
 function renderRouteGraph(){
   const wrap=document.getElementById('routeGraphWrap');if(!wrap)return;
   wrap.innerHTML='';
@@ -5496,6 +5515,12 @@ function renderRouteGraph(){
   const tb=document.createElement('div');tb.className='rg-toolbar';
   tb.innerHTML='<span class="rg-hint">'+esc(t('rgHint'))+'</span>'+
     (hiddenCount>0?'<span class="rg-hidden-note" style="font-size:10px;color:#7c8a99;margin-left:8px;">'+esc(t('rgHiddenCount').replace('{n}',hiddenCount))+'</span>':'')+
+    '<span class="rg-zoom">'+
+      '<button type="button" class="rg-zbtn" id="rgZoomOut" title="'+esc(t('rgZoomOut'))+'" aria-label="'+esc(t('rgZoomOut'))+'">−</button>'+
+      '<button type="button" class="rg-zlabel" id="rgZoomReset" title="'+esc(t('rgZoomReset'))+'"><span id="rgZoomLabel">100%</span></button>'+
+      '<button type="button" class="rg-zbtn" id="rgZoomIn" title="'+esc(t('rgZoomIn'))+'" aria-label="'+esc(t('rgZoomIn'))+'">＋</button>'+
+      '<button type="button" class="rg-zbtn rg-zfit" id="rgZoomFit" title="'+esc(t('rgZoomFit'))+'">'+esc(t('rgZoomFitLabel'))+'</button>'+
+    '</span>'+
     '<span class="rg-legend">'+
       '<span class="ld"><span class="lsq" style="background:#e3ebf5;"></span>'+esc(t('rgLegStart'))+'</span>'+
       '<span class="ld"><span class="lsq" style="background:var(--gold);"></span>'+esc(t('rgLegEnd'))+'</span>'+
@@ -5505,7 +5530,9 @@ function renderRouteGraph(){
 
   // ── ステージ ──
   const scroll=document.createElement('div');scroll.className='rg-scroll';
+  const canvas=document.createElement('div');canvas.className='rg-canvas';
   const stage=document.createElement('div');stage.className='rg-stage';
+  canvas.appendChild(stage);
   stage.style.width=stageW+'px';stage.style.height=stageH+'px';
   const SVGNS='http://www.w3.org/2000/svg';
   const svg=document.createElementNS(SVGNS,'svg');
@@ -5544,8 +5571,70 @@ function renderRouteGraph(){
     stage.appendChild(el);nodeEls[n.id]=el;
   });
 
-  scroll.appendChild(stage);wrap.appendChild(scroll);
+  scroll.appendChild(canvas);wrap.appendChild(scroll);
   const info=document.createElement('div');info.className='rg-info';info.textContent=t('rgHint');wrap.appendChild(info);
+
+  // ── 拡大縮小 ──
+  // stage を transform:scale し、外側の canvas をスケール後の実寸にしてスクロール範囲を合わせる。
+  // （stage 自体のサイズを変えると再レイアウトが走るため、変形＋外枠サイズの組み合わせにする）
+  function applyRouteZoom(){
+    stage.style.transform='scale('+routeZoom+')';
+    canvas.style.width=Math.round(stageW*routeZoom)+'px';
+    canvas.style.height=Math.round(stageH*routeZoom)+'px';
+    const lb=document.getElementById('rgZoomLabel');
+    if(lb)lb.textContent=Math.round(routeZoom*100)+'%';
+  }
+  function setRouteZoom(z,anchor){
+    const z0=routeZoom;
+    const z1=Math.min(RG_ZOOM_MAX,Math.max(RG_ZOOM_MIN,z));
+    if(z1===z0)return;
+    // anchor（画面座標）を指定された場合、その点がズーム後も同じ場所に留まるようスクロールを補正する
+    let gx=0,gy=0;
+    if(anchor){
+      const r0=canvas.getBoundingClientRect();
+      gx=(anchor.x-r0.left)/z0;gy=(anchor.y-r0.top)/z0;
+    }
+    routeZoom=z1;saveRouteZoom();applyRouteZoom();
+    if(anchor){
+      const r1=canvas.getBoundingClientRect();
+      scroll.scrollLeft+=(r1.left+gx*z1)-anchor.x;
+      scroll.scrollTop +=(r1.top +gy*z1)-anchor.y;
+    }
+  }
+  // 表示領域にグラフ全体が収まる倍率へ
+  function fitRouteZoom(){
+    const w=scroll.clientWidth-16, h=scroll.clientHeight-16;
+    if(w<=0||h<=0)return;
+    setRouteZoom(Math.min(w/stageW,h/stageH,1));
+    scroll.scrollLeft=0;scroll.scrollTop=0;
+  }
+  document.getElementById('rgZoomOut').addEventListener('click',e=>{e.stopPropagation();setRouteZoom(routeZoom/RG_ZOOM_STEP);});
+  document.getElementById('rgZoomIn').addEventListener('click',e=>{e.stopPropagation();setRouteZoom(routeZoom*RG_ZOOM_STEP);});
+  document.getElementById('rgZoomReset').addEventListener('click',e=>{e.stopPropagation();setRouteZoom(1);});
+  document.getElementById('rgZoomFit').addEventListener('click',e=>{e.stopPropagation();fitRouteZoom();});
+  // Ctrl(⌘)+ホイールで拡大縮小。修飾キーなしのホイールは今までどおりスクロールに使う
+  scroll.addEventListener('wheel',e=>{
+    if(!e.ctrlKey&&!e.metaKey)return;
+    e.preventDefault();
+    setRouteZoom(routeZoom*(e.deltaY<0?RG_ZOOM_STEP:1/RG_ZOOM_STEP),{x:e.clientX,y:e.clientY});
+  },{passive:false});
+  // 2本指のピンチ操作（スマホ・タブレット）
+  let pinch=null;
+  const dist=ts=>Math.hypot(ts[0].clientX-ts[1].clientX,ts[0].clientY-ts[1].clientY);
+  const mid=ts=>({x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1].clientY)/2});
+  scroll.addEventListener('touchstart',e=>{
+    if(e.touches.length===2)pinch={d:dist(e.touches),z:routeZoom};
+  },{passive:true});
+  scroll.addEventListener('touchmove',e=>{
+    if(!pinch||e.touches.length!==2)return;
+    e.preventDefault(); // ブラウザ側のページズームを抑止する
+    const d=dist(e.touches);
+    if(pinch.d>0)setRouteZoom(pinch.z*(d/pinch.d),mid(e.touches));
+  },{passive:false});
+  const endPinch=()=>{pinch=null;};
+  scroll.addEventListener('touchend',endPinch);
+  scroll.addEventListener('touchcancel',endPinch);
+  applyRouteZoom();
 
   let selId=null;
   function select(id){
