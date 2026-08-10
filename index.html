@@ -505,7 +505,6 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
      その技を含む“実際のコンボ”だけを強調するため、用途は技の共有関係の把握） */
 .rg-wrap{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 .rg-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--bd);background:var(--bg2);flex-shrink:0;}
-.rg-hint{font-size:11px;color:var(--muted);}
 .rg-legend{display:flex;gap:12px;font-size:11px;color:var(--dim);align-items:center;}
 .rg-legend .ld{display:inline-flex;align-items:center;gap:4px;}
 .rg-legend .lsq{width:9px;height:9px;border-radius:50%;display:inline-block;}
@@ -5513,8 +5512,7 @@ function renderRouteGraph(){
 
   // ── ツールバー（凡例）──
   const tb=document.createElement('div');tb.className='rg-toolbar';
-  tb.innerHTML='<span class="rg-hint">'+esc(t('rgHint'))+'</span>'+
-    (hiddenCount>0?'<span class="rg-hidden-note" style="font-size:10px;color:#7c8a99;margin-left:8px;">'+esc(t('rgHiddenCount').replace('{n}',hiddenCount))+'</span>':'')+
+  tb.innerHTML=(hiddenCount>0?'<span class="rg-hidden-note" style="font-size:10px;color:#7c8a99;">'+esc(t('rgHiddenCount').replace('{n}',hiddenCount))+'</span>':'')+
     '<span class="rg-zoom">'+
       '<button type="button" class="rg-zbtn" id="rgZoomOut" title="'+esc(t('rgZoomOut'))+'" aria-label="'+esc(t('rgZoomOut'))+'">−</button>'+
       '<button type="button" class="rg-zlabel" id="rgZoomReset" title="'+esc(t('rgZoomReset'))+'"><span id="rgZoomLabel">100%</span></button>'+
