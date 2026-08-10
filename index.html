@@ -581,7 +581,7 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
       <div class="ml-search" id="mlSearch">
         <span class="ml-search-ico">🔍</span>
         <input type="text" class="ml-search-inp" id="moveSearch" autocomplete="off" spellcheck="false"
-               data-i18n-ph="moveSearchPh" placeholder="技名・コマンドで検索">
+               data-i18n-ph="moveSearchPh" placeholder="技名・コマンドで検索（236 など可）">
         <button type="button" class="ml-search-clear" id="moveSearchClear" onclick="clearMoveSearch()">✕</button>
       </div>
       <div class="sort-bar" id="sortBar"></div>
@@ -752,7 +752,7 @@ const I18N={
   autoSaveFail:{ja:'自動保存に失敗しました: ',en:'Auto-save failed: '},
   dotTitleAuto:{ja:'未保存の変更があります（まもなく自動保存されます）',en:'Unsaved changes (auto-save will run shortly)'},
   dotTitleManual:{ja:'未保存の変更があります（💾保存で保存されます）',en:'Unsaved changes (press Save to store them)'},
-  moveSearchPh:{ja:'技名・コマンドで検索',en:'Search name or input'},
+  moveSearchPh:{ja:'技名・コマンドで検索（236 など可）',en:'Search name or input (e.g. 236)'},
   moveSearchClear:{ja:'検索をクリア',en:'Clear search'},
   noMoveHits:{ja:'該当する技がありません',en:'No matching moves'},
   clearFilters:{ja:'条件をクリア',en:'Clear filters'},
@@ -4511,7 +4511,7 @@ function openTutorial(){
     D(`コンボ内の各技に、当てたときの状況を色付きで記録できます。${b('✎ 編集')}中、各技チップの ${b('✕ ボタンの手前のボタン')}を押すたびに切り替わります（${b('通常 → C → PC → D → G → 通常')} の順で循環）。<br>• <span class="ctr-badge ctr-c">C</span> ${b('カウンター')}（黄）— 相手の技に割り込んでヒット<br>• <span class="ctr-badge ctr-pc">PC</span> ${b('パニッシュカウンター')}（橙）— 確定反撃でヒット<br>• <span class="ctr-badge ctr-d">D</span> ${b('ディレイ')}（紫）— 入力を遅らせて繋ぐ技<br>• <span class="ctr-badge ctr-g">G</span> ${b('ガード')}（青）— ガードされた（ブロック）状況<br>設定すると非編集時も技の右側に${b('バッジ表示')}され、${b('始動技別')} や ${b('📋 コマンド出力')}（例: 中P(PC)）にも反映されます。${b('もう一度押して通常')}に戻すと解除できます。`)+
     CAT('技とビュー')+
     H('#2ecc71','🔧 技の管理')+
-    D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能。登録時に自動で縮小されるので、大きなスクリーンショットをそのまま選んでも書き出しファイルが膨らみません<br>• ${b('🖼＋ 一括登録')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイルをまとめて登録できます。技が1つずつ表示されるので、それに合う画像を選ぶだけで次の技へ自動で進みます。対象は${b('未登録の技だけ')}／すべて（登録済みも差し替え）から選べ、${b('スキップ')}と${b('戻る')}も可能。未登録のみにしておけば、中断しても次に開いたときに続きから再開できます<br>• ${b('🔍 検索')} — MOVE LIST 上部の検索欄で、技名とコマンドから絞り込めます。空白で区切ると${b('AND検索')}（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１）は区別しません。ソートバーとの併用も可能<br>• ${b('表示切替（🖼 / ☰）')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイル大表示とリスト（コンパクト）表示をワンタップで切替（モバイルでは折りたたみボタンの左に表示）<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('パネル幅の変更')} — PCでは、MOVE LIST と右側の${b('境界をドラッグ')}して技リストの幅を変えられます（${b('ダブルクリック')}で既定幅に戻り、幅は次回も引き継がれます）。広げると技カードが自動で2列・3列に増えます<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
+    D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能。登録時に自動で縮小されるので、大きなスクリーンショットをそのまま選んでも書き出しファイルが膨らみません<br>• ${b('🖼＋ 一括登録')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイルをまとめて登録できます。技が1つずつ表示されるので、それに合う画像を選ぶだけで次の技へ自動で進みます。対象は${b('未登録の技だけ')}／すべて（登録済みも差し替え）から選べ、${b('スキップ')}と${b('戻る')}も可能。未登録のみにしておけば、中断しても次に開いたときに続きから再開できます<br>• ${b('🔍 検索')} — MOVE LIST 上部の検索欄で、技名とコマンドから絞り込めます。空白で区切ると${b('AND検索')}（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１）は区別しません。${b('テンキー表記')}でも引けます（${b('2')}＝↓、${b('236')}＝↓↘→、${b('46')}＝←溜め→）。「236 K」のように空白で区切ると、コマンドとボタンを組み合わせて絞り込めます。ソートバーとの併用も可能<br>• ${b('表示切替（🖼 / ☰）')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイル大表示とリスト（コンパクト）表示をワンタップで切替（モバイルでは折りたたみボタンの左に表示）<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('パネル幅の変更')} — PCでは、MOVE LIST と右側の${b('境界をドラッグ')}して技リストの幅を変えられます（${b('ダブルクリック')}で既定幅に戻り、幅は次回も引き継がれます）。広げると技カードが自動で2列・3列に増えます<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
     H('#6fd0e6','🕸 ルート図')+
     D(`登録したコンボの技を${b('「位置（手目）」ごとに左から右へ')}並べ、技のつながりを1枚で俯瞰できるタブです。<br>• ${b('ノード（技チップ）')} — 1手目・2手目…と列で並びます。${b('同じ位置で同じ技')}を使うコンボは1つのノードにまとめられます<br>• ${b('右上の数字バッジ')} — その技を${b('その位置で使っているコンボの本数')}（共有数）。よく使う中継技ほど数字が大きくなります<br>• ${b('ノードの色')} — MOVE LIST と同じ技タイプ別の色。上辺が${b('白＝始動技')}、${b('ゴールド＝締め（コンボの終端）')}を表します<br>• ${b('締めノード')} — そのコンボの終端には、右側に${b('コンボ名とDMG/DG')}が表示されます。同じ技で締めるコンボが複数あるときは「締め◯件」とまとまり、クリックで下部の情報バーに一覧が出ます<br>• ${b('クリックで強調')} — 技ノードをクリックすると、${b('その技を含む実際のコンボ')}だけがハイライトされ、関係しないノード・線は淡くなります（背景クリックで解除）<br>• ${b('使いどころ')} — 「この始動から何種類に派生しているか」「どの中継技が多くのコンボで共有されているか」を把握するのに向いています<br>• ${b('🕸 表示／非表示')} — コンボ一覧 で各コンボの${b('「📋 コマンド出力」ボタンの左')}にある${b('「🕸 表示／🕸 非表示」')}ボタンで、そのコンボを ルート図 に${b('表示するかを個別に切り替え')}られます。非表示にしたコンボはグラフから除外され、ツールバーに${b('「非表示 ◯件」')}と表示されます（切り替えはコンボごとに保存されます）<br>• ${b('※ 注意')} — 同位置・同技をまとめる都合上、${b('線を目で辿ると実在しない並びに見える')}ことがあります。正確な並びは ${b('コンボ一覧 / 始動技別')} で、特定の技を含むコンボは${b('ノードのクリック')}で確認してください`)+
     CAT('環境・データ')+
@@ -4536,7 +4536,7 @@ function openTutorial(){
     D(`You can record, in color, the situation in which each move in a combo lands. While in ${b('✎ Edit')}, pressing ${b('the button just before the ✕ button')} on each move chip cycles it (${b('Normal → C → PC → D → G → Normal')}).<br>• <span class="ctr-badge ctr-c">C</span> ${b('Counter')} (yellow) — Hit by interrupting the opponent's move<br>• <span class="ctr-badge ctr-pc">PC</span> ${b('Punish Counter')} (orange) — Hit as a guaranteed punish<br>• <span class="ctr-badge ctr-d">D</span> ${b('Delay')} (purple) — A move linked by delaying the input<br>• <span class="ctr-badge ctr-g">G</span> ${b('Guard')} (blue) — The move was guarded (blocked)<br>Once set, a ${b('badge')} also shows on the right of the move outside edit mode, and it carries over to ${b('STARTER TREE')} and ${b('📋 Copy notation')} (e.g. 中P(PC)). ${b('Press again to return to Normal')} to clear it.`)+
     CAT('Moves & views')+
     H('#2ecc71','🔧 Managing moves')+
-    D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move. Images are downscaled automatically on registration, so you can pick a full-size screenshot without bloating your export file<br>• ${b('🖼＋ Bulk registration')} — The ${b('button in the MOVE LIST header')} registers thumbnails in bulk. Moves are shown one at a time, so choosing the matching image advances to the next automatically. Target ${b('only moves without an image')} or all moves (replacing existing ones), with ${b('Skip')} and ${b('Back')} available. With the first option you can stop at any point and simply resume where you left off<br>• ${b('🔍 Search')} — The search box at the top of MOVE LIST filters by move name and input. Separating words with spaces performs an ${b('AND search')}, and case and full-/half-width characters are treated the same (SA1 / ＳＡ１). Works alongside the sort bar<br>• ${b('View toggle (🖼 / ☰)')} — Use the ${b('button in the MOVE LIST header')} to switch between large-thumbnail and compact list view with one tap (on mobile it sits to the left of the collapse toggle)<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Panel width')} — On desktop, ${b('drag the divider')} between MOVE LIST and the right-hand panel to resize the move list (${b('double-click')} resets it, and the width is remembered next time). Widening it flows the move cards into two or three columns<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
+    D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move. Images are downscaled automatically on registration, so you can pick a full-size screenshot without bloating your export file<br>• ${b('🖼＋ Bulk registration')} — The ${b('button in the MOVE LIST header')} registers thumbnails in bulk. Moves are shown one at a time, so choosing the matching image advances to the next automatically. Target ${b('only moves without an image')} or all moves (replacing existing ones), with ${b('Skip')} and ${b('Back')} available. With the first option you can stop at any point and simply resume where you left off<br>• ${b('🔍 Search')} — The search box at the top of MOVE LIST filters by move name and input. Separating words with spaces performs an ${b('AND search')}, and case and full-/half-width characters are treated the same (SA1 / ＳＡ１). ${b('Numpad notation')} works too (${b('2')} = ↓, ${b('236')} = ↓↘→, ${b('46')} = charge ← then →). Combine a motion with a button by separating them, e.g. "236 K". Works alongside the sort bar<br>• ${b('View toggle (🖼 / ☰)')} — Use the ${b('button in the MOVE LIST header')} to switch between large-thumbnail and compact list view with one tap (on mobile it sits to the left of the collapse toggle)<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Panel width')} — On desktop, ${b('drag the divider')} between MOVE LIST and the right-hand panel to resize the move list (${b('double-click')} resets it, and the width is remembered next time). Widening it flows the move cards into two or three columns<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
     H('#6fd0e6','🕸 ROUTE GRAPH')+
     D(`Lays out the moves of your saved combos ${b('by position (1st, 2nd, …) from left to right')}, so you can see how moves connect across combos in one view.<br>• ${b('Nodes (move chips)')} — Arranged in columns by position. Combos that use ${b('the same move at the same position')} are merged into a single node<br>• ${b('Number badge (top-right)')} — How many ${b('combos use that move at that position')} (shared count). The more a connector move is reused, the higher the number<br>• ${b('Node color')} — The same move-type colors as MOVE LIST. A ${b('white top edge = starter')}, ${b('gold = finisher (combo end)')}<br>• ${b('Finisher nodes')} — Show the ${b('combo name and DMG/DG')} on the right. When several combos end on the same move they are grouped as "N combos end here"; click to list them in the info bar below<br>• ${b('Click to highlight')} — Clicking a move node highlights ${b('only the actual combos that include it')} and dims unrelated nodes and lines (click the background to clear)<br>• ${b('When to use it')} — Handy for grasping "how many variants branch from this starter" and "which connector moves are shared by many combos"<br>• ${b('🕸 Show / hide per combo')} — In COMBO LIST, each combo has a ${b('"🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation"')}. Use it to ${b('include or exclude that combo from ROUTE GRAPH individually')}. Hidden combos are dropped from the graph and the toolbar shows ${b('"N hidden"')} (the choice is saved per combo)<br>• ${b('Note')} — Because same-position/same-move chips are merged, ${b('tracing the lines by eye can suggest sequences that do not exist')}. Check exact sequences in ${b('COMBO LIST / STARTER TREE')}, and use ${b('a node click')} to see which combos actually include a given move`)+
     CAT('Environment & data')+
@@ -4586,6 +4586,22 @@ function normSearch(s){
   const v=String(s==null?'':s);
   try{return v.normalize('NFKC').toLowerCase();}catch(e){return v.toLowerCase();}
 }
+// ★ テンキー表記での検索に対応する。コマンドの矢印を数字へ置き換えた形を検索対象に加える。
+//   7 8 9      ↖ ↑ ↗
+//   4 5 6  =   ← 　 →     （5＝ニュートラルは矢印が無いため対応する文字がない）
+//   1 2 3      ↙ ↓ ↘
+const NUMPAD_MAP={'\u2199':'1','\u2193':'2','\u2198':'3','\u2190':'4','\u2192':'6','\u2196':'7','\u2191':'8','\u2197':'9'};
+function toNumpadForms(s){
+  let sub='',digits='',found=false;
+  for(const ch of s){
+    const d=NUMPAD_MAP[ch];
+    if(d){sub+=d;digits+=d;found=true;}
+    else sub+=ch;
+  }
+  // sub …「236＋強p」形式（他の文字はそのまま）
+  // digits…「236」形式（方向だけを連結）。溜め技「←溜め→＋p」を「46」で引けるようにするため
+  return found?(sub+' '+digits):'';
+}
 // 正規化結果は技ごとにキャッシュする。WeakMapに置くので db には載らず、
 // 保存JSON・書き出しファイル・未保存判定(JSON.stringify比較)を汚さない。
 // 技名/コマンドが編集されたときは値が変わるので作り直す。
@@ -4593,7 +4609,8 @@ const _hayCache=new WeakMap();
 function moveHaystack(m){
   const c=_hayCache.get(m);
   if(c&&c.n===m.name&&c.i===m.inputStr)return c.h;
-  const h=normSearch(m.name)+' '+normSearch(m.inputStr);
+  const inp=normSearch(m.inputStr);
+  const h=normSearch(m.name)+' '+inp+' '+toNumpadForms(inp);
   _hayCache.set(m,{n:m.name,i:m.inputStr,h});
   return h;
 }
