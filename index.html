@@ -523,8 +523,8 @@ body.mobile .rg-zlabel{min-width:54px;}
 .rg-edges{position:absolute;left:0;top:0;}
 .rg-node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2;transition:opacity .15s;}
 .rg-node.dim{opacity:.16;}
-.rg-chip{position:relative;border:1px solid var(--bd2);border-radius:9px;padding:6px 10px;min-width:94px;max-width:150px;text-align:center;}
-.rg-node.sel .rg-chip{box-shadow:0 0 0 2px rgba(244,123,32,.6);}
+.rg-chip{position:relative;border:1px solid var(--bd2);border-radius:9px;padding:6px 10px;min-width:94px;max-width:150px;text-align:center;box-shadow:0 0 0 3px var(--bg);}
+.rg-node.sel .rg-chip{box-shadow:0 0 0 3px var(--bg),0 0 0 5px rgba(244,123,32,.6);}
 .rg-node.t-start .rg-chip{border-top:2px solid #e3ebf5;}
 .rg-node.t-end .rg-chip{border-top:2px solid var(--gold);}
 .rg-chip .cn-line{display:flex;align-items:baseline;justify-content:center;max-width:100%;}
@@ -541,6 +541,12 @@ body.mobile .rg-zlabel{min-width:54px;}
 .rg-edge{fill:none;stroke:var(--bd2);stroke-width:1.6;transition:stroke .15s,stroke-width .15s,opacity .15s;}
 .rg-edge.hot{stroke:var(--gold);stroke-width:2.8;}
 .rg-edge.faded{opacity:.1;}
+/* 接続ポート点：エッジがノードへ実際に接続する箇所に打つドット。
+   途中の列を横切るだけの線はそのノード位置にドットが付かないため、
+   「接続」と「下を通過しているだけ」を一目で区別できる。 */
+.rg-port{fill:var(--bd2);stroke:var(--bg);stroke-width:1.4;pointer-events:none;transition:fill .15s,opacity .15s;}
+.rg-port.hot{fill:var(--gold);}
+.rg-port.faded{opacity:.12;}
 .rg-info{flex-shrink:0;padding:8px 12px;border-top:1px solid var(--bd);background:var(--bg2);font-size:12px;color:var(--muted);}
 .rg-info b{color:var(--gold);}
 .rg-empty{color:#7a7a8a;font-size:12px;text-align:center;padding:30px;}
@@ -3585,6 +3591,7 @@ const SEED_VERSION = 16; // ★ シード(内蔵技データ)を更新したら�
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
+  { version:'1.3.4', date:'2026.08.11', ja:['ルート図 の縦位置の決め方を改善しました。最も多くのコンボに共有されている経路（幹線）を自動で見つけ、常に一直線の基準線として中央に固定します。分岐は幹線の上下に配置されるため、共通ルートを目で追いやすくなりました'], en:['Improved how ROUTE GRAPH positions nodes vertically. It now automatically finds the path shared by the most combos (the trunk) and pins it to a straight horizontal baseline through the center, with branches arranged above and below it, making the common route easier to follow at a glance'] },
   { version:'1.3.3', date:'2026.08.11', ja:['ルート図 のノードのまとめ方（アルゴリズム）を更新しました。「共通ルート抽出」という仕組みで、コンボどうしで共通する部分列を自動で見つけて重ねるようになり、より多くの共通パーツがまとまって見やすくなりました','ルート図 に拡大縮小機能を追加しました。ツールバーの − / ＋ で倒率を変更でき、中央の倒率表示で100%に、全体でグラフ全体が画面に収まる倒率になります。PCは Ctrl（⌘）＋ホイール、スマホ・タブレットは2本指のピンチでも操作でき、いずれもカーソル（指）の位置を中心に拡大縮小します（倒率は次回起動時も引き継がれます）'], en:['Updated the merging algorithm used by ROUTE GRAPH. It now uses "Common Route Extraction", which automatically finds and merges shared sub-sequences between combos, so more shared parts are merged and easier to see','Added zoom to ROUTE GRAPH. Use − / ＋ in the toolbar to change the zoom level, press the percentage in the middle to return to 100%, or Fit to scale the whole graph into view. Also works with Ctrl (⌘) + wheel on desktop and a two-finger pinch on phones and tablets, both zooming around the pointer (or your fingers); the zoom level is remembered next time'] },
   { version:'1.3.2', date:'2026.08.09', ja:['MOVE LIST に検索欄を追加しました。技名とコマンドの部分一致で絞り込めます。空白で区切るとAND検索（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１、キック／ｷｯｸ）は区別しません','⚙ 設定に「自動保存」を追加しました（既定ON）。変更してから約1.5秒後に自動で保存し、メモ欄も同時に保存されるため、💾保存の押し忘れで内容を失う心配がありません。トップバーには最終保存時刻を表示します。OFFにすると従来どおり💾保存を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます','FILTER のタグを複数選択できるようにしました。タグは押すたびに選択／解除が切り替わり、2つ以上選ぶと AND／OR の切替ボタンが現れます。AND は選んだタグをすべて持つコンボ、OR はどれか1つでも持つコンボを表示します','MOVE LIST と右側の境界をドラッグして、技リストの幅を変えられるようにしました。ダブルクリックで既定の幅に戻り、幅は次回起動時にも引き継がれます。広げると技カードが自動で2列・3列に増えるため、大きな画面ほど一覧性が上がります','MOVE LIST に「🖼＋」ボタンを追加し、サムネイル画像をまとめて登録できるようにしました。技を1つずつ表示するので、表示された技に合う画像を選ぶだけで次の技へ自動で進みます。対象を「未登録の技だけ」にしておけば、途中で中断しても次に開いたときに続きから再開できます。スキップ・戻るにも対応しています。また登録時に画像を自動で縮小するようにしたため、たくさん登録しても書き出しファイルが極端に大きくなりません','【不具合修正】メモタブを開いたままキャラクターを切り替えると、切替前のキャラのメモが表示されたまま残り、その状態で「💾 メモ保存」を押すと切替先のキャラのメモを上書きしてしまう問題を修正しました。切替時には未保存のメモを元のキャラへ保存したうえで、切替先のメモを読み直すようにしています。キャラクターの追加・データの読み込みでも同様に処理します'], en:['Added a search box to MOVE LIST that filters by move name and input. Separating words with spaces performs an AND search, and case and full-/half-width characters are treated the same (SA1／ＳＡ１, キック／ｷｯｸ)','Added Auto-save under ⚙ Settings (on by default). Changes are saved automatically about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to press Save. The top bar shows the time of the last save. Turn it off to keep the previous behaviour, where only Save writes your data and reloading beforehand discards changes','FILTER tags can now be multi-selected. Each tag toggles on and off, and selecting two or more reveals an AND/OR switch: AND shows combos carrying every selected tag, OR shows combos carrying any of them','You can now drag the divider between MOVE LIST and the right-hand panel to resize the move list. Double-click resets it to the default width, and the width is remembered next time. Widening it flows the move cards into two or three columns, so larger screens show more at once','Added a 🖼＋ button to MOVE LIST for registering thumbnails in bulk. Moves are presented one at a time, so picking the image that matches the move on screen advances to the next one automatically. Target only the moves without an image and you can stop at any point - reopening simply resumes where you left off - and Skip and Back are both available. Images are also downscaled as they are registered, so export files stay a reasonable size however many you add','[Bug fix] Switching characters while the MEMO tab was open left the previous character\'s memo on screen, and pressing Save memo from there overwrote the new character\'s memo. Switching now stores any unsaved memo against the character it belongs to and reloads the memo for the character you switched to. Adding a character and importing data are handled the same way'] },
   { version:'1.3.1', date:'2026.08.09', ja:['2026.08.03 バランス調整を反映。27キャラクター・122技のフレームデータを公式フレーム表の値に更新しました','リュウ・JP・エドは、判定やコンボ補正などフレーム表に現れない調整のみのため数値の変更はありません'], en:['Applied the 2026.08.03 balance update: refreshed frame data for 122 moves across 27 characters to match the official frame tables','Ryu, JP and Ed have no numeric changes — their adjustments only cover hitboxes and combo scaling, which the frame tables do not list'] },
@@ -5571,22 +5578,43 @@ function renderRouteGraph(){
       col.forEach(n=>{const nb=(usePrev?prevAdj:nextAdj).get(n.id);n._bc=nb.length?nb.reduce((s,id)=>s+byId[id]._ord,0)/nb.length:n._ord;});
       col.sort((a,b)=>a._bc-b._bc);col.forEach((n,i)=>n._ord=i);});};
   sweep(true);sweep(false);sweep(true);
+  // ★ 幹線（最も多くのコンボに共有されている経路）を求める。
+  //   各ノードを終点とした「通過コンボ数(pass)の合計が最大になる経路」をDPで求め、
+  //   末端（後続を持たないノード）のうち合計が最大のものから逆算して経路を復元する。
+  //   この経路は縦方向の基準線として固定し、視認性を高める（下のレイアウトで使用）。
+  const byDepthAsc=[...allNodes].sort((a,b)=>a.depth-b.depth);
+  const trunkScore=new Map(),trunkPrev=new Map();
+  byDepthAsc.forEach(n=>{
+    const preds=prevAdj.get(n.id);let best=0,bestP=null;
+    preds.forEach(pid=>{const s=trunkScore.get(pid)||0;if(s>best){best=s;bestP=pid;}});
+    trunkScore.set(n.id,best+n.pass);trunkPrev.set(n.id,bestP);
+  });
+  let trunkEnd=null,trunkBest=-1;
+  allNodes.forEach(n=>{if(nextAdj.get(n.id).length===0){const s=trunkScore.get(n.id)||0;if(s>trunkBest){trunkBest=s;trunkEnd=n.id;}}});
+  if(trunkEnd===null)allNodes.forEach(n=>{const s=trunkScore.get(n.id)||0;if(s>trunkBest){trunkBest=s;trunkEnd=n.id;}});
+  const trunkSet=new Set();
+  for(let cur=trunkEnd;cur;cur=trunkPrev.get(cur))trunkSet.add(cur);
   // ★ 次数（ノードに接続する線の本数）に比例して縦間隔を広げ、分岐・合流が集中するノード周りの線の混雑を緩和する。
   //   標準の通過ノード（入力1+出力1=2本）は加算0。線が増えるほどスロット高を大きくして上下に余白を確保する。
   const degBase=2,degStep=26,degMax=120;
   const nodeDeg=n=>prevAdj.get(n.id).length+nextAdj.get(n.id).length;
   const slotH=n=>rowGap+Math.min(degMax,Math.max(0,nodeDeg(n)-degBase)*degStep);
-  // 各列の高さ＝その列のスロット高の合計。最も高い列に合わせてステージ高を決める（高次数ノードがなければ従来と同じ高さ）。
-  const colH=cols.map(c=>c?c.reduce((s,n)=>s+slotH(n),0):0);
-  const maxColH=Math.max(rowGap,...colH);
-  const stageH=Math.max(topPad*2+(maxColH-rowGap)+60,200);
-  const midY=stageH/2;
-  // 各列をスロット高で積み上げ、列ごとに縦中央そろえで配置する。隣接ノード間の間隔は両者のスロット高の平均になる。
+  // 各列をスロット高で積み上げる。幹線ノードがある列は幹線ノードのYを基準(0)に、
+  // 他のノードはその上下に積み上げる（＝幹線が常に一直線の基準線になる）。
+  // 幹線ノードが無い列は、従来どおり列のバウンディングボックス中央を基準にする。
   cols.forEach((col,d)=>{if(!col)return;
     const slots=col.map(slotH);let acc=0;const ctr=[];
     for(let i=0;i<col.length;i++){ctr.push(acc+slots[i]/2);acc+=slots[i];}
-    const shift=midY-(ctr[0]+ctr[ctr.length-1])/2;
-    col.forEach((n,i)=>{n.x=leftPad+d*colStep;n.y=ctr[i]+shift;});});
+    const trunkIdx=col.findIndex(n=>trunkSet.has(n.id));
+    const base=trunkIdx>=0?ctr[trunkIdx]:(ctr[0]+ctr[ctr.length-1])/2;
+    col.forEach((n,i)=>{n.x=leftPad+d*colStep;n._relY=ctr[i]-base;});});
+  // 幹線基準(相対Y=0)からの上下最大到達量に合わせてステージ高を決め、
+  // 幹線がステージのちょうど中央（水平の基準線）に来るように配置する。
+  let maxAbove=0,maxBelow=0;
+  allNodes.forEach(n=>{if(n._relY<0)maxAbove=Math.max(maxAbove,-n._relY);else maxBelow=Math.max(maxBelow,n._relY);});
+  const stageH=Math.max(topPad*2+maxAbove+maxBelow+60,200);
+  const midY=topPad+maxAbove+30;
+  allNodes.forEach(n=>{n.y=midY+n._relY;});
   const stageW=leftPad+(cols.length-1)*colStep+rightPad;
 
   // ── ツールバー（凡例）──
@@ -5650,6 +5678,25 @@ function renderRouteGraph(){
 
   scroll.appendChild(canvas);wrap.appendChild(scroll);
   const info=document.createElement('div');info.className='rg-info';info.textContent=t('rgHint');wrap.appendChild(info);
+
+  // ── 接続ポート点 ──
+  // チップがDOMへ入り表示された後に横幅をまとめて測り（reflowは1回）、
+  // 各エッジの両端＝実際に接続するノードのチップ左右境界にドットを打つ。
+  // 列をまたいで別ノードの裏を通過するだけの線は、そのノードにドットが付かないので、
+  // 「このノードに繋がっている線」か「下を素通りしている線」かが見分けられる。
+  const RG_RING=3,RG_PORTR=3.1;
+  allNodes.forEach(n=>{const el=nodeEls[n.id];const w=el?el.offsetWidth:0;n._hw=w>0?w/2:47;});
+  const portEls=[];
+  const addPort=(x,y,key)=>{const c=document.createElementNS(SVGNS,'circle');
+    c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',RG_PORTR);
+    c.setAttribute('class','rg-port');c.dataset.key=key;svg.appendChild(c);portEls.push(c);};
+  // チップ幅が分かったので、エッジの端点をノード中央→チップ左右境界（高さは中央）へ付け直す。
+  // これで線は境界から水平に出入りし、その真横に置くポート点とちょうど重なる。
+  edges.forEach((e,i)=>{const a=byId[e.src],b=byId[e.dst];
+    const ax=a.x+a._hw,bx=b.x-b._hw;                      // 接続点＝チップの右境界／左境界
+    if(edgeEls[i])edgeEls[i].setAttribute('d',ePath(ax,a.y,bx,b.y));
+    addPort(ax+RG_RING+RG_PORTR,a.y,e.key);               // 出側ポート
+    addPort(bx-RG_RING-RG_PORTR,b.y,e.key);});            // 入側ポート
 
   // ── 拡大縮小 ──
   // stage を transform:scale し、外側の canvas をスケール後の実寸にしてスクロール範囲を合わせる。
@@ -5722,6 +5769,7 @@ function renderRouteGraph(){
     hot.forEach(c=>{const p=comboPath[c.id];p.forEach(nid=>keepN[nid]=true);for(let i=0;i+1<p.length;i++)keepE[p[i]+'>'+p[i+1]]=true;});
     Object.keys(nodeEls).forEach(k=>{nodeEls[k].classList.toggle('dim',!keepN[k]);nodeEls[k].classList.toggle('sel',k===id);});
     edgeEls.forEach(e=>{const on=!!keepE[e.dataset.key];e.classList.toggle('hot',on);e.classList.toggle('faded',!on);});
+    portEls.forEach(p=>{const on=!!keepE[p.dataset.key];p.classList.toggle('hot',on);p.classList.toggle('faded',!on);});
     const nd=byId[id];const m=mv(nd.mid);
     if(nd.ends&&nd.ends.length){
       // 締めノード: ここで終わるコンボの一覧（名前 + DMG/DG）を情報バーに表示
@@ -5740,7 +5788,7 @@ function renderRouteGraph(){
       ? '<b>'+esc(m?m.name:'?')+'</b> を含むコンボ <b>'+hot.length+'</b> 件 — '+names+more
       : '<b>'+esc(m?m.name:'?')+'</b> — included in <b>'+hot.length+'</b> combo'+(hot.length===1?'':'s')+': '+names+more;
   }
-  function clearSel(){selId=null;Object.keys(nodeEls).forEach(k=>nodeEls[k].classList.remove('dim','sel'));edgeEls.forEach(e=>e.classList.remove('hot','faded'));info.textContent=t('rgHint');}
+  function clearSel(){selId=null;Object.keys(nodeEls).forEach(k=>nodeEls[k].classList.remove('dim','sel'));edgeEls.forEach(e=>e.classList.remove('hot','faded'));portEls.forEach(p=>p.classList.remove('hot','faded'));info.textContent=t('rgHint');}
   scroll.addEventListener('click',clearSel);
 }
 
