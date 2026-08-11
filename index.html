@@ -518,7 +518,6 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
 .rg-zbtn.on{background:#2e1f08;border-color:var(--gold);color:var(--gold);}
 .rg-zlabel{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;}
 .rg-zfit{margin-left:4px;}
-.rg-align{display:flex;align-items:center;gap:2px;flex-shrink:0;}
 body.mobile .rg-zbtn,body.mobile .rg-zlabel{font-size:13px;padding:7px 11px;}
 body.mobile .rg-zlabel{min-width:54px;}
 .rg-edges{position:absolute;left:0;top:0;}
@@ -805,12 +804,6 @@ const I18N={
   rgToastOff:{ja:'🕸 このコンボを ルート図 から非表示にしました',en:'🕸 Hidden this combo from ROUTE GRAPH'},
   rgAllHidden:{ja:'すべてのコンボが ルート図 非表示です。各コンボの「🕸 非表示」ボタンで表示に戻せます',en:'All combos are hidden from ROUTE GRAPH. Use the "🕸 Hidden" button on each combo to show them again'},
   rgHiddenCount:{ja:'非表示 {n} 件',en:'{n} hidden'},
-  rgAlignFront:{ja:'前から',en:'From start'},
-  rgAlignBack:{ja:'後ろから',en:'From end'},
-  rgAlignFrontTitle:{ja:'先頭から数えて技が一致する場合に重ねて表示します（既定）',en:'Merge moves that match counting from the start (default)'},
-  rgAlignBackTitle:{ja:'末尾から数えて技が一致する場合に重ねて表示します。※実際には存在しない並びが線で繋がって見えることがあります',en:'Merge moves that match counting from the end. Note: lines may suggest sequences that do not actually exist'},
-  rgAlignToastFront:{ja:'🕸 ルート図：前から数えて一致でまとめます',en:'🕸 ROUTE GRAPH: merging by match from the start'},
-  rgAlignToastBack:{ja:'🕸 ルート図：後ろから数えて一致でまとめます',en:'🕸 ROUTE GRAPH: merging by match from the end'},
   editDone:{ja:'✓ 完了',en:'✓ Done'},
   edit:{ja:'✎ 編集',en:'✎ Edit'},
   editingBadge:{ja:'編集中',en:'EDITING'},
@@ -3592,7 +3585,7 @@ const SEED_VERSION = 16; // ★ シード(内蔵技データ)を更新したら�
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
-  { version:'1.3.3', date:'2026.08.11', ja:['ルート図 のツールバーに「前から／後ろから」の切替ボタンを追加しました。既定の「前から」は先頭から数えて技が一致するコンボを重ねます。「後ろから」は末尾（締め）から数えて技が一致するコンボを重ねます（切替は次回起動時も引き継がれます）','ルート図 に拡大縮小機能を追加しました。ツールバーの − / ＋ で倒率を変更でき、中央の倒率表示で100%に、全体でグラフ全体が画面に収まる倒率になります。PCは Ctrl（⌘）＋ホイール、スマホ・タブレットは2本指のピンチでも操作でき、いずれもカーソル（指）の位置を中心に拡大縮小します（倒率は次回起動時も引き継がれます）'], en:['Added "From start / From end" toggle buttons to the ROUTE GRAPH toolbar. The default, "From start", merges combos whose moves match counting from the beginning. "From end" merges combos whose moves match counting from the finisher backward (the choice is remembered next time)','Added zoom to ROUTE GRAPH. Use − / ＋ in the toolbar to change the zoom level, press the percentage in the middle to return to 100%, or Fit to scale the whole graph into view. Also works with Ctrl (⌘) + wheel on desktop and a two-finger pinch on phones and tablets, both zooming around the pointer (or your fingers); the zoom level is remembered next time'] },
+  { version:'1.3.3', date:'2026.08.11', ja:['ルート図 のノードのまとめ方（アルゴリズム）を更新しました。「共通ルート抽出」という仕組みで、コンボどうしで共通する部分列を自動で見つけて重ねるようになり、より多くの共通パーツがまとまって見やすくなりました','ルート図 に拡大縮小機能を追加しました。ツールバーの − / ＋ で倒率を変更でき、中央の倒率表示で100%に、全体でグラフ全体が画面に収まる倒率になります。PCは Ctrl（⌘）＋ホイール、スマホ・タブレットは2本指のピンチでも操作でき、いずれもカーソル（指）の位置を中心に拡大縮小します（倒率は次回起動時も引き継がれます）'], en:['Updated the merging algorithm used by ROUTE GRAPH. It now uses "Common Route Extraction", which automatically finds and merges shared sub-sequences between combos, so more shared parts are merged and easier to see','Added zoom to ROUTE GRAPH. Use − / ＋ in the toolbar to change the zoom level, press the percentage in the middle to return to 100%, or Fit to scale the whole graph into view. Also works with Ctrl (⌘) + wheel on desktop and a two-finger pinch on phones and tablets, both zooming around the pointer (or your fingers); the zoom level is remembered next time'] },
   { version:'1.3.2', date:'2026.08.09', ja:['MOVE LIST に検索欄を追加しました。技名とコマンドの部分一致で絞り込めます。空白で区切るとAND検索（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１、キック／ｷｯｸ）は区別しません','⚙ 設定に「自動保存」を追加しました（既定ON）。変更してから約1.5秒後に自動で保存し、メモ欄も同時に保存されるため、💾保存の押し忘れで内容を失う心配がありません。トップバーには最終保存時刻を表示します。OFFにすると従来どおり💾保存を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます','FILTER のタグを複数選択できるようにしました。タグは押すたびに選択／解除が切り替わり、2つ以上選ぶと AND／OR の切替ボタンが現れます。AND は選んだタグをすべて持つコンボ、OR はどれか1つでも持つコンボを表示します','MOVE LIST と右側の境界をドラッグして、技リストの幅を変えられるようにしました。ダブルクリックで既定の幅に戻り、幅は次回起動時にも引き継がれます。広げると技カードが自動で2列・3列に増えるため、大きな画面ほど一覧性が上がります','MOVE LIST に「🖼＋」ボタンを追加し、サムネイル画像をまとめて登録できるようにしました。技を1つずつ表示するので、表示された技に合う画像を選ぶだけで次の技へ自動で進みます。対象を「未登録の技だけ」にしておけば、途中で中断しても次に開いたときに続きから再開できます。スキップ・戻るにも対応しています。また登録時に画像を自動で縮小するようにしたため、たくさん登録しても書き出しファイルが極端に大きくなりません','【不具合修正】メモタブを開いたままキャラクターを切り替えると、切替前のキャラのメモが表示されたまま残り、その状態で「💾 メモ保存」を押すと切替先のキャラのメモを上書きしてしまう問題を修正しました。切替時には未保存のメモを元のキャラへ保存したうえで、切替先のメモを読み直すようにしています。キャラクターの追加・データの読み込みでも同様に処理します'], en:['Added a search box to MOVE LIST that filters by move name and input. Separating words with spaces performs an AND search, and case and full-/half-width characters are treated the same (SA1／ＳＡ１, キック／ｷｯｸ)','Added Auto-save under ⚙ Settings (on by default). Changes are saved automatically about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to press Save. The top bar shows the time of the last save. Turn it off to keep the previous behaviour, where only Save writes your data and reloading beforehand discards changes','FILTER tags can now be multi-selected. Each tag toggles on and off, and selecting two or more reveals an AND/OR switch: AND shows combos carrying every selected tag, OR shows combos carrying any of them','You can now drag the divider between MOVE LIST and the right-hand panel to resize the move list. Double-click resets it to the default width, and the width is remembered next time. Widening it flows the move cards into two or three columns, so larger screens show more at once','Added a 🖼＋ button to MOVE LIST for registering thumbnails in bulk. Moves are presented one at a time, so picking the image that matches the move on screen advances to the next one automatically. Target only the moves without an image and you can stop at any point - reopening simply resumes where you left off - and Skip and Back are both available. Images are also downscaled as they are registered, so export files stay a reasonable size however many you add','[Bug fix] Switching characters while the MEMO tab was open left the previous character\'s memo on screen, and pressing Save memo from there overwrote the new character\'s memo. Switching now stores any unsaved memo against the character it belongs to and reloads the memo for the character you switched to. Adding a character and importing data are handled the same way'] },
   { version:'1.3.1', date:'2026.08.09', ja:['2026.08.03 バランス調整を反映。27キャラクター・122技のフレームデータを公式フレーム表の値に更新しました','リュウ・JP・エドは、判定やコンボ補正などフレーム表に現れない調整のみのため数値の変更はありません'], en:['Applied the 2026.08.03 balance update: refreshed frame data for 122 moves across 27 characters to match the official frame tables','Ryu, JP and Ed have no numeric changes — their adjustments only cover hitboxes and combo scaling, which the frame tables do not list'] },
   { version:'1.3.0', date:'2026.08.08', ja:['新キャラクター「ヤスミン」の技データ(82技)を追加','⚙ 設定の表示モードに「タブレット表示」を追加。配置はPCレイアウトのまま、操作だけスマホと同じタップ中心になります','スマホ・タブレットで、コンボを長押しすると技追加モードに切り替えられるようにしました。モードに入ってから技をタップすると、そのコンボに追加されます','技追加モード中は、技と技の隙間に挿入位置（キャレット）が表示されます。オレンジに光っている位置に次の技が入り、隙間をタップすれば位置を変えられるので、コンボの途中にも技を差し込めます。既定は末尾で、技を1つ入れるとキャレットが自動で1つ右へ進むため、続けてタップするだけでコンボを組み立てられます','スマホ・タブレットで、コンボ内の技チップを長押しすると「移動中」になり、貼り付け先の隙間をタップして技を移動できるようにしました。同じコンボ内の並び替えだけでなく別のコンボへも移せます。まとめ表示（×3）のチップはまとまりごと、ヒット状況（C/PC/D/G）も一緒に移動します','コンボの編集中に ◀ ▶ ボタンを追加しました。▶ でそのコンボをすぐ上のコンボの分岐にでき、◀ で親と同じ階層へ出せます（トップレベルまで上げるとルートに戻ります）。配下の分岐ツリーもまとめて移動するので、グリップのドラッグ&ドロップが使えない環境でも階層を組み替えられます'], en:['Added move data for the new character Yasmine (82 moves)','Added a Tablet display mode under ⚙ Settings: it keeps the desktop layout while switching to mobile-style tap controls','On phones and tablets you can now long-press a combo to toggle add mode. Once in add mode, tapping a move adds it to that combo','While in add mode, an insertion caret appears in the gaps between moves. The next move goes wherever the orange caret sits, and tapping a gap moves it, so you can insert moves in the middle of a combo. It defaults to the end and steps one position to the right after each move, so you can build a combo by tapping straight through','On phones and tablets you can now long-press a move chip inside a combo to pick it up, then tap a gap to move it there — either reordering within the combo or moving it to a different one. Grouped chips like ×3 move as a whole and carry their hit states with them','Added ◀ ▶ buttons while editing a combo: ▶ turns it into a branch of the combo directly above, and ◀ moves it out to its parent level (keep going and it returns to the top level). Its own branch tree moves with it, so you can restructure the hierarchy without the drag-and-drop grip'] },
@@ -4535,7 +4528,7 @@ function openTutorial(){
     H('#2ecc71','🔧 技の管理')+
     D(`• ${b('✎ ボタン')} — 技のフレームデータを編集<br>• ${b('＋ 技追加')} — 独自の技を新規登録<br>• ${b('発動条件')} — 技に発動条件（例: 体力25%以下）を設定でき、設定すると技名の横に ⚡ アイコンが表示されます<br>• ${b('サムネイル')} — 技ごとに16:9画像を登録可能。登録時に自動で縮小されるので、大きなスクリーンショットをそのまま選んでも書き出しファイルが膨らみません<br>• ${b('🖼＋ 一括登録')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイルをまとめて登録できます。技が1つずつ表示されるので、それに合う画像を選ぶだけで次の技へ自動で進みます。対象は${b('未登録の技だけ')}／すべて（登録済みも差し替え）から選べ、${b('スキップ')}と${b('戻る')}も可能。未登録のみにしておけば、中断しても次に開いたときに続きから再開できます<br>• ${b('🔍 検索')} — MOVE LIST 上部の検索欄で、技名とコマンドから絞り込めます。空白で区切ると${b('AND検索')}（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１）は区別しません。${b('テンキー表記')}でも引けます（${b('2')}＝↓、${b('236')}＝↓↘→、${b('46')}＝←溜め→）。「236 K」のように空白で区切ると、コマンドとボタンを組み合わせて絞り込めます。ソートバーとの併用も可能<br>• ${b('表示切替（🖼 / ☰）')} — ${b('MOVE LIST ヘッダーのボタン')}で、サムネイル大表示とリスト（コンパクト）表示をワンタップで切替（モバイルでは折りたたみボタンの左に表示）<br>• ${b('ソートバー')} — 技タイプ別に技リストを絞り込み<br>• ${b('パネル幅の変更')} — PCでは、MOVE LIST と右側の${b('境界をドラッグ')}して技リストの幅を変えられます（${b('ダブルクリック')}で既定幅に戻り、幅は次回も引き継がれます）。広げると技カードが自動で2列・3列に増えます<br>• ${b('技プリセット')} — 新規キャラを${b('＋ キャラ')}で追加する際、全キャラ共通の技（立ち・しゃがみ・ジャンプの弱中強P・K、投げ・ドライブ系、ステップ/歩き/ジャンプ）をまとめて登録するか選べます（通称・フレーム・ダメージは空欄。ドライブ系のゲージ消費のみ設定済み）`)+
     H('#6fd0e6','🕸 ルート図')+
-    D(`登録したコンボの技を${b('「位置（手目）」ごとに左から右へ')}並べ、技のつながりを1枚で俯瞰できるタブです。<br>• ${b('ノード（技チップ）')} — 1手目・2手目…と列で並びます。${b('同じ位置で同じ技')}を使うコンボは1つのノードにまとめられます<br>• ${b('右上の数字バッジ')} — その技を${b('その位置で使っているコンボの本数')}（共有数）。よく使う中継技ほど数字が大きくなります<br>• ${b('ノードの色')} — MOVE LIST と同じ技タイプ別の色。上辺が${b('白＝始動技')}、${b('オレンジ＝締め（コンボの終端）')}を表します<br>• ${b('締めノード')} — そのコンボの終端には、右側に${b('コンボ名とDMG/DG')}が表示されます。同じ技で締めるコンボが複数あるときは「締め◯件」とまとまり、クリックで下部の情報バーに一覧が出ます<br>• ${b('クリックで強調')} — 技ノードをクリックすると、${b('その技を含む実際のコンボ')}だけがハイライトされ、関係しないノード・線は淡くなります（背景クリックで解除）<br>• ${b('拡大縮小')} — ツールバーの ${b('− / ＋')} で倒率を変えられます。中央の${b('倒率表示')}を押すと100%に、${b('全体')}を押すとグラフ全体が画面に収まる倒率になります。PCは ${b('Ctrl（⌘）＋ホイール')}、スマホ・タブレットは${b('2本指のピンチ')}でも操作でき、いずれも${b('カーソル（指）の位置を中心')}に拡大縮小します。倒率は次回起動時も引き継がれます<br>• ${b('🕸 表示／非表示')} — コンボ一覧 で各コンボの${b('「📋 コマンド出力」ボタンの左')}にある${b('「🕸 表示／🕸 非表示」')}ボタンで、そのコンボを ルート図 に${b('表示するかを個別に切り替え')}られます。非表示にしたコンボはグラフから除外され、ツールバーに${b('「非表示 ◯件」')}と表示されます（切り替えはコンボごとに保存されます）<br>• ${b('※ 注意')} — 同位置・同技をまとめる都合上、${b('線を目で辿ると実在しない並びに見える')}ことがあります。正確な並びは ${b('コンボ一覧 / 始動技別')} で、特定の技を含むコンボは${b('ノードのクリック')}で確認してください`)+
+    D(`登録したコンボの技を${b('技の並び方（つながり）に沿って左から右へ')}並べ、技のつながりを1枚で俯瞰できるタブです。${b('共通ルート抽出')}という仕組みで、${b('コンボどうしで共通する部分列を自動で見つけて重ねます')}。<br>• ${b('ノード（技チップ）')} — ${b('共通する技の並びを1つのノードに集約')}して列で並べます<br>• ${b('右上の数字バッジ')} — その技を${b('そのノードで使っているコンボの本数')}（共有数）。よく使う中継技ほど数字が大きくなります<br>• ${b('ノードの色')} — MOVE LIST と同じ技タイプ別の色。上辺が${b('白＝始動技')}、${b('オレンジ＝締め（コンボの終端）')}を表します<br>• ${b('締めノード')} — そのコンボの終端には、右側に${b('コンボ名とDMG/DG')}が表示されます。同じ技で締めるコンボが複数あるときは「締め◯件」とまとまり、クリックで下部の情報バーに一覧が出ます<br>• ${b('クリックで強調')} — 技ノードをクリックすると、${b('その技を含む実際のコンボ')}だけがハイライトされ、関係しないノード・線は淡くなります（背景クリックで解除）<br>• ${b('拡大縮小')} — ツールバーの ${b('− / ＋')} で倒率を変えられます。中央の${b('倒率表示')}を押すと100%に、${b('全体')}を押すとグラフ全体が画面に収まる倒率になります。PCは ${b('Ctrl（⌘）＋ホイール')}、スマホ・タブレットは${b('2本指のピンチ')}でも操作でき、いずれも${b('カーソル（指）の位置を中心')}に拡大縮小します。倒率は次回起動時も引き継がれます<br>• ${b('🕸 表示／非表示')} — コンボ一覧 で各コンボの${b('「📋 コマンド出力」ボタンの左')}にある${b('「🕸 表示／🕸 非表示」')}ボタンで、そのコンボを ルート図 に${b('表示するかを個別に切り替え')}られます。非表示にしたコンボはグラフから除外され、ツールバーに${b('「非表示 ◯件」')}と表示されます（切り替えはコンボごとに保存されます）<br>• ${b('※ 注意')} — 共通する部分列を自動でまとめる都合上、${b('線を目で辿ると実在しない並びに見える')}ことがあります。正確な並びは ${b('コンボ一覧 / 始動技別')} で、特定の技を含むコンボは${b('ノードのクリック')}で確認してください`)+
     CAT('環境・データ')+
     H('#2980b9','📱 モバイル／タブレット表示')+
     D(`• ${b('⚙ 設定')}の表示モードで「自動 / PC / ${b('タブレット')} / モバイル」を切替（${b('タブレット')}は配置はPCレイアウトのまま、操作だけモバイルと同じタップ中心になります）<br>• モバイル・タブレットでは、${b('コンボを長押し')}するか、編集中に${b('＋ 技を追加')}を押すと${b('技追加モード')}になります。モードに入ってから技をタップすると、そのコンボに追加されます（画面下部のバー、または追加モード中のコンボをもう一度長押しで終了）<br>• 追加モード中は、技と技の${b('隙間に挿入位置（｜）')}が表示されます。オレンジに光っている位置に次の技が入るので、${b('隙間をタップ')}して位置を変えれば、コンボの${b('途中にも技を差し込めます')}（既定は末尾。入れた直後にキャレットは1つ右へ進むので、そのまま続けて並べられます）<br>• 並び替えたいときは、コンボ内の${b('技チップを長押し')}すると${b('移動中')}になります。全コンボの隙間に貼り付け先が出るので、置きたい${b('隙間をタップ')}すれば移動できます（${b('別のコンボへも移せます')}。まとめ表示（×3）のチップは${b('まとまりごと')}、ヒット状況（C/PC/D/G）も一緒に移動します。つまんだチップをもう一度タップ、または画面下部の${b('完了')}で解除）<br>• ${b('MOVE LIST のヘッダーをタップ')}で技リストを折りたたみ、画面を広く使えます（${b('モバイルのみ')}。タブレットはPCと同じ常時表示）<br>• ${b('≡ メニュー')} — ヘッダーの操作ボタン（キャラ追加・技追加・保存・書き出しなど）を折りたたみ/展開できます（${b('モバイルのみ')}）`)+
@@ -4560,7 +4553,7 @@ function openTutorial(){
     H('#2ecc71','🔧 Managing moves')+
     D(`• ${b('✎ button')} — Edit a move's frame data<br>• ${b('＋ Move')} — Register your own custom move<br>• ${b('Condition')} — Set an activation condition for a move (e.g. HP 25% or below); a ⚡ icon then appears next to the move name<br>• ${b('Thumbnail')} — Register a 16:9 image per move. Images are downscaled automatically on registration, so you can pick a full-size screenshot without bloating your export file<br>• ${b('🖼＋ Bulk registration')} — The ${b('button in the MOVE LIST header')} registers thumbnails in bulk. Moves are shown one at a time, so choosing the matching image advances to the next automatically. Target ${b('only moves without an image')} or all moves (replacing existing ones), with ${b('Skip')} and ${b('Back')} available. With the first option you can stop at any point and simply resume where you left off<br>• ${b('🔍 Search')} — The search box at the top of MOVE LIST filters by move name and input. Separating words with spaces performs an ${b('AND search')}, and case and full-/half-width characters are treated the same (SA1 / ＳＡ１). ${b('Numpad notation')} works too (${b('2')} = ↓, ${b('236')} = ↓↘→, ${b('46')} = charge ← then →). Combine a motion with a button by separating them, e.g. "236 K". Works alongside the sort bar<br>• ${b('View toggle (🖼 / ☰)')} — Use the ${b('button in the MOVE LIST header')} to switch between large-thumbnail and compact list view with one tap (on mobile it sits to the left of the collapse toggle)<br>• ${b('Sort bar')} — Filter the move list by move type<br>• ${b('Panel width')} — On desktop, ${b('drag the divider')} between MOVE LIST and the right-hand panel to resize the move list (${b('double-click')} resets it, and the width is remembered next time). Widening it flows the move cards into two or three columns<br>• ${b('Move preset')} — When adding a new character with ${b('＋ Character')}, you can choose to bulk-register the moves common to all characters (standing/crouching/jump light-medium-heavy P・K, throws & Drive moves, step/walk/jump). Nicknames, frames and damage are left blank (only Drive Gauge cost is pre-filled)`)+
     H('#6fd0e6','🕸 ROUTE GRAPH')+
-    D(`Lays out the moves of your saved combos ${b('by position (1st, 2nd, …) from left to right')}, so you can see how moves connect across combos in one view.<br>• ${b('Nodes (move chips)')} — Arranged in columns by position. Combos that use ${b('the same move at the same position')} are merged into a single node<br>• ${b('Number badge (top-right)')} — How many ${b('combos use that move at that position')} (shared count). The more a connector move is reused, the higher the number<br>• ${b('Node color')} — The same move-type colors as MOVE LIST. A ${b('white top edge = starter')}, ${b('orange = finisher (combo end)')}<br>• ${b('Finisher nodes')} — Show the ${b('combo name and DMG/DG')} on the right. When several combos end on the same move they are grouped as "N combos end here"; click to list them in the info bar below<br>• ${b('Click to highlight')} — Clicking a move node highlights ${b('only the actual combos that include it')} and dims unrelated nodes and lines (click the background to clear)<br>• ${b('Zooming')} — Use ${b('− / ＋')} in the toolbar to change the zoom level. Press the ${b('percentage')} in the middle to return to 100%, or ${b('Fit')} to scale the whole graph into view. You can also use ${b('Ctrl (⌘) + wheel')} on desktop and a ${b('two-finger pinch')} on phones and tablets; both zoom ${b('around the pointer (or your fingers)')}. The zoom level is remembered next time<br>• ${b('🕸 Show / hide per combo')} — In COMBO LIST, each combo has a ${b('"🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation"')}. Use it to ${b('include or exclude that combo from ROUTE GRAPH individually')}. Hidden combos are dropped from the graph and the toolbar shows ${b('"N hidden"')} (the choice is saved per combo)<br>• ${b('Note')} — Because same-position/same-move chips are merged, ${b('tracing the lines by eye can suggest sequences that do not exist')}. Check exact sequences in ${b('COMBO LIST / STARTER TREE')}, and use ${b('a node click')} to see which combos actually include a given move`)+
+    D(`Lays out the moves of your saved combos ${b('following how they connect')} from left to right, so you can see how moves connect across combos in one view. It uses ${b('Common Route Extraction')}: it ${b('automatically finds and merges shared sub-sequences between combos')}.<br>• ${b('Nodes (move chips)')} — ${b('Shared runs of moves are merged into a single node')} and arranged in columns<br>• ${b('Number badge (top-right)')} — How many ${b('combos share that node')} (shared count). The more a connector move is reused, the higher the number<br>• ${b('Node color')} — The same move-type colors as MOVE LIST. A ${b('white top edge = starter')}, ${b('orange = finisher (combo end)')}<br>• ${b('Finisher nodes')} — Show the ${b('combo name and DMG/DG')} on the right. When several combos end on the same move they are grouped as "N combos end here"; click to list them in the info bar below<br>• ${b('Click to highlight')} — Clicking a move node highlights ${b('only the actual combos that include it')} and dims unrelated nodes and lines (click the background to clear)<br>• ${b('Zooming')} — Use ${b('− / ＋')} in the toolbar to change the zoom level. Press the ${b('percentage')} in the middle to return to 100%, or ${b('Fit')} to scale the whole graph into view. You can also use ${b('Ctrl (⌘) + wheel')} on desktop and a ${b('two-finger pinch')} on phones and tablets; both zoom ${b('around the pointer (or your fingers)')}. The zoom level is remembered next time<br>• ${b('🕸 Show / hide per combo')} — In COMBO LIST, each combo has a ${b('"🕸 Shown / 🕸 Hidden" button to the left of "📋 Copy notation"')}. Use it to ${b('include or exclude that combo from ROUTE GRAPH individually')}. Hidden combos are dropped from the graph and the toolbar shows ${b('"N hidden"')} (the choice is saved per combo)<br>• ${b('Note')} — Because shared sub-sequences are merged automatically, ${b('tracing the lines by eye can suggest sequences that do not exist')}. Check exact sequences in ${b('COMBO LIST / STARTER TREE')}, and use ${b('a node click')} to see which combos actually include a given move`)+
     CAT('Environment & data')+
     H('#2980b9','📱 Mobile / Tablet display')+
     D(`• Switch between "Auto / Desktop / ${b('Tablet')} / Mobile" via the display mode in ${b('⚙ Settings')} (${b('Tablet')} keeps the desktop layout, but switches the controls to the same tap-centric style as Mobile)<br>• On mobile and tablet, ${b('long-press a combo')}, or press ${b('＋ Add move')} while editing, then tap moves to add them (finish via the bar at the bottom of the screen; long-pressing a combo that's already in add mode ends it again)<br>• While in add mode, an ${b('insertion point (|)')} appears in the gaps between moves. The next move goes wherever the orange caret is, so ${b('tap a gap')} to move it and you can ${b('insert moves mid-combo')} (it defaults to the end, and steps one to the right after each move so you can keep adding in order)<br>• To reorder, ${b('long-press a move chip')} inside a combo to ${b('pick it up')}. Paste points appear in the gaps of every combo, so ${b('tap a gap')} to move it there (${b('including into another combo')}; grouped chips like ×3 move ${b('as a whole')}, carrying their hit states. Tap the picked chip again, or ${b('Done')} at the bottom of the screen, to drop it)<br>• ${b('Tap the MOVE LIST header')} to collapse the move list and use more of the screen (${b('mobile only')} — tablet always shows it, like desktop)<br>• ${b('≡ Menu')} — Collapse/expand the header action buttons (add character, add move, save, export, etc.) (${b('mobile only')})`)+
@@ -5454,17 +5447,90 @@ const RG_ZOOM_MIN=0.25, RG_ZOOM_MAX=2.5, RG_ZOOM_STEP=1.2;
 let routeZoom=(()=>{try{const v=parseFloat(localStorage.getItem('sf6_rgZoom'));
   return (v>=RG_ZOOM_MIN&&v<=RG_ZOOM_MAX)?v:1;}catch(e){return 1;}})();
 function saveRouteZoom(){try{localStorage.setItem('sf6_rgZoom',String(routeZoom));}catch(e){}}
-// ★ ルート図のノード集約の数え方。既定は前から（先頭から数えて一致するものを重ねる）。
-//   後ろから（末尾から数えて一致するものを重ねる）に切り替えると、実際には存在しないルートが
-//   線で繋がって見えることがあるが、締め技側からの共通点を俯瞰したい場合に使う。
-let routeAlignEnd=(()=>{try{return localStorage.getItem('sf6_rgAlignEnd')==='1';}catch(e){return false;}})();
-function setRouteAlign(fromEnd){
-  fromEnd=!!fromEnd;
-  if(routeAlignEnd===fromEnd)return;
-  routeAlignEnd=fromEnd;
-  try{localStorage.setItem('sf6_rgAlignEnd',routeAlignEnd?'1':'0');}catch(e){}
-  renderRouteGraph();
-  showToast(routeAlignEnd?t('rgAlignToastBack'):t('rgAlignToastFront'));
+// ===== [S:poa] 部分配列アラインメント（Partial Order Alignment 簡易版）=====
+// 各コンボの技列を、既存の技グラフ（DAG）に対して逐次アラインメントしながら追加していく。
+// 「一致」「削除（このコンボはこの既存ノードを通らない）」「挿入（このコンボだけの新規ノード）」の
+// 3種の遷移をDPで探索し、一致数が最大になる経路でノードを再利用する。
+// 参考: POA (Partial Order Alignment / Lee et al. 2002) の考え方を簡易化したもの。
+function buildPOAGraph(comboUnitsList){
+  let uid=0;const allNodes=[];const byId={};
+  const newNode=(mid,count,ctr)=>{const n={id:'n'+(uid++),mid:mid,count:count,ctr:ctr,pass:0,ends:[],starter:false,preds:new Set(),succs:new Set()};allNodes.push(n);byId[n.id]=n;return n;};
+  let topo=[];const topoPos=new Map();
+  const rebuildTopoPos=()=>{topoPos.clear();topo.forEach((id,i)=>topoPos.set(id,i));};
+  const edgeSet=new Set();const edges=[];
+  const addEdge=(srcId,dstId)=>{const key=srcId+'>'+dstId;if(!edgeSet.has(key)){edgeSet.add(key);edges.push({src:srcId,dst:dstId,key:key});byId[srcId].succs.add(dstId);byId[dstId].preds.add(srcId);}};
+  const comboPath={};
+  const MATCH=2,GAP=-1,EPS=1e-6; // EPS: スコアが同点のとき、より後方（＝直近）のノードへ一致させたい方をわずかに優先する
+
+  const predIdxOf=(j)=>{ // j: 1-based topo index。実際の先行ノードのtopo位置（1-based）配列を返す。無ければ[0](仮想開始)
+    const node=byId[topo[j-1]];
+    if(node.preds.size===0)return[0];
+    const arr=[];node.preds.forEach(pid=>{const pIdx=topoPos.get(pid);if(pIdx!==undefined)arr.push(pIdx+1);});
+    return arr.length?arr:[0];
+  };
+
+  function alignAndMerge(units,c){
+    const n=units.length,m=topo.length,NEG=-1e8;
+    const score=[];const trace=[];
+    for(let i=0;i<=n;i++){score.push(new Array(m+1).fill(NEG));trace.push(new Array(m+1).fill(null));}
+    for(let j=0;j<=m;j++)score[0][j]=0;
+    for(let i=1;i<=n;i++)score[i][0]=0; // 先頭側の未一致は無償（どこから一致を始めてもよい＝セミグローバル）
+    for(let j=1;j<=m;j++){
+      const preds=predIdxOf(j);const node=byId[topo[j-1]];const bonus=j*EPS;
+      for(let i=1;i<=n;i++){
+        let best=NEG,bt=null;
+        for(const p of preds){const v=score[i][p]+GAP;if(v>best){best=v;bt={type:'D',i:i,j:p};}}
+        {const v=score[i-1][j]+GAP;if(v>best){best=v;bt={type:'I',i:i-1,j:j};}}
+        const u=units[i-1];
+        if(u.mid===node.mid&&u.ctr===node.ctr&&u.count===node.count){
+          for(const p of preds){const v=score[i-1][p]+MATCH+bonus;if(v>best){best=v;bt={type:'M',i:i-1,j:p};}}
+        }
+        score[i][j]=best;trace[i][j]=bt;
+      }
+    }
+    let bestJ=0,bestScore=score[n][0];
+    for(let j=1;j<=m;j++){if(score[n][j]>bestScore){bestScore=score[n][j];bestJ=j;}}
+    const ops=[];let ci=n,cj=bestJ;
+    while(ci>0||cj>0){
+      const t=trace[ci]?trace[ci][cj]:null;
+      if(!t){if(ci>0){ops.push({type:'I',seqIdx:ci-1,nodeId:null});ci--;}else break;continue;}
+      if(t.type==='M')ops.push({type:'M',seqIdx:ci-1,nodeId:topo[cj-1]});
+      else if(t.type==='D')ops.push({type:'D',seqIdx:null,nodeId:topo[cj-1]});
+      else ops.push({type:'I',seqIdx:ci-1,nodeId:null});
+      ci=t.i;cj=t.j;
+    }
+    ops.reverse();
+    const path=[];let prevId=null,lastRealIdx=-1;
+    ops.forEach(op=>{
+      if(op.type==='D'){const idx=topoPos.get(op.nodeId);if(idx!==undefined)lastRealIdx=Math.max(lastRealIdx,idx);}
+      else if(op.type==='M'){
+        const nid=op.nodeId,node=byId[nid];node.pass++;if(op.seqIdx===0)node.starter=true;
+        if(prevId)addEdge(prevId,nid);path.push(nid);prevId=nid;lastRealIdx=topoPos.get(nid);
+      }else{
+        const u=units[op.seqIdx];const node=newNode(u.mid,u.count,u.ctr);node.pass++;if(op.seqIdx===0)node.starter=true;
+        if(prevId)addEdge(prevId,node.id);path.push(node.id);prevId=node.id;
+        topo.splice(lastRealIdx+1,0,node.id);rebuildTopoPos();lastRealIdx=topoPos.get(node.id);
+      }
+    });
+    if(prevId)byId[prevId].ends.push(c);
+    comboPath[c.id]=path;
+  }
+
+  comboUnitsList.forEach(({combo:c,units},idx)=>{
+    if(idx===0){
+      let prev=null;const path=[];
+      units.forEach((u,i)=>{const n=newNode(u.mid,u.count,u.ctr);if(i===0)n.starter=true;n.pass++;path.push(n.id);topo.push(n.id);if(prev)addEdge(prev.id,n.id);prev=n;});
+      rebuildTopoPos();if(prev)prev.ends.push(c);comboPath[c.id]=path;
+      return;
+    }
+    alignAndMerge(units,c);
+  });
+
+  // ── 列(depth)は「そのノードに到達するまでの最長経路長」で決める（トポロジカル順に確定）──
+  allNodes.forEach(n=>n.depth=0);
+  topo.forEach(id=>{const n=byId[id];let d=0;n.preds.forEach(pid=>{d=Math.max(d,byId[pid].depth+1);});n.depth=d;});
+
+  return {allNodes:allNodes,edges:edges,comboPath:comboPath,byId:byId};
 }
 function renderRouteGraph(){
   const wrap=document.getElementById('routeGraphWrap');if(!wrap)return;
@@ -5476,14 +5542,8 @@ function renderRouteGraph(){
   if(!combos.length){wrap.innerHTML='<div class="rg-empty">'+esc(withMoves.length?t('rgAllHidden'):t('rgEmpty'))+'</div>';return;}
   const hiddenCount=withMoves.length-combos.length;
 
-  // ── ノード構築（位置(列)+技 が同じなら集約。途中までの並びが違っても重ねる）──
+  // ── ノード構築（部分配列アラインメントで、途中の共通部分もまとめて重ねる）──
   // 同じ技のまとめ表示(groupRepeats)がONなら、連続する同一技を ×N の1ノードにまとめる。
-  let uid=0;const allNodes=[];const comboPath={};const edges=[];
-  const nodeMap=new Map();const edgeSet=new Set();
-  const newNode=(mid,d,count,ctr)=>{const n={id:'n'+(uid++),mid:mid,depth:d,count:count,ctr:ctr,pass:0,ends:[]};allNodes.push(n);return n;};
-  // ノードの同一性: 位置(列) + 技 + まとめ数 + ヒット状況。弱P×3 と 弱P×2、
-  // またヒット状況(カウンター/ディレイ等)が付いた技と素の技は別ノードとして扱う。
-  const getNode=(mid,d,count,ctr)=>{const k=d+'|'+mid+'|'+count+'|'+ctr;let n=nodeMap.get(k);if(!n){n=newNode(mid,d,count,ctr);nodeMap.set(k,n);}return n;};
   // 各コンボを「塊(ユニット)」列に変換。まとめるのは「素の同一技が連続」する場合のみ。
   // カウンターやディレイ等のヒット状況が付いた技は別技として扱い、まとめない。
   const comboUnits=combos.map(c=>{
@@ -5496,19 +5556,8 @@ function renderRouteGraph(){
       else{units.push({mid:mid,count:1,ctr:ctr});}});
     return {combo:c,units:units};
   });
-  // ★ 後ろから数えるモード(routeAlignEnd)では、各コンボの列位置(d)を「末尾がそろう」ように
-  //   右へずらす（offset）。これにより「末尾から数えて技が一致」する場合に同じノードへ重なる。
-  //   短いコンボほど offset が大きくなり、始点側の列がずれて空くぶん、前から見ると
-  //   実在しない並びに見えることがある（呼び出し元の注意書きの通り）。
-  const maxLen=comboUnits.reduce((m,cu)=>Math.max(m,cu.units.length),0);
-  comboUnits.forEach(({combo:c,units})=>{
-    const offset=routeAlignEnd?(maxLen-units.length):0;
-    const path=[];let prev=null;
-    units.forEach((u,i)=>{const d=offset+i;const n=getNode(u.mid,d,u.count,u.ctr);n.pass++;if(i===0)n.starter=true;path.push(n.id);
-      if(prev){const ek=prev.id+'>'+n.id;if(!edgeSet.has(ek)){edgeSet.add(ek);edges.push({src:prev.id,dst:n.id,key:ek});}}
-      prev=n;});
-    if(prev)prev.ends.push(c);comboPath[c.id]=path;});
-  const byId={};allNodes.forEach(n=>byId[n.id]=n);
+  const g=buildPOAGraph(comboUnits);
+  const allNodes=g.allNodes,edges=g.edges,comboPath=g.comboPath,byId=g.byId;
 
   // ── レイアウト（位置=列。各列のノード順は接続先の平均位置にそろえて交差を低減）──
   const colStep=210,rowGap=96,topPad=48,leftPad=92,rightPad=190;
@@ -5543,10 +5592,6 @@ function renderRouteGraph(){
   // ── ツールバー（凡例）──
   const tb=document.createElement('div');tb.className='rg-toolbar';
   tb.innerHTML=(hiddenCount>0?'<span class="rg-hidden-note" style="font-size:10px;color:#7c8a99;">'+esc(t('rgHiddenCount').replace('{n}',hiddenCount))+'</span>':'')+
-    '<span class="rg-align">'+
-      '<button type="button" class="rg-zbtn'+(routeAlignEnd?'':' on')+'" id="rgAlignFront" title="'+esc(t('rgAlignFrontTitle'))+'">'+esc(t('rgAlignFront'))+'</button>'+
-      '<button type="button" class="rg-zbtn'+(routeAlignEnd?' on':'')+'" id="rgAlignBack" title="'+esc(t('rgAlignBackTitle'))+'">'+esc(t('rgAlignBack'))+'</button>'+
-    '</span>'+
     '<span class="rg-zoom">'+
       '<button type="button" class="rg-zbtn" id="rgZoomOut" title="'+esc(t('rgZoomOut'))+'" aria-label="'+esc(t('rgZoomOut'))+'">−</button>'+
       '<button type="button" class="rg-zlabel" id="rgZoomReset" title="'+esc(t('rgZoomReset'))+'"><span id="rgZoomLabel">100%</span></button>'+
@@ -5640,8 +5685,6 @@ function renderRouteGraph(){
     setRouteZoom(Math.min(w/stageW,h/stageH,1));
     scroll.scrollLeft=0;scroll.scrollTop=0;
   }
-  document.getElementById('rgAlignFront').addEventListener('click',e=>{e.stopPropagation();setRouteAlign(false);});
-  document.getElementById('rgAlignBack').addEventListener('click',e=>{e.stopPropagation();setRouteAlign(true);});
   document.getElementById('rgZoomOut').addEventListener('click',e=>{e.stopPropagation();setRouteZoom(routeZoom/RG_ZOOM_STEP);});
   document.getElementById('rgZoomIn').addEventListener('click',e=>{e.stopPropagation();setRouteZoom(routeZoom*RG_ZOOM_STEP);});
   document.getElementById('rgZoomReset').addEventListener('click',e=>{e.stopPropagation();setRouteZoom(1);});
@@ -5692,14 +5735,10 @@ function renderRouteGraph(){
     }
     const names=hot.slice(0,4).map(c=>esc(c.name||'COMBO')).join(ja?'、':', ');
     const more=hot.length>4?(ja?(' ほか'+(hot.length-4)+'件'):(' +'+(hot.length-4)+' more')):'';
-    // ★ 後ろから数えるモードでは、コンボごとに前からの手数が異なりうるため「末尾から◯手目」で表示する
-    //   （このノードに合流する全コンボで共通の値になるのは末尾からの手数の方）。
-    const ord=routeAlignEnd?(maxLen-byId[id].depth):(byId[id].depth+1);
-    const ordLabelJa=routeAlignEnd?('後ろから'+ord+'手目'):(ord+'手目');
-    const ordLabelEn=routeAlignEnd?('move '+ord+' from the end'):('move '+ord);
+    // ★ 合流するコンボごとに実際の手数がまちまちになりうるため、単一の手目は示さず技名のみ表示する。
     info.innerHTML=ja
-      ? '<b>'+esc(m?m.name:'?')+'</b>（'+ordLabelJa+'） を含むコンボ <b>'+hot.length+'</b> 件 — '+names+more
-      : '<b>'+esc(m?m.name:'?')+'</b> ('+ordLabelEn+') — included in <b>'+hot.length+'</b> combo'+(hot.length===1?'':'s')+': '+names+more;
+      ? '<b>'+esc(m?m.name:'?')+'</b> を含むコンボ <b>'+hot.length+'</b> 件 — '+names+more
+      : '<b>'+esc(m?m.name:'?')+'</b> — included in <b>'+hot.length+'</b> combo'+(hot.length===1?'':'s')+': '+names+more;
   }
   function clearSel(){selId=null;Object.keys(nodeEls).forEach(k=>nodeEls[k].classList.remove('dim','sel'));edgeEls.forEach(e=>e.classList.remove('hot','faded'));info.textContent=t('rgHint');}
   scroll.addEventListener('click',clearSel);
