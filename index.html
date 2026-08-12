@@ -63,7 +63,7 @@
 <!-- ===== [S:css] スタイル定義 ===== -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-:root{--bg:#1b2733;--bg2:#22303d;--bg3:#2c3e50;--bg4:#34495e;--bd:#3a4d61;--bd2:#4a5f76;--gold:#f47b20;--text:#ecf0f1;--muted:#c3ccd5;--dim:#9aa6b4;--hit:#2ecc71;--blk:#e74c3c;}
+:root{--bg:#1b2733;--bg2:#22303d;--bg3:#2c3e50;--bg4:#34495e;--bd:#3a4d61;--bd2:#4a5f76;--gold:#f47b20;--text:#ecf0f1;--muted:#c3ccd5;--dim:#9aa6b4;--hit:#2ecc71;--blk:#e74c3c;--trunk:#c9d6e3;}
 html,body{width:100%;height:100%;background:#050508;overflow:hidden;}
 body{display:flex;align-items:center;justify-content:center;font-family:'Noto Sans JP','Segoe UI',system-ui,sans-serif;}
 #scaleRoot{width:1400px;height:800px;transform-origin:top left;position:absolute;}
@@ -508,6 +508,7 @@ body.mobile .left.collapsed .move-list-wrap{display:none;}
 .rg-legend{display:flex;gap:12px;font-size:11px;color:var(--dim);align-items:center;}
 .rg-legend .ld{display:inline-flex;align-items:center;gap:4px;}
 .rg-legend .lsq{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.rg-legend .lln{width:16px;height:0;display:inline-block;border-top-style:solid;vertical-align:middle;}
 .rg-scroll{flex:1;min-height:0;overflow:auto;touch-action:pan-x pan-y;}
 .rg-canvas{position:relative;margin:0 auto;}
 /* ★ 拡大縮小は stage を transform する。左上基点にして外枠(.rg-canvas)の実寸と合わせる */
@@ -539,7 +540,17 @@ body.mobile .rg-zlabel{min-width:54px;}
 .rg-end-cap .ec-mt{font-size:9px;color:#9a9aa8;white-space:nowrap;}
 .rg-end-cap .ec-count{font-size:10px;font-weight:700;color:var(--gold);background:var(--bg2);border:1px solid var(--gold);border-radius:9px;padding:2px 9px;white-space:nowrap;}
 .rg-edge{fill:none;stroke:var(--bd2);stroke-width:1.6;transition:stroke .15s,stroke-width .15s,opacity .15s;}
-.rg-edge.hot{stroke:var(--gold);stroke-width:2.8;}
+/* 通過コンボ数(w)に応じた太さ。w1=1本しか通らない「幻の経路」候補は細く薄く目立たなくし、
+   w3/w4は多くのコンボが共有する太い線として一目で分かるようにする。w2(2〜3本)は既定より
+   少し明るい色＋太めにして、w1との差をはっきりさせている。 */
+.rg-edge.w1{stroke-width:1.2;opacity:.75;}
+.rg-edge.w2{stroke:#6f89a6;stroke-width:1.8;}
+.rg-edge.w3{stroke:#6f89a6;stroke-width:2.0;}
+.rg-edge.w4{stroke:#6f89a6;stroke-width:2.6;}
+/* 幹線（最も多くのコンボに共有されている経路）。太さは上のw1〜w4のまま、色だけ変えて経路として際立たせる。 */
+.rg-edge.trunk{stroke:var(--trunk);}
+.rg-edge.trunk.w1{opacity:.9;} /* 幹線上のw1は基本ないはずだが、念のため薄すぎないように */
+.rg-edge.hot{stroke:var(--gold);stroke-width:2.8;opacity:1;}
 .rg-edge.faded{opacity:.1;}
 /* 接続ポート点：エッジがノードへ実際に接続する箇所に打つドット。
    途中の列を横切るだけの線はそのノード位置にドットが付かないため、
@@ -969,6 +980,8 @@ const I18N={
   rgLegMid:{ja:'コンボ',en:'Combo'},
   rgLegEnd:{ja:'締め（コンボ終端）',en:'Finisher (combo end)'},
   rgLegShared:{ja:'共有数（その技をその位置で使うコンボの本数）',en:'Shared (combos using this move at this position)'},
+  rgLegTrunk:{ja:'幹線（最も共有されている経路）',en:'Main line (most shared route)'},
+  rgLegThin:{ja:'細い線＝1本のコンボしか通らない',en:'Thin line = used by only one combo'},
   rgColStart:{ja:'始動技',en:'STARTER'},
   rgColMid:{ja:'コンボ',en:'COMBO'},
   rgColEnd:{ja:'締め技',en:'FINISHER'},
@@ -5457,16 +5470,28 @@ function saveRouteZoom(){try{localStorage.setItem('sf6_rgZoom',String(routeZoom)
 // 各コンボの技列を、既存の技グラフ（DAG）に対して逐次アラインメントしながら追加していく。
 // 「一致」「削除（このコンボはこの既存ノードを通らない）」「挿入（このコンボだけの新規ノード）」の
 // 3種の遷移をDPで探索し、一致数が最大になる経路でノードを再利用する。
-// 参考: POA (Partial Order Alignment / Lee et al. 2002) の考え方を簡易化したもの。
+// ギャップはアフィン化: 一致(M)で終わる状態と、ギャップ(G)で終わる状態の2面でスコアを持ち、
+// ギャップの「開始(GAP_OPEN)」と「延長(GAP_EXTEND)」のコストを分ける。「削除（既存ノードを飛ばす）」
+// と「挿入（このコンボだけの新規ノードを足す）」は別種の操作だが、DAGの構造上"中間がまとめて
+// 1ブロック違う"（同じ始動技→別の中継→同じ締め）ケースは削除の連続＋挿入の連続が1本の差分として
+// 隣接して現れるため、G状態は削除・挿入のどちらの継続でもEXTENDで安く繋げる。これにより
+// 「まとめて1ブロック違う」は安く、「あちこちバラバラに1手だけ違う」は相対的に高くつくようになり、
+// 共通の始動技が中間の差の長さだけで分裂する副作用を抑える（一律GAPを緩める対症療法より副作用が少ない）。
+// 参考: POA (Partial Order Alignment / Lee et al. 2002) ＋ Gotoh (1982) のアフィンギャップ拡張。
 function buildPOAGraph(comboUnitsList){
   let uid=0;const allNodes=[];const byId={};
   const newNode=(mid,count,ctr)=>{const n={id:'n'+(uid++),mid:mid,count:count,ctr:ctr,pass:0,ends:[],starter:false,preds:new Set(),succs:new Set()};allNodes.push(n);byId[n.id]=n;return n;};
   let topo=[];const topoPos=new Map();
   const rebuildTopoPos=()=>{topoPos.clear();topo.forEach((id,i)=>topoPos.set(id,i));};
-  const edgeSet=new Set();const edges=[];
-  const addEdge=(srcId,dstId)=>{const key=srcId+'>'+dstId;if(!edgeSet.has(key)){edgeSet.add(key);edges.push({src:srcId,dst:dstId,key:key});byId[srcId].succs.add(dstId);byId[dstId].preds.add(srcId);}};
+  const edgeByKey=new Map();const edges=[];
+  // w: このエッジ（技→技のつながり）を実際に通るコンボの本数。同じ辺を通るたび+1する。
+  // 見た目の線の太さに反映し、幹線（よく通る太い線）と1本しか通らない細い線を区別できるようにする。
+  const addEdge=(srcId,dstId)=>{const key=srcId+'>'+dstId;let e=edgeByKey.get(key);
+    if(!e){e={src:srcId,dst:dstId,key:key,w:0};edgeByKey.set(key,e);edges.push(e);byId[srcId].succs.add(dstId);byId[dstId].preds.add(srcId);}
+    e.w++;};
   const comboPath={};
-  const MATCH=2,GAP=-1,EPS=1e-6; // EPS: スコアが同点のとき、より後方（＝直近）のノードへ一致させたい方をわずかに優先する
+  // GAP_OPEN: ギャップの最初の1手にかかるコスト（重い）／GAP_EXTEND: 同じギャップを1手延ばすごとのコスト（軽い）
+  const MATCH=2,GAP_OPEN=-1.2,GAP_EXTEND=-0.15,EPS=1e-6; // EPS: スコアが同点のとき、より後方（＝直近）のノードへ一致させたい方をわずかに優先する
 
   const predIdxOf=(j)=>{ // j: 1-based topo index。実際の先行ノードのtopo位置（1-based）配列を返す。無ければ[0](仮想開始)
     const node=byId[topo[j-1]];
@@ -5477,33 +5502,53 @@ function buildPOAGraph(comboUnitsList){
 
   function alignAndMerge(units,c){
     const n=units.length,m=topo.length,NEG=-1e8;
-    const score=[];const trace=[];
-    for(let i=0;i<=n;i++){score.push(new Array(m+1).fill(NEG));trace.push(new Array(m+1).fill(null));}
-    for(let j=0;j<=m;j++)score[0][j]=0;
-    for(let i=1;i<=n;i++)score[i][0]=0; // 先頭側の未一致は無償（どこから一致を始めてもよい＝セミグローバル）
+    // M: 一致で終わる状態 / G: ギャップ（既存ノードを飛ばす＝D、またはこのコンボの技を挿入する＝I）で終わる状態
+    const M=[],G=[];
+    const trM=[],trG=[];
+    for(let i=0;i<=n;i++){
+      M.push(new Array(m+1).fill(NEG));G.push(new Array(m+1).fill(NEG));
+      trM.push(new Array(m+1).fill(null));trG.push(new Array(m+1).fill(null));
+    }
+    // 境界（セミグローバル）: 先頭側の未一致は無償（どこから一致を始めてもよい）。境界そのものにはギャップコストを課さない。
+    for(let j=0;j<=m;j++)M[0][j]=0;
+    for(let i=0;i<=n;i++)M[i][0]=0;
     for(let j=1;j<=m;j++){
       const preds=predIdxOf(j);const node=byId[topo[j-1]];const bonus=j*EPS;
       for(let i=1;i<=n;i++){
-        let best=NEG,bt=null;
-        for(const p of preds){const v=score[i][p]+GAP;if(v>best){best=v;bt={type:'D',i:i,j:p};}}
-        {const v=score[i-1][j]+GAP;if(v>best){best=v;bt={type:'I',i:i-1,j:j};}}
+        // --- G: ギャップ状態。D型（既存ノードjを飛ばす。同じiでjだけ進む＝グラフ側のギャップ）と
+        //     I型（このコンボの技iを挿入する。同じjでiだけ進む＝配列側のギャップ）の両方から、
+        //     直前がMなら開始コスト、直前がG（D/I問わず）なら延長コストで遷移する ---
+        let gBest=NEG,gTr=null;
+        for(const p of preds){
+          const vOpen=M[i][p]+GAP_OPEN;if(vOpen>gBest){gBest=vOpen;gTr={opType:'D',pi:i,pj:p,pState:'M'};}
+          const vExt=G[i][p]+GAP_EXTEND;if(vExt>gBest){gBest=vExt;gTr={opType:'D',pi:i,pj:p,pState:'G'};}
+        }
+        {const vOpen=M[i-1][j]+GAP_OPEN;if(vOpen>gBest){gBest=vOpen;gTr={opType:'I',pi:i-1,pj:j,pState:'M'};}
+         const vExt=G[i-1][j]+GAP_EXTEND;if(vExt>gBest){gBest=vExt;gTr={opType:'I',pi:i-1,pj:j,pState:'G'};}}
+        G[i][j]=gBest;trG[i][j]=gTr;
+        // --- M: 技iとノードjが一致 ---
         const u=units[i-1];
         if(u.mid===node.mid&&u.ctr===node.ctr&&u.count===node.count){
-          for(const p of preds){const v=score[i-1][p]+MATCH+bonus;if(v>best){best=v;bt={type:'M',i:i-1,j:p};}}
+          let best=NEG,bp=null,bs=null;
+          for(const p of preds){
+            if(M[i-1][p]>best){best=M[i-1][p];bp=p;bs='M';}
+            if(G[i-1][p]>best){best=G[i-1][p];bp=p;bs='G';}
+          }
+          if(bp!==null){M[i][j]=best+MATCH+bonus;trM[i][j]={pi:i-1,pj:bp,pState:bs};}
         }
-        score[i][j]=best;trace[i][j]=bt;
       }
     }
-    let bestJ=0,bestScore=score[n][0];
-    for(let j=1;j<=m;j++){if(score[n][j]>bestScore){bestScore=score[n][j];bestJ=j;}}
-    const ops=[];let ci=n,cj=bestJ;
+    const bestOf=(i,j)=>M[i][j]>=G[i][j]?{state:'M',value:M[i][j]}:{state:'G',value:G[i][j]};
+    let bestJ=0,bestState='M',bestScore=M[n][0];
+    for(let j=1;j<=m;j++){const b=bestOf(n,j);if(b.value>bestScore){bestScore=b.value;bestJ=j;bestState=b.state;}}
+    const ops=[];let ci=n,cj=bestJ,cs=bestState;
     while(ci>0||cj>0){
-      const t=trace[ci]?trace[ci][cj]:null;
-      if(!t){if(ci>0){ops.push({type:'I',seqIdx:ci-1,nodeId:null});ci--;}else break;continue;}
-      if(t.type==='M')ops.push({type:'M',seqIdx:ci-1,nodeId:topo[cj-1]});
-      else if(t.type==='D')ops.push({type:'D',seqIdx:null,nodeId:topo[cj-1]});
+      const tr=(cs==='M'?trM:trG)[ci][cj];
+      if(!tr){if(ci>0){ops.push({type:'I',seqIdx:ci-1,nodeId:null});ci--;cs='M';}else break;continue;}
+      if(cs==='M')ops.push({type:'M',seqIdx:ci-1,nodeId:topo[cj-1]});
+      else if(tr.opType==='D')ops.push({type:'D',seqIdx:null,nodeId:topo[cj-1]});
       else ops.push({type:'I',seqIdx:ci-1,nodeId:null});
-      ci=t.i;cj=t.j;
+      ci=tr.pi;cj=tr.pj;cs=tr.pState;
     }
     ops.reverse();
     const path=[];let prevId=null,lastRealIdx=-1;
@@ -5591,13 +5636,9 @@ function renderRouteGraph(){
   let trunkEnd=null,trunkBest=-1;
   allNodes.forEach(n=>{if(nextAdj.get(n.id).length===0){const s=trunkScore.get(n.id)||0;if(s>trunkBest){trunkBest=s;trunkEnd=n.id;}}});
   if(trunkEnd===null)allNodes.forEach(n=>{const s=trunkScore.get(n.id)||0;if(s>trunkBest){trunkBest=s;trunkEnd=n.id;}});
-  const trunkSet=new Set();
-  for(let cur=trunkEnd;cur;cur=trunkPrev.get(cur))trunkSet.add(cur);
-  // ★ 次数（ノードに接続する線の本数）に比例して縦間隔を広げ、分岐・合流が集中するノード周りの線の混雑を緩和する。
-  //   標準の通過ノード（入力1+出力1=2本）は加算0。線が増えるほどスロット高を大きくして上下に余白を確保する。
-  const degBase=2,degStep=26,degMax=120;
-  const nodeDeg=n=>prevAdj.get(n.id).length+nextAdj.get(n.id).length;
-  const slotH=n=>rowGap+Math.min(degMax,Math.max(0,nodeDeg(n)-degBase)*degStep);
+  const trunkSet=new Set();const trunkEdgeKeys=new Set();
+  for(let cur=trunkEnd;cur;cur=trunkPrev.get(cur)){trunkSet.add(cur);const p=trunkPrev.get(cur);if(p)trunkEdgeKeys.add(p+'>'+cur);}
+  const slotH=n=>rowGap;
   // 各列をスロット高で積み上げる。幹線ノードがある列は幹線ノードのYを基準(0)に、
   // 他のノードはその上下に積み上げる（＝幹線が常に一直線の基準線になる）。
   // 幹線ノードが無い列は、従来どおり列のバウンディングボックス中央を基準にする。
@@ -5629,6 +5670,8 @@ function renderRouteGraph(){
       '<span class="ld"><span class="lsq" style="background:#e3ebf5;"></span>'+esc(t('rgLegStart'))+'</span>'+
       '<span class="ld"><span class="lsq" style="background:var(--gold);"></span>'+esc(t('rgLegEnd'))+'</span>'+
       '<span class="ld"><span class="rg-cnt">N</span>'+esc(t('rgLegShared'))+'</span>'+
+      '<span class="ld"><span class="lln" style="border-top-color:var(--trunk);border-top-width:2.5px;"></span>'+esc(t('rgLegTrunk'))+'</span>'+
+      '<span class="ld"><span class="lln" style="border-top-color:var(--bd2);border-top-width:1.2px;opacity:.75;"></span>'+esc(t('rgLegThin'))+'</span>'+
     '</span>';
   wrap.appendChild(tb);
 
@@ -5705,9 +5748,16 @@ function renderRouteGraph(){
       ' L '+xb+' '+L+
       ' C '+R1(xb+e)+' '+L+' '+R1(x2-e)+' '+y2+' '+x2+' '+y2;
   };
+  // ★ 線の見やすさ: 幹線（最も共有されている経路）を色分けし、太さは通過コンボ数(w)に比例させる。
+  //   w=1（このコンボでしか使われていない=繋がりの信頼度が低い「幻の経路」候補）は細く薄くして目立たなくする。
+  const edgeWClass=w=>w<=1?'w1':(w<=3?'w2':(w<=6?'w3':'w4'));
   const edgeEls=[];
   edges.forEach(e=>{const a=byId[e.src],b=byId[e.dst];const path=document.createElementNS(SVGNS,'path');
-    path.setAttribute('d',ePath(a,b,a.x,a.y,b.x,b.y));path.setAttribute('class','rg-edge');path.dataset.key=e.key;
+    const cls='rg-edge'+(trunkEdgeKeys.has(e.key)?' trunk':'')+(edgeWClass(e.w)?' '+edgeWClass(e.w):'');
+    path.setAttribute('d',ePath(a,b,a.x,a.y,b.x,b.y));path.setAttribute('class',cls);path.dataset.key=e.key;
+    if(e.w>1){const ttl=document.createElementNS(SVGNS,'title');
+      ttl.textContent=ja?(e.w+'本のコンボがこの繋ぎを通ります'):(e.w+' combos use this connection');
+      path.appendChild(ttl);}
     svg.appendChild(path);edgeEls.push(path);});
 
   const nodeEls={};
