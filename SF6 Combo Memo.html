@@ -177,8 +177,7 @@ body.mobile .tag-mode-btn{font-size:12px;padding:5px 10px;}
 .combo-block.is-branch{border-left:2px solid rgba(244,123,32,.45);}
 /* ★ 親へつながるコネクタを「↳」グリフで表示（インデント内に配置） */
 .combo-block.is-branch::before{content:"↳";position:absolute;left:-16px;top:0;color:rgba(244,123,32,.7);font-size:18px;line-height:1;pointer-events:none;}
-/* ★ 差分表示: 親と共通の技は淡色、分岐後の技はオレンジ強調 */
-.placed.placed-common{opacity:.6;}
+/* ★ 差分表示: 分岐後の技はオレンジ強調（親と共通の技を薄くする表示は視認性のため廃止） */
 .placed.placed-branch{border-color:rgba(244,123,32,.7);box-shadow:inset 0 0 0 1px rgba(244,123,32,.3);}
 .branch-split-sep{color:var(--gold);font-size:16px;font-weight:700;flex-shrink:0;display:flex;align-items:center;gap:2px;white-space:nowrap;line-height:1;transform:scaleY(-1);-webkit-text-stroke:0.5px var(--gold);text-stroke:0.5px var(--gold);position:relative;top:4px;}
 .branch-legend{font-size:9px;color:var(--dim);margin:0 0 4px 2px;display:flex;align-items:center;gap:8px;}
@@ -263,8 +262,7 @@ body.touch-mode .placed{-webkit-touch-callout:none;}
 .tree-combo-moves{display:flex;align-items:center;gap:3px;flex-wrap:wrap;}
 .tree-move-chip{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap;cursor:pointer;transition:filter .15s,box-shadow .15s;}
 .tree-move-chip:hover{filter:brightness(1.18);box-shadow:0 0 0 1.5px var(--gold);}
-/* ★ ツリービューの差分表示：親と共通=淡色、分岐後=オレンジのリング */
-.tree-move-chip.tmc-common{opacity:.6;}
+/* ★ ツリービューの差分表示：分岐後=オレンジのリング（親と共通の技を薄くする表示は視認性のため廃止） */
 .tree-move-chip.tmc-branch{box-shadow:0 0 0 1.5px rgba(244,123,32,.7);}
 .rep-x{font-weight:700;margin-left:2px;font-size:10px;}
 .placed .rep-x{color:var(--gold);}
@@ -623,6 +621,7 @@ body.mobile .rg-zlabel{min-width:54px;}
       </div>
       <div class="tab-view active" id="tab-combo">
         <div class="filter-bar" id="filterBar"></div>
+        <div class="sort-bar combo-sort-bar" id="comboSortBar"></div>
         <div class="combo-scroll"><div class="combo-area" id="comboArea"></div></div>
         <div class="bottom-bar"><button class="add-combo-btn" onclick="addCombo()">＋ NEW COMBO</button></div>
       </div>
@@ -796,6 +795,14 @@ const I18N={
   noComboHits:{ja:'条件に合うコンボがありません',en:'No combos match the filter'},
   clearTagFilter:{ja:'フィルタを解除',en:'Clear filter'},
   addTag:{ja:'＋タグ',en:'＋ Tag'},
+  // combo sort
+  comboSortLabel:{ja:'SORT:',en:'SORT:'},
+  comboSort_manual:{ja:'手動',en:'Manual'},
+  comboSortManualTitle:{ja:'自動並び替えの選択を解除します（ドラッグでの並び替えはそのまま使えます）',en:'Clears the auto-sort selection (you can still drag combos to reorder them)'},
+  comboSort_starter:{ja:'始動技',en:'Starter'},
+  comboSort_damage:{ja:'ダメージ',en:'Damage'},
+  comboSortHint:{ja:'クリックでこの基準に並び替え（もう一度クリックで昇順⇔降順を切替）',en:'Click to sort by this. Click again to toggle ascending/descending'},
+  comboSortedToast:{ja:'コンボを並び替えました',en:'Combos sorted'},
   // combos
   noCombos:{ja:'コンボがありません',en:'No combos yet'},
   noCombosHint:{ja:'下の＋NEW COMBOから追加',en:'Drag a move from the list on the left to add one'},
@@ -979,9 +986,7 @@ const I18N={
   rgLegStart:{ja:'始動技',en:'Starter'},
   rgLegMid:{ja:'コンボ',en:'Combo'},
   rgLegEnd:{ja:'締め（コンボ終端）',en:'Finisher (combo end)'},
-  rgLegShared:{ja:'共有数（その技をその位置で使うコンボの本数）',en:'Shared (combos using this move at this position)'},
-  rgLegTrunk:{ja:'幹線（最も共有されている経路）',en:'Main line (most shared route)'},
-  rgLegThin:{ja:'細い線＝1本のコンボしか通らない',en:'Thin line = used by only one combo'},
+  rgLegShared:{ja:'共有数',en:'Shared'},
   rgColStart:{ja:'始動技',en:'STARTER'},
   rgColMid:{ja:'コンボ',en:'COMBO'},
   rgColEnd:{ja:'締め技',en:'FINISHER'},
@@ -3604,6 +3609,7 @@ const SEED_VERSION = 16; // ★ シード(内蔵技データ)を更新したら�
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
+  { version:'1.3.4', date:'2026.08.14', ja:['コンボ一覧 に自動並び替え（ソート）機能を追加しました。SORTバーの「始動技」「ダメージ」のピルをクリックすると一括で並び替えられます（もう一度クリックで昇順⇔降順を切替）。分岐コンボの親子関係は崩れず、並び替え後もドラッグでの手動並び替えを引き続き使えます','そのほか軽微な調整を行いました'], en:['Added an auto-sort feature to COMBO LIST. Click the "Starter" or "Damage" pill in the SORT bar to sort all combos at once (click again to toggle ascending/descending). Branch combo hierarchies stay intact, and you can still drag combos to reorder them manually afterward','Various other minor adjustments'] },
   { version:'1.3.3', date:'2026.08.11', ja:['ルート図 のノードのまとめ方（アルゴリズム）を更新しました。「共通ルート抽出」という仕組みで、コンボどうしで共通する部分列を自動で見つけて重ねるようになり、より多くの共通パーツがまとまって見やすくなりました','ルート図 に拡大縮小機能を追加しました。ツールバーの − / ＋ で倒率を変更でき、中央の倒率表示で100%に、全体でグラフ全体が画面に収まる倒率になります。PCは Ctrl（⌘）＋ホイール、スマホ・タブレットは2本指のピンチでも操作でき、いずれもカーソル（指）の位置を中心に拡大縮小します（倒率は次回起動時も引き継がれます）'], en:['Updated the merging algorithm used by ROUTE GRAPH. It now uses "Common Route Extraction", which automatically finds and merges shared sub-sequences between combos, so more shared parts are merged and easier to see','Added zoom to ROUTE GRAPH. Use − / ＋ in the toolbar to change the zoom level, press the percentage in the middle to return to 100%, or Fit to scale the whole graph into view. Also works with Ctrl (⌘) + wheel on desktop and a two-finger pinch on phones and tablets, both zooming around the pointer (or your fingers); the zoom level is remembered next time'] },
   { version:'1.3.2', date:'2026.08.09', ja:['MOVE LIST に検索欄を追加しました。技名とコマンドの部分一致で絞り込めます。空白で区切るとAND検索（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１、キック／ｷｯｸ）は区別しません','⚙ 設定に「自動保存」を追加しました（既定ON）。変更してから約1.5秒後に自動で保存し、メモ欄も同時に保存されるため、💾保存の押し忘れで内容を失う心配がありません。トップバーには最終保存時刻を表示します。OFFにすると従来どおり💾保存を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます','FILTER のタグを複数選択できるようにしました。タグは押すたびに選択／解除が切り替わり、2つ以上選ぶと AND／OR の切替ボタンが現れます。AND は選んだタグをすべて持つコンボ、OR はどれか1つでも持つコンボを表示します','MOVE LIST と右側の境界をドラッグして、技リストの幅を変えられるようにしました。ダブルクリックで既定の幅に戻り、幅は次回起動時にも引き継がれます。広げると技カードが自動で2列・3列に増えるため、大きな画面ほど一覧性が上がります','MOVE LIST に「🖼＋」ボタンを追加し、サムネイル画像をまとめて登録できるようにしました。技を1つずつ表示するので、表示された技に合う画像を選ぶだけで次の技へ自動で進みます。対象を「未登録の技だけ」にしておけば、途中で中断しても次に開いたときに続きから再開できます。スキップ・戻るにも対応しています。また登録時に画像を自動で縮小するようにしたため、たくさん登録しても書き出しファイルが極端に大きくなりません','【不具合修正】メモタブを開いたままキャラクターを切り替えると、切替前のキャラのメモが表示されたまま残り、その状態で「💾 メモ保存」を押すと切替先のキャラのメモを上書きしてしまう問題を修正しました。切替時には未保存のメモを元のキャラへ保存したうえで、切替先のメモを読み直すようにしています。キャラクターの追加・データの読み込みでも同様に処理します'], en:['Added a search box to MOVE LIST that filters by move name and input. Separating words with spaces performs an AND search, and case and full-/half-width characters are treated the same (SA1／ＳＡ１, キック／ｷｯｸ)','Added Auto-save under ⚙ Settings (on by default). Changes are saved automatically about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to press Save. The top bar shows the time of the last save. Turn it off to keep the previous behaviour, where only Save writes your data and reloading beforehand discards changes','FILTER tags can now be multi-selected. Each tag toggles on and off, and selecting two or more reveals an AND/OR switch: AND shows combos carrying every selected tag, OR shows combos carrying any of them','You can now drag the divider between MOVE LIST and the right-hand panel to resize the move list. Double-click resets it to the default width, and the width is remembered next time. Widening it flows the move cards into two or three columns, so larger screens show more at once','Added a 🖼＋ button to MOVE LIST for registering thumbnails in bulk. Moves are presented one at a time, so picking the image that matches the move on screen advances to the next one automatically. Target only the moves without an image and you can stop at any point - reopening simply resumes where you left off - and Skip and Back are both available. Images are also downscaled as they are registered, so export files stay a reasonable size however many you add','[Bug fix] Switching characters while the MEMO tab was open left the previous character\'s memo on screen, and pressing Save memo from there overwrote the new character\'s memo. Switching now stores any unsaved memo against the character it belongs to and reloads the memo for the character you switched to. Adding a character and importing data are handled the same way'] },
   { version:'1.3.1', date:'2026.08.09', ja:['2026.08.03 バランス調整を反映。27キャラクター・122技のフレームデータを公式フレーム表の値に更新しました','リュウ・JP・エドは、判定やコンボ補正などフレーム表に現れない調整のみのため数値の変更はありません'], en:['Applied the 2026.08.03 balance update: refreshed frame data for 122 moves across 27 characters to match the official frame tables','Ryu, JP and Ed have no numeric changes — their adjustments only cover hitboxes and combo scaling, which the frame tables do not list'] },
@@ -3615,6 +3621,21 @@ const CHANGELOG = [
 ];
 // ★ 現在のバージョン表記（更新履歴の先頭から自動取得。直接書き換える必要はありません）
 const APP_VERSION = (CHANGELOG[0] && CHANGELOG[0].version) || '1.0.0';
+// ★ バージョンが上がったとき、既存ユーザーの次回起動時に一度だけ 更新履歴 を自動で開く。
+//   GitHub Pages 等で公開していると更新に気づかれにくいため、「前回見たバージョン」を
+//   localStorageに記録しておき、それと現在の APP_VERSION が違えば自動表示する。
+//   ・保存データが無い＝初回インストールのユーザーには出さない
+//   ・この自動表示機能自体が入った回（＝「前回見たバージョン」の記録がまだ無い既存ユーザー）も
+//     いきなり出すと唐突なので、記録が無いときは今回は出さず、次回以降の判定用に記録だけする
+function maybeShowChangelogOnUpdate(){
+  try{
+    const hadSavedData=!!localStorage.getItem('sf6_v5');
+    const seenKey='sf6_seenVersion';
+    const seen=localStorage.getItem(seenKey);
+    if(hadSavedData&&seen!=null&&seen!==APP_VERSION)openChangelog();
+    localStorage.setItem(seenKey,APP_VERSION);
+  }catch(e){}
+}
 // ★ 紹介記事(note)のURL。公開後は下記をプレビュー用から本公開URLに差し替えてください
 const ARTICLE_URL = 'https://note.com/lithe_ram4730/n/nb72ab61c1604';
 // ★ 作者名とプロフィール(note)URL
@@ -3759,6 +3780,107 @@ function toggleTagFilter(tag){
   renderFilterBar();renderCombos();
 }
 function clearTagFilter(){activeTags.clear();renderFilterBar();renderCombos();}
+// ===== [S:comboSort] コンボ一覧の自動並び替え =====
+// クリックした基準（始動技/ダメージ）で、兄弟コンボ（同じ親を持つコンボ同士）ごとに
+// 一括で並び替える。親子（分岐）のまとまりは崩さない：各ノードの子コンボ同士のみを並べ替え、
+// 深さ優先で連結し直す（NormalizeComboOrderと同じ考え方）。ドラッグでの手動並び替えは並び替え後も引き続き使える。
+const COMBO_SORT_KEYS=['starter','damage'];
+const COMBO_SORT_DEFAULT_DIR={starter:'asc',damage:'desc'};
+let comboSortKey=(()=>{try{return localStorage.getItem('sf6_comboSortKey')||'';}catch(e){return'';}})();
+let comboSortDir=(()=>{try{return localStorage.getItem('sf6_comboSortDir')||'asc';}catch(e){return'asc';}})();
+// 始動技（コンボ先頭の技）でのソート用：技IDが技リスト内で何番目にあるかを一度だけ索引化する
+// （MOVE LISTに並ぶ順＝製作者が意図した技の並びとしてグループ化する）
+let _comboSortStarterMap=null;
+function buildComboSortStarterMap(){
+  const arr=(cur()&&cur().moves)||[];
+  const map=new Map();
+  arr.forEach((m,i)=>map.set(m.id,i));
+  return map;
+}
+function comboSortValue(combo,key){
+  switch(key){
+    case 'starter':{
+      const mid=(combo.moves||[])[0];
+      if(mid==null)return null;
+      if(!_comboSortStarterMap)_comboSortStarterMap=buildComboSortStarterMap();
+      const idx=_comboSortStarterMap.get(mid);
+      return idx==null?null:idx;
+    }
+    case 'damage':{const v=parseFloat(combo.damage);return isNaN(v)?null:v;}
+    default:return null;
+  }
+}
+function comboSortCompare(a,b,key,dir){
+  const va=comboSortValue(a,key),vb=comboSortValue(b,key);
+  const aEmpty=(va==null),bEmpty=(vb==null);
+  if(aEmpty&&bEmpty)return 0;
+  if(aEmpty)return 1;  // 値が無いコンボは並び替え方向に関わらず常に末尾へ
+  if(bEmpty)return -1;
+  let r;
+  if(typeof va==='string')r=va.localeCompare(vb,LANG==='ja'?'ja':'en');
+  else r=(va<vb?-1:va>vb?1:0);
+  return dir==='asc'?r:-r;
+}
+function applyComboSort(key){
+  const char=cur();if(!char||!Array.isArray(char.combos)||char.combos.length<2)return;
+  if(comboSortKey===key)comboSortDir=(comboSortDir==='asc')?'desc':'asc';
+  else{comboSortKey=key;comboSortDir=COMBO_SORT_DEFAULT_DIR[key]||'asc';}
+  try{localStorage.setItem('sf6_comboSortKey',comboSortKey);localStorage.setItem('sf6_comboSortDir',comboSortDir);}catch(e){}
+  _comboSortStarterMap=null; // 技リストの最新状態で作り直す
+  char.combos=NormalizeComboOrder(char.combos);
+  const byId=new Map(char.combos.map(c=>[c.id,c]));
+  const childrenOf=new Map();const roots=[];
+  char.combos.forEach(c=>{
+    const pid=c.parentId;
+    if(pid!=null&&byId.has(pid)){if(!childrenOf.has(pid))childrenOf.set(pid,[]);childrenOf.get(pid).push(c);}
+    else roots.push(c);
+  });
+  const cmp=(a,b)=>comboSortCompare(a,b,comboSortKey,comboSortDir);
+  roots.sort(cmp);
+  childrenOf.forEach(arr=>arr.sort(cmp));
+  const out=[];const seen=new Set();
+  roots.forEach(r=>{
+    (function walk(node){
+      if(seen.has(node.id))return;seen.add(node.id);out.push(node);
+      (childrenOf.get(node.id)||[]).forEach(walk);
+    })(r);
+  });
+  char.combos.forEach(c=>{if(!seen.has(c.id)){seen.add(c.id);out.push(c);}}); // 取りこぼし防止
+  char.combos=out;
+  renderComboSortBar();renderCombos();if(activeTab==='tree')renderTree();
+  updateSavedIndicator();
+  showToast(t('comboSortedToast'));
+}
+function clearComboSort(){
+  comboSortKey='';
+  try{localStorage.setItem('sf6_comboSortKey','');}catch(e){}
+  renderComboSortBar();
+}
+function renderComboSortBar(){
+  const bar=document.getElementById('comboSortBar');if(!bar)return;
+  bar.innerHTML='';
+  const lbl=document.createElement('span');
+  lbl.style.cssText='font-size:10px;color:#8e8e9c;letter-spacing:1px;white-space:nowrap;';
+  lbl.textContent=t('comboSortLabel');
+  bar.appendChild(lbl);
+  COMBO_SORT_KEYS.forEach(key=>{
+    const active=comboSortKey===key;
+    const p=document.createElement('div');
+    p.className='sort-pill'+(active?' active':'');
+    p.textContent=t('comboSort_'+key)+(active?(comboSortDir==='asc'?' ▲':' ▼'):'');
+    p.title=t('comboSortHint');
+    p.onclick=()=>applyComboSort(key);
+    bar.appendChild(p);
+  });
+  if(comboSortKey){
+    const clr=document.createElement('div');
+    clr.className='sort-pill';
+    clr.textContent='✕ '+t('comboSort_manual');
+    clr.title=t('comboSortManualTitle');
+    clr.onclick=()=>clearComboSort();
+    bar.appendChild(clr);
+  }
+}
 let moveQuery=''; // ★ MOVE LIST の検索語。カテゴリピル(activeSort)とはAND条件で効く
 let activeAddCombo=null; // スマホのタップ追加モードで対象になっているコンボID
 // ★ タップ追加モードの挿入位置（moves配列の「境界」インデックス。0=先頭の前、moves.length=末尾）。
@@ -4315,6 +4437,7 @@ function saveToStorage(){
 }
 async function exportJSON(){
   try{
+    flushMemo(); // 書き出し前に、今開いているメモの未保存分をlocalStorageへ確定させる（でないと最新の編集が抜け落ちる）
     // db本体（thumbは画像キー）を複製し、参照されている画像をIDBから集めて
     // base64で _images に同梱する。これにより1ファイルで完結し、別環境でも復元できる。
     const data=JSON.parse(JSON.stringify(db));
@@ -4322,7 +4445,13 @@ async function exportJSON(){
     Object.values(data.chars||{}).forEach(c=>(c.moves||[]).forEach(m=>{if(isImgKey(m.thumb))keys.add(m.thumb);}));
     const images={};
     for(const k of keys){try{const blob=await idbGetImage(k);if(blob)images[k]=await blobToDataURL(blob);}catch(e){}}
-    const out=Object.assign({},data,{_images:images,_imgFormat:'idb-v1'});
+    // ★ 各キャラのFREE MEMO（localStorage: sf6_memo_<charId>）を書き出しに同梱する。
+    //   メモはdb本体とは別のストレージに保存されており、これが無いと書き出し→読み込みで
+    //   コンボは復元されるのにメモだけ消える、という抜けが生じてしまう。
+    const memos={};
+    try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);
+      if(k&&k.indexOf('sf6_memo_')===0){const v=localStorage.getItem(k);if(v)memos[k]=v;}}}catch(e){}
+    const out=Object.assign({},data,{_images:images,_imgFormat:'idb-v1',_memos:memos});
     const b=new Blob([JSON.stringify(out)],{type:'application/json'});
     // ファイル名に当日の日付(ローカル時刻)を付与する: sf6_combo_YYYY-MM-DD.json 。複数バックアップの識別・整理を容易にする
     const now=new Date();
@@ -4340,6 +4469,11 @@ function importJSON(input){
       const images=d._images||null;delete d._images;delete d._imgFormat;
       if(images){for(const k of Object.keys(images)){try{await idbPutImage(k,dataURLToBlob(images[k]));}catch(err){}}}
       flushMemo(); // 読み込みでキャラが入れ替わる前に、未保存メモを元のキャラへ書き戻す
+      // ★ 同梱メモ（_memos: {"sf6_memo_<charId>": 本文}）があればlocalStorageへ書き戻す。
+      //   上のflushMemoより後に適用することで、読み込むファイル側の内容を優先する
+      //   （キャラIDが被っていても、インポートしたバックアップの内容で確実に上書きする）。
+      const memos=d._memos||null;delete d._memos;
+      if(memos){for(const k of Object.keys(memos)){try{localStorage.setItem(k,memos[k]);}catch(err){}}}
       db=d;if(!db.currentChar||!db.chars[db.currentChar])db.currentChar=Object.keys(db.chars)[0];
       migrateSeed(db);
       // 既存のObjectURLキャッシュを破棄して、新データの画像を取り直す。
@@ -4593,7 +4727,7 @@ function openTutorial(){
 }
 
 // ===== [S:render] コンボ一覧の描画 =====
-function render(){rebuildMoveMap();renderCharSelect();renderSortBar();renderMoveList();renderFilterBar();renderCombos();if(activeTab==='tree')renderTree();if(activeTab==='route')renderRouteGraph();loadThumbsForCurrentChar();updateSavedIndicator();}
+function render(){rebuildMoveMap();renderCharSelect();renderSortBar();renderMoveList();renderFilterBar();renderComboSortBar();renderCombos();if(activeTab==='tree')renderTree();if(activeTab==='route')renderRouteGraph();loadThumbsForCurrentChar();updateSavedIndicator();}
 
 function renderCharSelect(){
   const sel=document.getElementById('charSelect');sel.innerHTML='';
@@ -4882,7 +5016,7 @@ function renderComboBlock(area,combo){
         <option value="">${t('addTag')}</option>${avail.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}
       </select>`:''}
     </div>
-    ${_hasDiverged?`<div class="branch-legend"><span class="lg-dot"><span class="lg-sw" style="background:var(--bg4);opacity:.6;"></span>${esc(t('legendCommon'))}</span><span class="lg-dot"><span class="lg-sw" style="background:#2e1f08;border:1px solid rgba(244,123,32,.7);"></span>${esc(t('legendBranch'))}</span></div>`:(_parent&&combo.moves.length?`<div class="branch-nodiff">${esc(t('branchNoDiff'))}</div>`:'')}
+    ${_hasDiverged?`<div class="branch-legend"><span class="lg-dot"><span class="lg-sw" style="background:#2e1f08;border:1px solid rgba(244,123,32,.7);"></span>${esc(t('legendBranch'))}</span></div>`:(_parent&&combo.moves.length?`<div class="branch-nodiff">${esc(t('branchNoDiff'))}</div>`:'')}
     <div class="drop-zone" data-cz="${combo.id}">
       <div id="pr-${combo.id}" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1;min-height:38px;"></div>
     </div>
@@ -5371,7 +5505,7 @@ function renderTree(){
   if(!combos.length){wrap.innerHTML='<div style="color:#7a7a8a;font-size:12px;text-align:center;padding:30px;">'+esc(t('noCombosTree'))+'</div>';return;}
   if(combos.some(c=>c.parentId)){
     const lg=document.createElement('div');lg.className='tree-diff-legend';
-    lg.innerHTML=esc(t('treeDiffLabel'))+'<span class="lg-dot"><span class="lg-sw" style="background:var(--bg4);opacity:.6;"></span>'+esc(t('legendCommon'))+'</span><span class="lg-dot"><span class="lg-sw" style="background:#2e1f08;box-shadow:0 0 0 1.5px rgba(244,123,32,.7);"></span>'+esc(t('legendBranch'))+'</span>';
+    lg.innerHTML=esc(t('treeDiffLabel'))+'<span class="lg-dot"><span class="lg-sw" style="background:#2e1f08;box-shadow:0 0 0 1.5px rgba(244,123,32,.7);"></span>'+esc(t('legendBranch'))+'</span>';
     wrap.appendChild(lg);
   }
   // ヒット状況の凡例（いずれかのコンボで C/PC/D が設定されているときだけ表示）
@@ -5617,11 +5751,23 @@ function renderRouteGraph(){
   allNodes.forEach(n=>{prevAdj.set(n.id,[]);nextAdj.set(n.id,[]);});
   edges.forEach(e=>{nextAdj.get(e.src).push(e.dst);prevAdj.get(e.dst).push(e.src);});
   cols.forEach(col=>col&&col.forEach((n,i)=>n._ord=i));
-  const sweep=usePrev=>{const ds=usePrev?cols.map((_,i)=>i):cols.map((_,i)=>i).reverse();
-    ds.forEach(d=>{const col=cols[d];if(!col)return;
+  // バリセンター法（重心法）で交差を減らす：列を左→右／右→左と交互に走査し、各ノードを
+  // 「つながる先ノードの列内位置の平均」の順に並べ替える。1往復（3回）だけだと、離れた列どうし
+  // （共有する合流・分岐が遠いノード）の影響が伝わりきらないことがあるため、順序が変化しなくなる
+  // （＝収束する）か、上限回数に達するまで往復を続ける。上限は無限ループ防止の安全弁。
+  const sweep=usePrev=>{let changed=false;
+    const ds=usePrev?cols.map((_,i)=>i):cols.map((_,i)=>i).reverse();
+    ds.forEach(d=>{const col=cols[d];if(!col||col.length<2)return;
+      const before=col.map(n=>n.id);
       col.forEach(n=>{const nb=(usePrev?prevAdj:nextAdj).get(n.id);n._bc=nb.length?nb.reduce((s,id)=>s+byId[id]._ord,0)/nb.length:n._ord;});
-      col.sort((a,b)=>a._bc-b._bc);col.forEach((n,i)=>n._ord=i);});};
-  sweep(true);sweep(false);sweep(true);
+      col.sort((a,b)=>a._bc-b._bc);col.forEach((n,i)=>n._ord=i);
+      if(!changed)for(let i=0;i<before.length;i++){if(before[i]!==col[i].id){changed=true;break;}}});
+    return changed;};
+  let sweepDir=true;
+  for(let iter=0;iter<16;iter++){
+    const changed=sweep(sweepDir);sweepDir=!sweepDir;
+    if(!changed&&iter>=2)break; // 最低でも2往復ぶんは試してから収束と判断する
+  }
   // ★ 幹線（最も多くのコンボに共有されている経路）を求める。
   //   各ノードを終点とした「通過コンボ数(pass)の合計が最大になる経路」をDPで求め、
   //   末端（後続を持たないノード）のうち合計が最大のものから逆算して経路を復元する。
@@ -5670,8 +5816,6 @@ function renderRouteGraph(){
       '<span class="ld"><span class="lsq" style="background:#e3ebf5;"></span>'+esc(t('rgLegStart'))+'</span>'+
       '<span class="ld"><span class="lsq" style="background:var(--gold);"></span>'+esc(t('rgLegEnd'))+'</span>'+
       '<span class="ld"><span class="rg-cnt">N</span>'+esc(t('rgLegShared'))+'</span>'+
-      '<span class="ld"><span class="lln" style="border-top-color:var(--trunk);border-top-width:2.5px;"></span>'+esc(t('rgLegTrunk'))+'</span>'+
-      '<span class="ld"><span class="lln" style="border-top-color:var(--bd2);border-top-width:1.2px;opacity:.75;"></span>'+esc(t('rgLegThin'))+'</span>'+
     '</span>';
   wrap.appendChild(tb);
 
@@ -6254,7 +6398,7 @@ function confirmDeleteChar(){
 function switchChar(id){
   endAddMode();cancelPickMove(true);editingCombos.clear();
   flushMemo();                                  // 切替前のキャラへ未保存メモを書き戻す
-  db.currentChar=id;activeTags.clear();activeSort='ALL';resetMoveSearch();render();
+  db.currentChar=id;activeTags.clear();comboSortKey='';activeSort='ALL';resetMoveSearch();render();
   if(activeTab==='memo')loadMemo();             // メモタブ表示中なら切替先の本文へ差し替える
 }
 // モバイル：ヘッダーの操作ボタン群を折りたたみ/展開
@@ -6370,6 +6514,7 @@ window.addEventListener('beforeunload',e=>{
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAutoSave();});
 window.addEventListener('pagehide',()=>{flushAutoSave();});
 autoScale();render();
+maybeShowChangelogOnUpdate(); // バージョンが上がっていれば、既存ユーザーにだけ更新履歴を1回自動表示
 </script>
 </body>
 </html>
