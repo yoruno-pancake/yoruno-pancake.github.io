@@ -626,9 +626,11 @@ body.mobile .rg-zlabel{min-width:54px;}
         <div class="bottom-bar"><button class="add-combo-btn" onclick="addCombo()">＋ NEW COMBO</button></div>
       </div>
       <div class="tab-view" id="tab-tree">
+        <div class="filter-bar" id="filterBarTree"></div>
         <div class="tree-view-wrap" id="treeViewWrap"></div>
       </div>
       <div class="tab-view" id="tab-route">
+        <div class="filter-bar" id="filterBarRoute"></div>
         <div class="rg-wrap" id="routeGraphWrap"></div>
       </div>
       <div class="tab-view" id="tab-memo">
@@ -3609,6 +3611,7 @@ const SEED_VERSION = 16; // ★ シード(内蔵技データ)を更新したら�
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
+  { version:'1.3.5', date:'2026.09.18', ja:['始動技別・ルート図 にも FILTER のタグ絞り込みを追加しました。選択したタグはコンボ一覧と共通で、タグに合致しないコンボは子孫（分岐先）ごと非表示になります。ルート図では🕸非表示（表示トグル）とタグ絞り込みは別枠で扱われ、それぞれ0件になった場合は個別に案内が出ます'], en:["Added the FILTER tag filter to STARTER TREE and ROUTE GRAPH as well. Selected tags are shared with COMBO LIST, and combos that do not match a tag are hidden along with their branches. In ROUTE GRAPH, the 🕸 hide toggle and tag filtering are handled separately, each showing its own message when it results in zero combos"] },
   { version:'1.3.4', date:'2026.08.14', ja:['コンボ一覧 に自動並び替え（ソート）機能を追加しました。SORTバーの「始動技」「ダメージ」のピルをクリックすると一括で並び替えられます（もう一度クリックで昇順⇔降順を切替）。分岐コンボの親子関係は崩れず、並び替え後もドラッグでの手動並び替えを引き続き使えます','そのほか軽微な調整を行いました'], en:['Added an auto-sort feature to COMBO LIST. Click the "Starter" or "Damage" pill in the SORT bar to sort all combos at once (click again to toggle ascending/descending). Branch combo hierarchies stay intact, and you can still drag combos to reorder them manually afterward','Various other minor adjustments'] },
   { version:'1.3.3', date:'2026.08.11', ja:['ルート図 のノードのまとめ方（アルゴリズム）を更新しました。「共通ルート抽出」という仕組みで、コンボどうしで共通する部分列を自動で見つけて重ねるようになり、より多くの共通パーツがまとまって見やすくなりました','ルート図 に拡大縮小機能を追加しました。ツールバーの − / ＋ で倒率を変更でき、中央の倒率表示で100%に、全体でグラフ全体が画面に収まる倒率になります。PCは Ctrl（⌘）＋ホイール、スマホ・タブレットは2本指のピンチでも操作でき、いずれもカーソル（指）の位置を中心に拡大縮小します（倒率は次回起動時も引き継がれます）'], en:['Updated the merging algorithm used by ROUTE GRAPH. It now uses "Common Route Extraction", which automatically finds and merges shared sub-sequences between combos, so more shared parts are merged and easier to see','Added zoom to ROUTE GRAPH. Use − / ＋ in the toolbar to change the zoom level, press the percentage in the middle to return to 100%, or Fit to scale the whole graph into view. Also works with Ctrl (⌘) + wheel on desktop and a two-finger pinch on phones and tablets, both zooming around the pointer (or your fingers); the zoom level is remembered next time'] },
   { version:'1.3.2', date:'2026.08.09', ja:['MOVE LIST に検索欄を追加しました。技名とコマンドの部分一致で絞り込めます。空白で区切るとAND検索（例:「立ち 強」）になり、大文字・小文字や全角・半角（SA1／ＳＡ１、キック／ｷｯｸ）は区別しません','⚙ 設定に「自動保存」を追加しました（既定ON）。変更してから約1.5秒後に自動で保存し、メモ欄も同時に保存されるため、💾保存の押し忘れで内容を失う心配がありません。トップバーには最終保存時刻を表示します。OFFにすると従来どおり💾保存を押したときだけ保存され、保存前に再読み込みすれば変更を破棄できます','FILTER のタグを複数選択できるようにしました。タグは押すたびに選択／解除が切り替わり、2つ以上選ぶと AND／OR の切替ボタンが現れます。AND は選んだタグをすべて持つコンボ、OR はどれか1つでも持つコンボを表示します','MOVE LIST と右側の境界をドラッグして、技リストの幅を変えられるようにしました。ダブルクリックで既定の幅に戻り、幅は次回起動時にも引き継がれます。広げると技カードが自動で2列・3列に増えるため、大きな画面ほど一覧性が上がります','MOVE LIST に「🖼＋」ボタンを追加し、サムネイル画像をまとめて登録できるようにしました。技を1つずつ表示するので、表示された技に合う画像を選ぶだけで次の技へ自動で進みます。対象を「未登録の技だけ」にしておけば、途中で中断しても次に開いたときに続きから再開できます。スキップ・戻るにも対応しています。また登録時に画像を自動で縮小するようにしたため、たくさん登録しても書き出しファイルが極端に大きくなりません','【不具合修正】メモタブを開いたままキャラクターを切り替えると、切替前のキャラのメモが表示されたまま残り、その状態で「💾 メモ保存」を押すと切替先のキャラのメモを上書きしてしまう問題を修正しました。切替時には未保存のメモを元のキャラへ保存したうえで、切替先のメモを読み直すようにしています。キャラクターの追加・データの読み込みでも同様に処理します'], en:['Added a search box to MOVE LIST that filters by move name and input. Separating words with spaces performs an AND search, and case and full-/half-width characters are treated the same (SA1／ＳＡ１, キック／ｷｯｸ)','Added Auto-save under ⚙ Settings (on by default). Changes are saved automatically about 1.5 seconds after you make them, including the memo field, so nothing is lost if you forget to press Save. The top bar shows the time of the last save. Turn it off to keep the previous behaviour, where only Save writes your data and reloading beforehand discards changes','FILTER tags can now be multi-selected. Each tag toggles on and off, and selecting two or more reveals an AND/OR switch: AND shows combos carrying every selected tag, OR shows combos carrying any of them','You can now drag the divider between MOVE LIST and the right-hand panel to resize the move list. Double-click resets it to the default width, and the width is remembered next time. Widening it flows the move cards into two or three columns, so larger screens show more at once','Added a 🖼＋ button to MOVE LIST for registering thumbnails in bulk. Moves are presented one at a time, so picking the image that matches the move on screen advances to the next one automatically. Target only the moves without an image and you can stop at any point - reopening simply resumes where you left off - and Skip and Back are both available. Images are also downscaled as they are registered, so export files stay a reasonable size however many you add','[Bug fix] Switching characters while the MEMO tab was open left the previous character\'s memo on screen, and pressing Save memo from there overwrote the new character\'s memo. Switching now stores any unsaved memo against the character it belongs to and reloads the memo for the character you switched to. Adding a character and importing data are handled the same way'] },
@@ -3763,7 +3766,7 @@ let tagMatchMode=(()=>{try{return localStorage.getItem('sf6_tagMode')==='or'?'or
 function setTagMatchMode(m){
   tagMatchMode=(m==='or')?'or':'and';
   try{localStorage.setItem('sf6_tagMode',tagMatchMode);}catch(e){}
-  renderFilterBar();renderCombos();
+  refreshFilterableViews();
 }
 function comboMatchesTags(c){
   if(!activeTags.size)return true;
@@ -3777,9 +3780,16 @@ function comboMatchesTags(c){
 }
 function toggleTagFilter(tag){
   if(activeTags.has(tag))activeTags.delete(tag);else activeTags.add(tag);
-  renderFilterBar();renderCombos();
+  refreshFilterableViews();
 }
-function clearTagFilter(){activeTags.clear();renderFilterBar();renderCombos();}
+function clearTagFilter(){activeTags.clear();refreshFilterableViews();}
+// ★ タグ絞り込み・タグ削除など activeTags に関わる操作の再描画をここに一本化。
+//   コンボ一覧は常に最新化し、加えて現在アクティブなタブが始動技別／ルート図ならそちらも再描画する。
+function refreshFilterableViews(){
+  renderFilterBar();renderCombos();
+  if(activeTab==='tree')renderTree();
+  if(activeTab==='route')renderRouteGraph();
+}
 // ===== [S:comboSort] コンボ一覧の自動並び替え =====
 // クリックした基準（始動技/ダメージ）で、兄弟コンボ（同じ親を持つコンボ同士）ごとに
 // 一括で並び替える。親子（分岐）のまとまりは崩さない：各ノードの子コンボ同士のみを並べ替え、
@@ -4873,8 +4883,10 @@ function renderMoveList(){
     el.addEventListener('dragend',e=>{const card=e.target.closest('.move-card');if(card)card.classList.remove('dragging');});
   }
 }
-function renderFilterBar(){
-  const bar=document.getElementById('filterBar');
+// ★ フィルタバーは「コンボ一覧」「始動技別」「ルート図」の3箇所に同じ内容を描く。
+//   選択状態(activeTags)は共通なので、本体はここに切り出して3バー分呼び出すだけにする。
+function buildFilterBarInto(bar){
+  if(!bar)return;
   bar.innerHTML='<span style="font-size:10px;color:#8e8e9c;letter-spacing:1px;white-space:nowrap;">'+esc(t('filterLabel'))+'</span>';
   const ALLC={bg:'#23232e',fg:'#cfcfe0',abg:'#3a3a4a',afg:'#ffffff'};
   // ALLピル: 選択を全解除する。どのタグも選ばれていないときが選択状態
@@ -4890,11 +4902,13 @@ function renderFilterBar(){
     p.textContent=(on?'✓ ':'')+tag;
     p.style.cssText=`background:${on?tc.abg:tc.bg};color:${on?tc.afg:tc.fg};border-color:${on?tc.afg:'transparent'};`;
     p.onclick=()=>toggleTagFilter(tag);
-    // ★ タグはコンボへドラッグ&ドロップして付与できる
-    p.setAttribute('draggable','true');
-    p.title=t('tagDragTitle');
-    p.addEventListener('dragstart',e=>{tagDragName=tag;if(e.dataTransfer){e.dataTransfer.effectAllowed='copy';try{e.dataTransfer.setData('text/plain','tag:'+tag);}catch(_){}}});
-    p.addEventListener('dragend',()=>{tagDragName=null;document.querySelectorAll('.combo-block.tagdrop-target').forEach(el=>el.classList.remove('tagdrop-target'));});
+    // ★ タグはコンボへドラッグ&ドロップして付与できる（ドロップ先の掴みは コンボ一覧 にしか無いため、そこでのみ有効化）
+    if(bar.id==='filterBar'){
+      p.setAttribute('draggable','true');
+      p.title=t('tagDragTitle');
+      p.addEventListener('dragstart',e=>{tagDragName=tag;if(e.dataTransfer){e.dataTransfer.effectAllowed='copy';try{e.dataTransfer.setData('text/plain','tag:'+tag);}catch(_){}}});
+      p.addEventListener('dragend',()=>{tagDragName=null;document.querySelectorAll('.combo-block.tagdrop-target').forEach(el=>el.classList.remove('tagdrop-target'));});
+    }
     bar.appendChild(p);
   });
   // AND/OR切替は2つ以上選んだときだけ意味を持つので、そのときだけ出す
@@ -4906,8 +4920,11 @@ function renderFilterBar(){
     mb.onclick=()=>setTagMatchMode(tagMatchMode==='and'?'or':'and');
     bar.appendChild(mb);
   }
-  const ab=document.createElement('button');ab.className='btn';ab.textContent=t('addTag');ab.style.cssText='font-size:10px;padding:2px 7px;';
-  ab.onclick=()=>openAddTagModal();bar.appendChild(ab);
+  // ＋タグ（新規タグ追加）はコンボ一覧タブでのみ表示。始動技別／ルート図は絞り込み専用のバーにする
+  if(bar.id==='filterBar'){
+    const ab=document.createElement('button');ab.className='btn';ab.textContent=t('addTag');ab.style.cssText='font-size:10px;padding:2px 7px;';
+    ab.onclick=()=>openAddTagModal();bar.appendChild(ab);
+  }
   // 絞り込み中は「該当数 / 全体数」を出す（MOVE LISTの検索と同じ考え方）
   if(activeTags.size){
     const all=(cur().combos||[]);
@@ -4916,6 +4933,9 @@ function renderFilterBar(){
     cnt.className='tag-count';cnt.textContent=n+' / '+all.length;
     bar.appendChild(cnt);
   }
+}
+function renderFilterBar(){
+  ['filterBar','filterBarTree','filterBarRoute'].forEach(id=>buildFilterBarInto(document.getElementById(id)));
 }
 // コンボの「親子関係・深さ」を描画前に一度だけ索引化する。
 // これにより各ブロック描画時の char.combos.find / filter（コンボ数の2乗オーダー）を
@@ -5519,7 +5539,10 @@ function renderTree(){
   const _byId=new Map();const _kids=new Map();
   combos.forEach(c=>{_byId.set(c.id,c);const p=c.parentId||null;let a=_kids.get(p);if(!a){a=[];_kids.set(p,a);}a.push(c);});
   const root=document.createElement('div');root.className='tree-root';
-  Object.entries(map).forEach(([k,list])=>{
+  Object.entries(map).forEach(([k,listAll])=>{
+    // ★ タグに合致しないコンボは子孫ごと非表示（コンボ一覧と同じ「合致しないものは丸ごと消える」方針）
+    const list=listAll.filter(comboMatchesTags);
+    if(!list.length)return; // この始動技グループがタグ絞り込みで0件になったらブロックごと出さない
     const sm=mv(k);const s=sm?cs(sm.type):cs('other');
     const block=document.createElement('div');block.className='tree-starter-block';
     block.innerHTML=`<div class="tree-starter-hdr">
@@ -5529,6 +5552,7 @@ function renderTree(){
       <div style="margin-left:auto;font-size:10px;color:#8e8e9c">${esc(combosUnit(list.length))}</div></div>`;
     const listEl=document.createElement('div');listEl.className='tree-combos';
     function rRow(combo,depth){
+      if(!comboMatchesTags(combo))return; // ★ 合致しないコンボは子孫ごと非表示
       const dg=comboDG(combo);const dgManual=comboDGManual(combo);const children=_kids.get(combo.id)||[];
       const row=document.createElement('div');row.className='tree-combo-row';row.style.marginLeft=(depth*20)+'px';
       // ★ 分岐コンボは親と比較し、共通部分=淡色 / 分岐後=オレンジ、分岐点に ⎇ を表示
@@ -5588,6 +5612,13 @@ function renderTree(){
     });
     root.appendChild(block);
   });
+  if(!root.children.length&&activeTags.size){
+    // combos.length は非0だが、タグ絞り込みで全ブロックが消えた場合。コンボ一覧と同じメッセージ＋解除ボタンを出す
+    const empty=document.createElement('div');empty.className='no-combos';
+    empty.innerHTML=esc(t('noComboHits'))+'<br><button type="button" class="btn" style="margin-top:8px;" onclick="clearTagFilter()">'+esc(t('clearTagFilter'))+'</button>';
+    wrap.appendChild(empty);
+    return;
+  }
   wrap.appendChild(root);
 }
 
@@ -5723,9 +5754,15 @@ function renderRouteGraph(){
   const ja=(typeof LANG!=='undefined'&&LANG==='ja');
   const char=cur();
   const withMoves=((char&&char.combos)||[]).filter(c=>(c.moves||[]).some(m=>mv(m)));
-  const combos=withMoves.filter(c=>c.inRoute!==false); // ★ コンボ単位の表示トグル（非表示は除外）
-  if(!combos.length){wrap.innerHTML='<div class="rg-empty">'+esc(withMoves.length?t('rgAllHidden'):t('rgEmpty'))+'</div>';return;}
-  const hiddenCount=withMoves.length-combos.length;
+  const inRouteCombos=withMoves.filter(c=>c.inRoute!==false); // ★ コンボ単位の表示トグル（非表示は除外）
+  if(!inRouteCombos.length){wrap.innerHTML='<div class="rg-empty">'+esc(withMoves.length?t('rgAllHidden'):t('rgEmpty'))+'</div>';return;}
+  const hiddenCount=withMoves.length-inRouteCombos.length; // 🕸非表示の件数。タグ絞り込みとは別枠で従来どおり数える
+  // ★ タグ絞り込みは🕸非表示とは独立した別枠で扱う。0件ならタグ絞り込み用の「フィルタを解除」メッセージを出す
+  const combos=inRouteCombos.filter(comboMatchesTags);
+  if(!combos.length){
+    wrap.innerHTML='<div class="rg-empty">'+esc(t('noComboHits'))+'<br><button type="button" class="btn" style="margin-top:8px;" onclick="clearTagFilter()">'+esc(t('clearTagFilter'))+'</button></div>';
+    return;
+  }
 
   // ── ノード構築（部分配列アラインメントで、途中の共通部分もまとめて重ねる）──
   // 同じ技のまとめ表示(groupRepeats)がONなら、連続する同一技を ×N の1ノードにまとめる。
@@ -6423,7 +6460,7 @@ function renderTagList(){
   tl.querySelectorAll('.tag-del-chip').forEach(el=>el.addEventListener('click',()=>deleteTag(el.dataset.tag)));
 }
 function saveTag(){const v=document.getElementById('ti-name').value.trim();if(!v)return;const char=cur();if(!char.tags)char.tags=[];if(!char.tags.includes(v))char.tags.push(v);document.getElementById('ti-name').value='';updateSavedIndicator();renderTagList();renderFilterBar();}
-function deleteTag(tag){const char=cur();char.tags=char.tags.filter(t=>t!==tag);char.combos.forEach(c=>{c.tags=c.tags.filter(t=>t!==tag);});activeTags.delete(tag);updateSavedIndicator();renderTagList();renderFilterBar();renderCombos();}
+function deleteTag(tag){const char=cur();char.tags=char.tags.filter(t=>t!==tag);char.combos.forEach(c=>{c.tags=c.tags.filter(t=>t!==tag);});activeTags.delete(tag);updateSavedIndicator();renderTagList();refreshFilterableViews();}
 // ★ フィルターのタグをコンボへドラッグ&ドロップで付与する
 function addTagToCombo(comboId,tag){
   const char=cur();const c=(char.combos||[]).find(x=>x.id===comboId);
