@@ -3698,7 +3698,7 @@ const SEED_VERSION = 17; // ★ シード(内蔵技データ)を更新したら�
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
-  { version:'1.3.7', date:'2026.10.16', ja:['始動技別 に「すべて開く」「すべて閉じる」ボタンを追加しました（始動技が2つ以上あるときに右上に表示）','コンボ編集中、技チップの削除（✕）・複製（⧉）ボタンのアイコンが環境によって中心からズレて表示される問題を修正しました'], en:['Added "Expand all" / "Collapse all" buttons to STARTER TREE (shown at the top right when there are two or more starters)','Fixed the delete (✕) / duplicate (⧉) icons on move chips appearing off-center in some environments while editing a combo'] },
+  { version:'1.3.7', date:'2026.10.16', ja:['始動技別 に「すべて開く」「すべて閉じる」ボタンを追加しました（始動技が2つ以上あるときに右上に表示）','視認性向上のため、始動技別 上部の「分岐の差分」「ヒット状況」の凡例を削除しました','コンボ編集中、技チップの削除（✕）・複製（⧉）ボタンのアイコンが環境によって中心からズレて表示される問題を修正しました'], en:['Added "Expand all" / "Collapse all" buttons to STARTER TREE (shown at the top right when there are two or more starters)','Removed the "Branch diff" and "Hit status" legends at the top of STARTER TREE for better readability','Fixed the delete (✕) / duplicate (⧉) icons on move chips appearing off-center in some environments while editing a combo'] },
   { version:'1.3.6', date:'2026.10.16', ja:['新キャラクター「アルジュン」の技データ(77技)を追加','エド・ケン・キンバリー・A.K.I.・ジェイミーのOD派生技(21技)のDゲージ消費量を2→0に修正','ヤスミンのODウラン／ODクロッグを「ODムカ・ン・ランギットから(消費0)」と「弱・中・強ムカ・ン・ランギットから(消費2)」に分割'], en:['Added move data for the new character Arjun (77 moves)','Fixed Drive Gauge cost of 21 OD follow-ups for Ed, Ken, Kimberly, A.K.I. and Jamie (2 to 0)','Split Yasmine\'s OD Ulan / OD Kulog into versions from OD Muka ng Langit (cost 0) and from L/M/H Muka ng Langit (cost 2)'] },
   { version:'1.3.5', date:'2026.09.18', ja:['始動技別・ルート図 にも FILTER のタグ絞り込みを追加しました。選択したタグはコンボ一覧と共通で、タグに合致しないコンボは子孫（分岐先）ごと非表示になります。ルート図では🕸非表示（表示トグル）とタグ絞り込みは別枠で扱われ、それぞれ0件になった場合は個別に案内が出ます'], en:["Added the FILTER tag filter to STARTER TREE and ROUTE GRAPH as well. Selected tags are shared with COMBO LIST, and combos that do not match a tag are hidden along with their branches. In ROUTE GRAPH, the 🕸 hide toggle and tag filtering are handled separately, each showing its own message when it results in zero combos"] },
   { version:'1.3.4', date:'2026.08.14', ja:['コンボ一覧 に自動並び替え（ソート）機能を追加しました。SORTバーの「始動技」「ダメージ」のピルをクリックすると一括で並び替えられます（もう一度クリックで昇順⇔降順を切替）。分岐コンボの親子関係は崩れず、並び替え後もドラッグでの手動並び替えを引き続き使えます','そのほか軽微な調整を行いました'], en:['Added an auto-sort feature to COMBO LIST. Click the "Starter" or "Damage" pill in the SORT bar to sort all combos at once (click again to toggle ascending/descending). Branch combo hierarchies stay intact, and you can still drag combos to reorder them manually afterward','Various other minor adjustments'] },
@@ -5616,17 +5616,7 @@ function renderTree(){
   const wrap=document.getElementById('treeViewWrap');wrap.innerHTML='';
   const char=cur();const combos=char.combos||[];
   if(!combos.length){wrap.innerHTML='<div style="color:#7a7a8a;font-size:12px;text-align:center;padding:30px;">'+esc(t('noCombosTree'))+'</div>';return;}
-  if(combos.some(c=>c.parentId)){
-    const lg=document.createElement('div');lg.className='tree-diff-legend';
-    lg.innerHTML=esc(t('treeDiffLabel'))+'<span class="lg-dot"><span class="lg-sw" style="background:#2e1f08;box-shadow:0 0 0 1.5px rgba(244,123,32,.7);"></span>'+esc(t('legendBranch'))+'</span>';
-    wrap.appendChild(lg);
-  }
-  // ヒット状況の凡例（いずれかのコンボで C/PC/D が設定されているときだけ表示）
-  if(combos.some(c=>(c.counters||[]).some(x=>x))){
-    const lg2=document.createElement('div');lg2.className='tree-diff-legend tree-hit-legend';
-    lg2.innerHTML=esc(t('treeHitLabel'))+'<span class="lg-grid"><span class="lg-dot"><span class="ctr-badge ctr-c">C</span>'+esc(t('ctrCounter'))+'</span><span class="lg-dot"><span class="ctr-badge ctr-pc">PC</span>'+esc(t('ctrPunish'))+'</span><span class="lg-dot"><span class="ctr-badge ctr-d">D</span>'+esc(t('ctrDelay'))+'</span><span class="lg-dot"><span class="ctr-badge ctr-g">G</span>'+esc(t('ctrGuard'))+'</span></span>';
-    wrap.appendChild(lg2);
-  }
+  // ※ 分岐の差分／ヒット状況の凡例は視認性のため v1.3.7 で非表示にした（チップの色分け・バッジ自体は従来どおり）
   const map={};combos.forEach(c=>{if(c.parentId)return;const k=c.moves[0]||'__none__';if(!map[k])map[k]=[];map[k].push(c);});
   // 親子参照を一度だけ索引化（行ごとの char.combos.filter/find による2乗オーダー走査を回避）
   const _byId=new Map();const _kids=new Map();
