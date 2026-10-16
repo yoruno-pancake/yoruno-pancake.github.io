@@ -210,6 +210,9 @@ body.mobile .tag-mode-btn{font-size:12px;padding:5px 10px;}
 .placed.ins-r::before{right:-4px;}
 .rm-btn{width:14px;height:14px;background:#3a1a1a;border:none;border-radius:50%;color:#ff4444;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
 .dup-btn{width:14px;height:14px;background:#2e2410;border:none;border-radius:50%;color:var(--gold);font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
+/* ★ ✕ / ⧉ は文字だとフォント（OS・ブラウザごとの代替フォント）の字面位置で中心がズレるため、SVGで描いて常に正円の中心に置く */
+.rm-btn,.dup-btn{line-height:0;}
+.rm-btn svg,.dup-btn svg{display:block;pointer-events:none;}
 .arrow-sep{color:var(--dim);font-size:11px;flex-shrink:0;}
 /* ★ 技追加モードの挿入キャレット（タッチ操作時のみ表示）。タップした位置が次に技が入る場所になる */
 .ins-caret{display:none;position:relative;flex-shrink:0;width:12px;align-self:stretch;min-height:26px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -266,6 +269,7 @@ body.touch-mode .placed{-webkit-touch-callout:none;}
 .tree-move-chip.tmc-branch{box-shadow:0 0 0 1.5px rgba(244,123,32,.7);}
 .rep-x{font-weight:700;margin-left:2px;font-size:10px;}
 .placed .rep-x{color:var(--gold);}
+.tree-toolbar{display:flex;justify-content:flex-end;gap:6px;margin:0 0 10px;}
 .tree-diff-legend{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--dim);margin:0 0 10px 2px;}
 .tree-diff-legend .lg-dot{display:inline-flex;align-items:center;gap:4px;}
 .tree-diff-legend .lg-sw{width:10px;height:10px;border-radius:3px;display:inline-block;}
@@ -868,6 +872,8 @@ const I18N={
   ctrGuard:{ja:'ガード',en:'Guard'},
   // tree
   treeDiffLabel:{ja:'分岐の差分: ',en:'Branch diff: '},
+  treeExpandAll:{ja:'▼ すべて開く',en:'▼ Expand all'},
+  treeCollapseAll:{ja:'▶ すべて閉じる',en:'▶ Collapse all'},
   treeHitLabel:{ja:'ヒット状況: ',en:'Hit state: '},
   noStarter:{ja:'始動技なし',en:'No starter'},
   noMovesTree:{ja:'技なし',en:'No moves'},
@@ -1248,22 +1254,22 @@ const SEED_MOVES={
   {id:"jamie_0049",name:"中 流酔拳（2段目）",type:"special",inputStr:"↓↘→＋中P▶→＋P",startup:16,active:"16-17",recovery:"28",onHit:-3,onBlock:-11,damage:400,cancel:"",notes:"空振り時も派生可能",dgCost:0,thumb:null},
   {id:"jamie_0050",name:"強 流酔拳（2段目）",type:"special",inputStr:"↓↘→＋強P▶→＋P",startup:19,active:"19-20",recovery:"28",onHit:-3,onBlock:-9,damage:450,cancel:"",notes:"空振り時も派生可能",dgCost:0,thumb:null},
   {id:"jamie_0051",name:"[酔いレベル4]流酔拳（2段目）",type:"special",inputStr:"↓↘→＋P▶→＋P",startup:15,active:"15-23",recovery:"27",onHit:-2,onBlock:-10,damage:450,cancel:"",notes:"酔いLv4で発動可能",dgCost:0,thumb:null},
-  {id:"jamie_0052",name:"OD 流酔拳（2段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P",startup:13,active:"13-14",recovery:"22",onHit:-1,onBlock:-3,damage:450,cancel:"",notes:"空振り時も派生可能",dgCost:2,thumb:null},
-  {id:"jamie_0053",name:"[酔いレベル4]OD 流酔拳（2段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P",startup:15,active:"15-23",recovery:"22",onHit:-1,onBlock:-3,damage:500,cancel:"",notes:"酔いLv4で発動可能",dgCost:2,thumb:null},
+  {id:"jamie_0052",name:"OD 流酔拳（2段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P",startup:13,active:"13-14",recovery:"22",onHit:-1,onBlock:-3,damage:450,cancel:"",notes:"空振り時も派生可能",dgCost:0,thumb:null},
+  {id:"jamie_0053",name:"[酔いレベル4]OD 流酔拳（2段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P",startup:15,active:"15-23",recovery:"22",onHit:-1,onBlock:-3,damage:500,cancel:"",notes:"酔いLv4で発動可能",dgCost:0,thumb:null},
   {id:"jamie_0054",name:"弱 流酔拳（3段目）",type:"special",inputStr:"↓↘→＋弱P▶→＋P▶→＋P",startup:13,active:"13-14",recovery:"30",onHit:"D",onBlock:-17,damage:550,cancel:"SA3",notes:"空振り時も派生可能",dgCost:0,thumb:null},
   {id:"jamie_0055",name:"中 流酔拳（3段目）",type:"special",inputStr:"↓↘→＋中P▶→＋P▶→＋P",startup:16,active:"16-17",recovery:"30",onHit:"D",onBlock:-15,damage:600,cancel:"SA3",notes:"空振り時も派生可能",dgCost:0,thumb:null},
   {id:"jamie_0056",name:"強 流酔拳（3段目）",type:"special",inputStr:"↓↘→＋強P▶→＋P▶→＋P",startup:19,active:"19-20",recovery:"30",onHit:"D",onBlock:-13,damage:650,cancel:"SA3",notes:"空振り時も派生可能",dgCost:0,thumb:null},
   {id:"jamie_0057",name:"[酔いレベル4]流酔拳（3段目）",type:"special",inputStr:"↓↘→＋P▶→＋P▶→＋P",startup:16,active:"16-40",recovery:"28",onHit:"D",onBlock:-14,damage:750,cancel:"SA3",notes:"酔いLv4で発動可能",dgCost:0,thumb:null},
-  {id:"jamie_0058",name:"OD 流酔拳（3段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P▶→＋P",startup:13,active:"13-14",recovery:"30",onHit:"D",onBlock:-13,damage:750,cancel:"SA2",notes:"空振り時も派生可能",dgCost:2,thumb:null},
-  {id:"jamie_0059",name:"[酔いレベル4]OD 流酔拳（3段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P▶→＋P",startup:16,active:"16-40",recovery:"28",onHit:"D",onBlock:-14,damage:700,cancel:"SA2",notes:"酔いLv4で発動可能",dgCost:2,thumb:null},
+  {id:"jamie_0058",name:"OD 流酔拳（3段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P▶→＋P",startup:13,active:"13-14",recovery:"30",onHit:"D",onBlock:-13,damage:750,cancel:"SA2",notes:"空振り時も派生可能",dgCost:0,thumb:null},
+  {id:"jamie_0059",name:"[酔いレベル4]OD 流酔拳（3段目）",type:"od",inputStr:"↓↘→＋PP▶→＋P▶→＋P",startup:16,active:"16-40",recovery:"28",onHit:"D",onBlock:-14,damage:700,cancel:"SA2",notes:"酔いLv4で発動可能",dgCost:0,thumb:null},
   {id:"jamie_0060",name:"弱 流酔脚（2段目）",type:"special",inputStr:"↓↘→＋弱P▶→＋K",startup:14,active:"14-15",recovery:"32",onHit:-7,onBlock:-15,damage:250,cancel:"",notes:"",dgCost:0,thumb:null},
   {id:"jamie_0061",name:"中 流酔脚（2段目）",type:"special",inputStr:"↓↘→＋中P▶→＋K",startup:17,active:"17-18",recovery:"32",onHit:-7,onBlock:-15,damage:300,cancel:"",notes:"",dgCost:0,thumb:null},
   {id:"jamie_0062",name:"強 流酔脚（2段目）",type:"special",inputStr:"↓↘→＋強P▶→＋K",startup:20,active:"20-21",recovery:"32",onHit:-7,onBlock:-15,damage:300,cancel:"",notes:"",dgCost:0,thumb:null},
-  {id:"jamie_0063",name:"OD 流酔脚（2段目）",type:"od",inputStr:"↓↘→＋PP▶→＋K",startup:14,active:"14-15",recovery:"32",onHit:-7,onBlock:-15,damage:350,cancel:"",notes:"",dgCost:2,thumb:null},
+  {id:"jamie_0063",name:"OD 流酔脚（2段目）",type:"od",inputStr:"↓↘→＋PP▶→＋K",startup:14,active:"14-15",recovery:"32",onHit:-7,onBlock:-15,damage:350,cancel:"",notes:"",dgCost:0,thumb:null},
   {id:"jamie_0064",name:"弱 流酔脚（3段目）",type:"special",inputStr:"↓↘→＋弱P▶→＋K▶→＋K",startup:18,active:"18-19",recovery:"64",onHit:"D",onBlock:-49,damage:450,cancel:"",notes:"55F目で酔いLv1上昇 / 酔いLv3以下の時ドライブゲージ5000回復 / 酔いLv4時ドライブゲージ10000回復",dgCost:0,thumb:null},
   {id:"jamie_0065",name:"中 流酔脚（3段目）",type:"special",inputStr:"↓↘→＋中P▶→＋K▶→＋K",startup:21,active:"21-22",recovery:"64",onHit:"D",onBlock:-49,damage:500,cancel:"",notes:"59F目で酔いLv1上昇 / 酔いLv3以下の時ドライブゲージ5000回復 / 酔いLv4時ドライブゲージ10000回復",dgCost:0,thumb:null},
   {id:"jamie_0066",name:"強 流酔脚（3段目）",type:"special",inputStr:"↓↘→＋強P▶→＋K▶→＋K",startup:24,active:"24-25",recovery:"64",onHit:"D",onBlock:-49,damage:550,cancel:"",notes:"62F目で酔いLv1上昇 / 酔いLv3以下の時ドライブゲージ5000回復 / 酔いLv4時ドライブゲージ10000回復",dgCost:0,thumb:null},
-  {id:"jamie_0067",name:"OD 流酔脚（3段目）",type:"od",inputStr:"↓↘→＋PP▶→＋K▶→＋K",startup:18,active:"18-19",recovery:"64",onHit:"D",onBlock:-49,damage:600,cancel:"",notes:"56F目で酔いLv1上昇 / 酔いLv3以下の時ドライブゲージ5000回復 / 酔いLv4時ドライブゲージ10000回復",dgCost:2,thumb:null},
+  {id:"jamie_0067",name:"OD 流酔脚（3段目）",type:"od",inputStr:"↓↘→＋PP▶→＋K▶→＋K",startup:18,active:"18-19",recovery:"64",onHit:"D",onBlock:-49,damage:600,cancel:"",notes:"56F目で酔いLv1上昇 / 酔いLv3以下の時ドライブゲージ5000回復 / 酔いLv4時ドライブゲージ10000回復",dgCost:0,thumb:null},
   {id:"jamie_0068",name:"弱 酔疾歩",type:"special",inputStr:"↓↙←＋弱P",startup:17,active:"17-25",recovery:"17",onHit:"D",onBlock:-6,damage:900,cancel:"SA3",notes:"",dgCost:0,thumb:null},
   {id:"jamie_0069",name:"中 酔疾歩",type:"special",inputStr:"↓↙←＋中P",startup:20,active:"20-28",recovery:"17",onHit:"D",onBlock:-6,damage:1000,cancel:"SA3",notes:"",dgCost:0,thumb:null},
   {id:"jamie_0070",name:"強 酔疾歩",type:"special",inputStr:"↓↙←＋強P",startup:25,active:"25-33",recovery:"16",onHit:"D",onBlock:-3,damage:1200,cancel:"SA3",notes:"",dgCost:0,thumb:null},
@@ -1283,7 +1289,7 @@ const SEED_MOVES={
   {id:"jamie_0084",name:"点辰",type:"special",inputStr:"→↘↓↙←＋K",condition:"酔いLv3以上",startup:8,active:"8-9",recovery:"52",onHit:8,onBlock:"",damage:0,cancel:"",notes:"酔いLv3以上で発動可能 / ※コンボの3段目以降に補正がかかる",dgCost:0,thumb:null},
   {id:"jamie_0085",name:"OD 点辰",type:"od",inputStr:"→↘↓↙←＋KK",condition:"酔いLv3以上",startup:8,active:"8-9",recovery:"52",onHit:"D",onBlock:"",damage:650,cancel:"",notes:"酔いLv3以上で発動可能 / ヒット時膝崩れ / ■クラシック操作 / パニッシュカウンター時個別ダメージ（784） / ■モダン操作時 / パニッシュカウンター時個別ダメージ（627）",dgCost:2,thumb:null},
   {id:"jamie_0086",name:"疾歩仙掌",type:"special",inputStr:"↓↙←＋P▶→＋P",condition:"酔いLv4以上",startup:19,active:"19-21",recovery:"39",onHit:"D",onBlock:-23,damage:900,cancel:"SA3",notes:"酔いLv4で発動可能",dgCost:0,thumb:null},
-  {id:"jamie_0087",name:"OD 疾歩仙掌",type:"od",inputStr:"↓↙←＋PP▶→＋P",condition:"酔いLv4以上",startup:19,active:"19-21",recovery:"39",onHit:"D",onBlock:-23,damage:1000,cancel:"SA2",notes:"酔いLv4で発動可能",dgCost:2,thumb:null},
+  {id:"jamie_0087",name:"OD 疾歩仙掌",type:"od",inputStr:"↓↙←＋PP▶→＋P",condition:"酔いLv4以上",startup:19,active:"19-21",recovery:"39",onHit:"D",onBlock:-23,damage:1000,cancel:"SA2",notes:"酔いLv4で発動可能",dgCost:0,thumb:null},
   {id:"jamie_0088",name:"SA1 武麗禽",type:"super",inputStr:"↓↘→↓↘→＋K",startup:8,active:"8-133",recovery:"74※107",onHit:"D",onBlock:"-60※-93",damage:"2200※1850",cancel:"",notes:"1-12 打撃・投げに対して無敵 / 最低保障ダメージ30％ / カウンター/パニッシュカウンターで数値が変動しない / ※動作中に、下方向を入力し続けると性質が変化し、酔いLvが1上昇する。",dgCost:0,thumb:null},
   {id:"jamie_0089",name:"SA2 絶唱魔身",type:"super",inputStr:"↓↙←↓↙←＋P",startup:"",active:"",recovery:"全体6",onHit:"",onBlock:"",damage:0,cancel:"",notes:"発動後、一定時間酔いLv4状態となる / （ただし、ダメージ倍率は105%） / 効果時間900F / 酔いLv4時に発動するとドライブゲージ30000回復",dgCost:0,thumb:null},
   {id:"jamie_0090",name:"SA3 月牙叉炮",type:"super",inputStr:"↓↘→↓↘→＋P",startup:10,active:"10-28",recovery:"42",onHit:"D",onBlock:-27,damage:2600,cancel:"",notes:"1-12F 完全無敵 / 最低保障ダメージ50％ / カウンター/パニッシュカウンターで数値が変動しない / ハードノックダウン / ※必殺技キャンセル時のみ適用",dgCost:0,thumb:null},
@@ -1507,19 +1513,19 @@ const SEED_MOVES={
   {id:"kimberly_0037",name:"疾駆け",type:"special",inputStr:"↓↘→＋K",startup:"",active:"",recovery:"全体55",onHit:"",onBlock:"",damage:0,cancel:"",notes:"8Fから専用技に派生可 / 16F以降、相手が一定距離内にいると弧空に自動派生",dgCost:0,thumb:null},
   {id:"kimberly_0038",name:"OD 疾駆け",type:"od",inputStr:"↓↘→＋KK",startup:"",active:"",recovery:"全体54",onHit:"",onBlock:"",damage:0,cancel:"",notes:"6Fから急停止に派生可 / 8Fから胴刎ね、影すくい、首狩りに派生可 / 14F以降、相手が一定距離内にいると弧空に自動派生",dgCost:2,thumb:null},
   {id:"kimberly_0039",name:"急停止",type:"special",inputStr:"P",condition:"疾駆け中に",startup:"",active:"",recovery:"全体14",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
-  {id:"kimberly_0040",name:"OD 急停止",type:"od",inputStr:"P",condition:"OD疾駆け中に",startup:"",active:"",recovery:"全体13",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:2,thumb:null},
+  {id:"kimberly_0040",name:"OD 急停止",type:"od",inputStr:"P",condition:"OD疾駆け中に",startup:"",active:"",recovery:"全体13",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
   {id:"kimberly_0041",name:"胴刎ね",type:"special",inputStr:"弱K",condition:"疾駆け中に",startup:21,active:"21-27",recovery:"16",onHit:"D",onBlock:1,damage:900,cancel:"SA3",notes:"",dgCost:0,thumb:null},
-  {id:"kimberly_0042",name:"OD 胴刎ね",type:"od",inputStr:"弱K",condition:"OD疾駆け中に",startup:17,active:"17-23",recovery:"16",onHit:"D",onBlock:3,damage:1080,cancel:"SA2",notes:"",dgCost:2,thumb:null},
+  {id:"kimberly_0042",name:"OD 胴刎ね",type:"od",inputStr:"弱K",condition:"OD疾駆け中に",startup:17,active:"17-23",recovery:"16",onHit:"D",onBlock:3,damage:1080,cancel:"SA2",notes:"",dgCost:0,thumb:null},
   {id:"kimberly_0043",name:"影すくい",type:"special",inputStr:"中K",condition:"疾駆け中に",startup:10,active:"10-21",recovery:"19",onHit:"D",onBlock:-12,damage:720,cancel:"SA3",notes:"",dgCost:0,thumb:null},
-  {id:"kimberly_0044",name:"OD 影すくい",type:"od",inputStr:"中K",condition:"OD疾駆け中に",startup:8,active:"8-19",recovery:"19",onHit:"D",onBlock:-10,damage:900,cancel:"SA2",notes:"",dgCost:2,thumb:null},
+  {id:"kimberly_0044",name:"OD 影すくい",type:"od",inputStr:"中K",condition:"OD疾駆け中に",startup:8,active:"8-19",recovery:"19",onHit:"D",onBlock:-10,damage:900,cancel:"SA2",notes:"",dgCost:0,thumb:null},
   {id:"kimberly_0045",name:"首狩り",type:"special",inputStr:"強K",condition:"疾駆け中に",startup:19,active:"19-23",recovery:"19",onHit:"D",onBlock:-3,damage:900,cancel:"SA3",notes:"",dgCost:0,thumb:null},
-  {id:"kimberly_0046",name:"OD 首狩り",type:"od",inputStr:"強K",condition:"OD疾駆け中に",startup:15,active:"15-19",recovery:"19",onHit:"D",onBlock:-1,damage:1080,cancel:"SA2",notes:"空中ヒット時床バウンド",dgCost:2,thumb:null},
+  {id:"kimberly_0046",name:"OD 首狩り",type:"od",inputStr:"強K",condition:"OD疾駆け中に",startup:15,active:"15-19",recovery:"19",onHit:"D",onBlock:-1,damage:1080,cancel:"SA2",notes:"空中ヒット時床バウンド",dgCost:0,thumb:null},
   {id:"kimberly_0047",name:"弧空",type:"special",inputStr:"-",condition:"疾駆けで相手に一定距離まで近付くと自動派生",startup:6,active:"6-15",recovery:"26+着地後4",onHit:3,onBlock:-6,damage:450,cancel:"",notes:"7-41F 空中判定 / 33F 専用技に派生可",dgCost:0,thumb:null},
-  {id:"kimberly_0048",name:"OD 弧空",type:"od",inputStr:"-",condition:"OD疾駆けで相手に一定距離まで近付くと自動派生",startup:6,active:"6-15",recovery:"26+着地後4",onHit:3,onBlock:-6,damage:270,cancel:"",notes:"7-41F 空中判定 / 33F 専用技に派生可",dgCost:2,thumb:null},
+  {id:"kimberly_0048",name:"OD 弧空",type:"od",inputStr:"-",condition:"OD疾駆けで相手に一定距離まで近付くと自動派生",startup:6,active:"6-15",recovery:"26+着地後4",onHit:3,onBlock:-6,damage:270,cancel:"",notes:"7-41F 空中判定 / 33F 専用技に派生可",dgCost:0,thumb:null},
   {id:"kimberly_0049",name:"武神イズナ落とし",type:"special",inputStr:"P",condition:"弧空中に",startup:13,active:"13-18",recovery:"着地後40",onHit:"D",onBlock:"",damage:1440,cancel:"",notes:"■クラシック操作 / パニッシュカウンター時個別ダメージ（1656） / ■モダン操作時 / パニッシュカウンター時個別ダメージ（1324）",dgCost:0,thumb:null},
-  {id:"kimberly_0050",name:"OD 武神イズナ落とし",type:"od",inputStr:"P",condition:"OD弧空中に",startup:13,active:"13-18",recovery:"着地後40",onHit:"D",onBlock:"",damage:900,cancel:"",notes:"■クラシック操作 / パニッシュカウンター時個別ダメージ（1035） / ■モダン操作時 / パニッシュカウンター時個別ダメージ（828）",dgCost:2,thumb:null},
+  {id:"kimberly_0050",name:"OD 武神イズナ落とし",type:"od",inputStr:"P",condition:"OD弧空中に",startup:13,active:"13-18",recovery:"着地後40",onHit:"D",onBlock:"",damage:900,cancel:"",notes:"■クラシック操作 / パニッシュカウンター時個別ダメージ（1035） / ■モダン操作時 / パニッシュカウンター時個別ダメージ（828）",dgCost:0,thumb:null},
   {id:"kimberly_0051",name:"武神鉾刃脚",type:"special",inputStr:"K",condition:"弧空中に",startup:13,active:"13-18",recovery:"着地後20",onHit:"D",onBlock:-8,damage:630,cancel:"",notes:"",dgCost:0,thumb:null},
-  {id:"kimberly_0052",name:"OD 武神鉾刃脚",type:"od",inputStr:"K",condition:"OD弧空中に",startup:13,active:"13-18",recovery:"着地後20",onHit:"D",onBlock:-8,damage:630,cancel:"SA2",notes:"ヒット時のみ2段目に派生 / ヒット時壁やられ",dgCost:2,thumb:null},
+  {id:"kimberly_0052",name:"OD 武神鉾刃脚",type:"od",inputStr:"K",condition:"OD弧空中に",startup:13,active:"13-18",recovery:"着地後20",onHit:"D",onBlock:-8,damage:630,cancel:"SA2",notes:"ヒット時のみ2段目に派生 / ヒット時壁やられ",dgCost:0,thumb:null},
   {id:"kimberly_0053",name:"弱 流転一文字",type:"special",inputStr:"↓↘→＋弱P",startup:10,active:"10-12",recovery:"21",onHit:3,onBlock:-4,damage:810,cancel:"SA3",notes:"",dgCost:0,thumb:null},
   {id:"kimberly_0054",name:"中 流転一文字",type:"special",inputStr:"↓↘→＋中P",startup:17,active:"17-43※",recovery:"28",onHit:"D",onBlock:-12,damage:1080,cancel:"SA3",notes:"※ヒット時のみ2段目派生",dgCost:0,thumb:null},
   {id:"kimberly_0055",name:"強 流転一文字",type:"special",inputStr:"↓↘→＋強P",startup:24,active:"24- 45※",recovery:"28",onHit:"D",onBlock:-12,damage:540,cancel:"SA3",notes:"※ヒット時のみ2段目派生 / 2段目ジャンプキャンセル可",dgCost:0,thumb:null},
@@ -1702,13 +1708,13 @@ const SEED_MOVES={
   {id:"ken_0050",name:"強 迅雷脚",type:"special",inputStr:"↓↘→＋強K",startup:25,active:"25-27",recovery:"19",onHit:"D",onBlock:-2,damage:700,cancel:"SA3",notes:"36-41F 風鎌蹴り、轟雷落としに派生可 / 34-41F 閃火脚に派生可",dgCost:0,thumb:null},
   {id:"ken_0051",name:"OD 迅雷脚",type:"od",inputStr:"↓↘→＋KK",startup:13,active:"13-15",recovery:"25",onHit:-4,onBlock:-7,damage:600,cancel:"SA2",notes:"21-27F OD風鎌蹴り、OD轟雷落としに派生可 / 19-27F OD閃火脚に派生可",dgCost:2,thumb:null},
   {id:"ken_0052",name:"風鎌蹴り",type:"special",inputStr:"→＋弱K",condition:"迅雷脚中に",startup:6,active:"6-9",recovery:"19",onHit:3,onBlock:-5,damage:600,cancel:"SA3",notes:"カウンター/パニッシュカウンター時ダウン / 動作中常に被パニッシュカウンター判定",dgCost:0,thumb:null},
-  {id:"ken_0053",name:"OD 風鎌蹴り",type:"od",inputStr:"→＋弱K",condition:"OD迅雷脚中に",startup:6,active:"6-8",recovery:"20",onHit:3,onBlock:-5,damage:500,cancel:"SA2",notes:"11F 火砕蹴に派生可 / 動作中常に被パニッシュカウンター判定",dgCost:2,thumb:null},
+  {id:"ken_0053",name:"OD 風鎌蹴り",type:"od",inputStr:"→＋弱K",condition:"OD迅雷脚中に",startup:6,active:"6-8",recovery:"20",onHit:3,onBlock:-5,damage:500,cancel:"SA2",notes:"11F 火砕蹴に派生可 / 動作中常に被パニッシュカウンター判定",dgCost:0,thumb:null},
   {id:"ken_0054",name:"火砕蹴",type:"special",inputStr:"→＋K",condition:"OD風鎌蹴り後に",startup:15,active:"15-17",recovery:"29",onHit:"D",onBlock:-12,damage:500,cancel:"SA2",notes:"動作中常に被パニッシュカウンター判定",dgCost:0,thumb:null},
   {id:"ken_0055",name:"轟雷落とし",type:"special",inputStr:"→＋中K",condition:"迅雷脚中に",startup:18,active:"18-20",recovery:"20",onHit:3,onBlock:-3,damage:1000,cancel:"SA3",notes:"動作中常に被パニッシュカウンター判定 / 空中ヒット時床バウンド",dgCost:0,thumb:null},
-  {id:"ken_0056",name:"OD 轟雷落とし",type:"od",inputStr:"→＋中K",condition:"OD迅雷脚中に",startup:17,active:"17-19",recovery:"24",onHit:-3,onBlock:-7,damage:1000,cancel:"SA2",notes:"24F 火砕蹴に派生可 / 動作中常に被パニッシュカウンター判定",dgCost:2,thumb:null},
+  {id:"ken_0056",name:"OD 轟雷落とし",type:"od",inputStr:"→＋中K",condition:"OD迅雷脚中に",startup:17,active:"17-19",recovery:"24",onHit:-3,onBlock:-7,damage:1000,cancel:"SA2",notes:"24F 火砕蹴に派生可 / 動作中常に被パニッシュカウンター判定",dgCost:0,thumb:null},
   {id:"ken_0057",name:"火砕蹴",type:"special",inputStr:"→＋K",condition:"OD轟雷落とし後に",startup:11,active:"11-13",recovery:"29",onHit:"D",onBlock:-12,damage:500,cancel:"SA2",notes:"動作中常に被パニッシュカウンター判定",dgCost:0,thumb:null},
   {id:"ken_0058",name:"閃火脚",type:"special",inputStr:"→＋強K",condition:"迅雷脚中に",startup:10,active:"10-12",recovery:"25",onHit:"D",onBlock:-3,damage:800,cancel:"SA3",notes:"動作中常に被パニッシュカウンター判定 / しゃがみ状態の相手に当たらない",dgCost:0,thumb:null},
-  {id:"ken_0059",name:"OD 閃火脚",type:"od",inputStr:"→＋強K",condition:"OD迅雷脚中に",startup:10,active:"10-15",recovery:"18",onHit:"D",onBlock:-4,damage:800,cancel:"SA2",notes:"22F 火砕蹴に派生可 / 動作中常に被パニッシュカウンター判定",dgCost:2,thumb:null},
+  {id:"ken_0059",name:"OD 閃火脚",type:"od",inputStr:"→＋強K",condition:"OD迅雷脚中に",startup:10,active:"10-15",recovery:"18",onHit:"D",onBlock:-4,damage:800,cancel:"SA2",notes:"22F 火砕蹴に派生可 / 動作中常に被パニッシュカウンター判定",dgCost:0,thumb:null},
   {id:"ken_0060",name:"火砕蹴",type:"special",inputStr:"→＋K",condition:"OD閃火脚後に",startup:15,active:"15-17",recovery:"37",onHit:"D",onBlock:-20,damage:500,cancel:"SA2",notes:"動作中常に被パニッシュカウンター判定",dgCost:0,thumb:null},
   {id:"ken_0061",name:"SA1 龍尾烈脚",type:"super",inputStr:"↓↙←↓↙←＋K",startup:7,active:"7-9",recovery:"41",onHit:"D",onBlock:-24,damage:2000,cancel:"",notes:"1-9F 打撃・投げに対して無敵 / 最低保障ダメージ30％ / カウンター/パニッシュカウンターで数値が変動しない",dgCost:0,thumb:null},
   {id:"ken_0062",name:"SA2 疾風迅雷脚",type:"super",inputStr:"↓↘→↓↘→＋K",startup:6,active:"6-61",recovery:"28",onHit:"D",onBlock:-5,damage:2800,cancel:"",notes:"ヒット時6段目以降に派生 / 最低保障ダメージ40％",dgCost:0,thumb:null},
@@ -2678,7 +2684,7 @@ const SEED_MOVES={
   {id:"aki_0025",name:"紫煙砲",type:"special",inputStr:"↓↙←＋弱P",startup:17,active:"",recovery:"全体52",onHit:-5,onBlock:-10,damage:500,cancel:"※SA3",notes:"ヒット時毒状態 / 30-36F専用技でキャンセル可 / ※35-52F OD版蛇軽功でキャンセル可",dgCost:0,thumb:null},
   {id:"aki_0026",name:"紫煙追",type:"special",inputStr:"→＋P",condition:"紫煙砲中に",startup:13,active:"13-14",recovery:"34",onHit:-4,onBlock:-16,damage:"※500",cancel:"SA3",notes:"ヒット時毒状態 / 毒状態中にヒット時毒破裂 / ※毒破裂時ダメージ800/吹き飛びダウン / 飛び道具相殺判定あり（1回）",dgCost:0,thumb:null},
   {id:"aki_0027",name:"OD 紫煙砲",type:"od",inputStr:"↓↙←＋PP",startup:16,active:"",recovery:"全体44",onHit:"D",onBlock:1,damage:700,cancel:"※SA2",notes:"ヒット時毒状態 / 34-35F専用技でキャンセル可 / ※32-33F OD版蛇軽功でキャンセル可",dgCost:2,thumb:null},
-  {id:"aki_0028",name:"OD 紫煙追",type:"od",inputStr:"→＋P",condition:"OD紫煙砲中に",startup:13,active:"13-17",recovery:"28",onHit:"D",onBlock:-13,damage:"※600",cancel:"SA2",notes:"ヒット/ガード時毒状態 / 毒状態中にヒット時毒破裂 / ※毒破裂時ダメージ800/吹き飛びダウン / 飛び道具相殺判定あり（1回）",dgCost:2,thumb:null},
+  {id:"aki_0028",name:"OD 紫煙追",type:"od",inputStr:"→＋P",condition:"OD紫煙砲中に",startup:13,active:"13-17",recovery:"28",onHit:"D",onBlock:-13,damage:"※600",cancel:"SA2",notes:"ヒット/ガード時毒状態 / 毒状態中にヒット時毒破裂 / ※毒破裂時ダメージ800/吹き飛びダウン / 飛び道具相殺判定あり（1回）",dgCost:0,thumb:null},
   {id:"aki_0029",name:"紫煙追 （炸裂）",type:"special",inputStr:"-",startup:"",active:"",recovery:"",onHit:"D",onBlock:"",damage:800,cancel:"",notes:"ヒット時毒状態",dgCost:0,thumb:null},
   {id:"aki_0030",name:"OD 紫煙追 （炸裂）",type:"od",inputStr:"-",startup:"",active:"",recovery:"",onHit:"D",onBlock:"",damage:1600,cancel:"",notes:"ヒット時毒状態",dgCost:2,thumb:null},
   {id:"aki_0031",name:"紫泡泉",type:"special",inputStr:"↓↙←＋中P",startup:26,active:"※",recovery:"全体46",onHit:"",onBlock:"",damage:0,cancel:"",notes:"毒溜まり接触時毒状態 / 設置した毒溜まりは160F持続",dgCost:0,thumb:null},
@@ -2750,9 +2756,9 @@ const SEED_MOVES={
   {id:"ed_0030",name:"弱 サイコシュート",type:"special",inputStr:"→＋弱P",condition:"サイコスパーク中に",startup:12,active:"",recovery:"全体42",onHit:3,onBlock:-8,damage:600,cancel:"SA3",notes:"",dgCost:0,thumb:null},
   {id:"ed_0031",name:"中 サイコシュート",type:"special",inputStr:"→＋中P",condition:"サイコスパーク中に",startup:12,active:"",recovery:"全体42",onHit:3,onBlock:-8,damage:600,cancel:"SA3",notes:"",dgCost:0,thumb:null},
   {id:"ed_0032",name:"強 サイコシュート",type:"special",inputStr:"→＋強P",condition:"サイコスパーク中に",startup:12,active:"",recovery:"全体42",onHit:3,onBlock:-8,damage:600,cancel:"SA3",notes:"",dgCost:0,thumb:null},
-  {id:"ed_0033",name:"OD 弱 サイコシュート",type:"od",inputStr:"→＋弱P",condition:"ODサイコスパーク中に",startup:12,active:"",recovery:"全体40",onHit:"D",onBlock:-2,damage:800,cancel:"SA2",notes:"",dgCost:2,thumb:null},
-  {id:"ed_0034",name:"OD 中 サイコシュート",type:"od",inputStr:"→＋中P",condition:"ODサイコスパーク中に",startup:12,active:"",recovery:"全体40",onHit:"D",onBlock:-2,damage:800,cancel:"SA2",notes:"",dgCost:2,thumb:null},
-  {id:"ed_0035",name:"OD 強 サイコシュート",type:"od",inputStr:"→＋強P",condition:"ODサイコスパーク中に",startup:12,active:"",recovery:"全体40",onHit:"D",onBlock:-2,damage:800,cancel:"SA2",notes:"",dgCost:2,thumb:null},
+  {id:"ed_0033",name:"OD 弱 サイコシュート",type:"od",inputStr:"→＋弱P",condition:"ODサイコスパーク中に",startup:12,active:"",recovery:"全体40",onHit:"D",onBlock:-2,damage:800,cancel:"SA2",notes:"",dgCost:0,thumb:null},
+  {id:"ed_0034",name:"OD 中 サイコシュート",type:"od",inputStr:"→＋中P",condition:"ODサイコスパーク中に",startup:12,active:"",recovery:"全体40",onHit:"D",onBlock:-2,damage:800,cancel:"SA2",notes:"",dgCost:0,thumb:null},
+  {id:"ed_0035",name:"OD 強 サイコシュート",type:"od",inputStr:"→＋強P",condition:"ODサイコスパーク中に",startup:12,active:"",recovery:"全体40",onHit:"D",onBlock:-2,damage:800,cancel:"SA2",notes:"",dgCost:0,thumb:null},
   {id:"ed_0036",name:"弱 サイコアッパー",type:"special",inputStr:"→↓↘＋弱P",startup:10,active:"10-17",recovery:"28",onHit:"D",onBlock:-13,damage:900,cancel:"SA3",notes:"1-15F 空中判定の打撃・空弾属性に対して無敵",dgCost:0,thumb:null},
   {id:"ed_0037",name:"中 サイコアッパー",type:"special",inputStr:"→↓↘＋中P",startup:14,active:"14-19",recovery:"32",onHit:"D",onBlock:-20,damage:1000,cancel:"SA3",notes:"1-19F 空中判定の打撃・空弾属性に対して無敵",dgCost:0,thumb:null},
   {id:"ed_0038",name:"強 サイコアッパー",type:"special",inputStr:"→↓↘＋強P",startup:16,active:"16-21",recovery:"33",onHit:"D",onBlock:-21,damage:1200,cancel:"SA3",notes:"1-19F 空中判定の打撃・空弾属性に対して無敵",dgCost:0,thumb:null},
@@ -3566,9 +3572,11 @@ const SEED_MOVES={
   {id:"yasmine_0049",name:"強 ムカ・ン・ランギット",type:"special",inputStr:"↓↘→＋強K",startup:"",active:"",recovery:"全体59",onHit:"",onBlock:"",damage:0,cancel:"",notes:"23F-42Fまで、ウラン(OD版を含む)、クロッグ(OD版を含む)に派生可能 / 14F以降、空中判定",dgCost:0,thumb:null},
   {id:"yasmine_0050",name:"OD ムカ・ン・ランギット",type:"od",inputStr:"↓↘→＋KK",startup:"",active:"",recovery:"全体59",onHit:"",onBlock:"",damage:0,cancel:"",notes:"18F-45Fまで、ODウラン、ODクロッグに派生可能 / 14F以降、空中判定",dgCost:2,thumb:null},
   {id:"yasmine_0051",name:"ウラン",type:"special",inputStr:"P",condition:"ムカ・ン・ランギット中に",startup:17,active:"17-20",recovery:"着地後12",onHit:"3～6",onBlock:"-4～-2",damage:800,cancel:"",notes:"めくり性能 / ヒット・ガードさせた高度によって硬直差が変化",dgCost:0,thumb:null},
-  {id:"yasmine_0052",name:"OD ウラン",type:"od",inputStr:"PP",condition:"ムカ・ン・ランギット中に",startup:17,active:"17-20",recovery:"着地後12",onHit:"5～10",onBlock:"-2～2",damage:800,cancel:"",notes:"めくり性能 / ヒット・ガードさせた高度によって硬直差が変化 / ODムカ・ン・ランギット中はP単押しでも発動",dgCost:0,thumb:null},
+  {id:"yasmine_0052",name:"OD ウラン",type:"od",inputStr:"PP",condition:"ODムカ・ン・ランギット中に",startup:17,active:"17-20",recovery:"着地後12",onHit:"5～10",onBlock:"-2～2",damage:800,cancel:"",notes:"めくり性能 / ヒット・ガードさせた高度によって硬直差が変化 / ODムカ・ン・ランギット中はP単押しでも発動 / ODムカ・ン・ランギットから発動した場合、追加でDゲージは消費しない",dgCost:0,thumb:null},
+  {id:"yasmine_0083",name:"OD ウラン（弱・中・強ムカ中）",type:"od",inputStr:"PP",condition:"弱・中・強ムカ・ン・ランギット中に",startup:17,active:"17-20",recovery:"着地後12",onHit:"5～10",onBlock:"-2～2",damage:800,cancel:"",notes:"めくり性能 / ヒット・ガードさせた高度によって硬直差が変化 / 弱・中・強ムカ・ン・ランギットから発動した場合はDゲージを2消費",dgCost:2,thumb:null},
   {id:"yasmine_0053",name:"クロッグ",type:"special",inputStr:"K",condition:"ムカ・ン・ランギット中に",startup:17,active:"17-着地まで",recovery:"着地後12",onHit:"4～10",onBlock:"-3～4",damage:700,cancel:"",notes:"ヒット・ガードさせた高度によって硬直差が変化",dgCost:0,thumb:null},
-  {id:"yasmine_0054",name:"OD クロッグ",type:"od",inputStr:"KK",condition:"ムカ・ン・ランギット中に",startup:17,active:"17-着地まで",recovery:"着地後12",onHit:"7～13",onBlock:"1～7",damage:700,cancel:"",notes:"ヒット・ガードさせた高度によって硬直差が変化 / ODムカ・ン・ランギット中はK単押しでも発動",dgCost:0,thumb:null},
+  {id:"yasmine_0054",name:"OD クロッグ",type:"od",inputStr:"KK",condition:"ODムカ・ン・ランギット中に",startup:17,active:"17-着地まで",recovery:"着地後12",onHit:"7～13",onBlock:"1～7",damage:700,cancel:"",notes:"ヒット・ガードさせた高度によって硬直差が変化 / ODムカ・ン・ランギット中はK単押しでも発動 / ODムカ・ン・ランギットから発動した場合、追加でDゲージは消費しない",dgCost:0,thumb:null},
+  {id:"yasmine_0084",name:"OD クロッグ（弱・中・強ムカ中）",type:"od",inputStr:"KK",condition:"弱・中・強ムカ・ン・ランギット中に",startup:17,active:"17-着地まで",recovery:"着地後12",onHit:"7～13",onBlock:"1～7",damage:700,cancel:"",notes:"ヒット・ガードさせた高度によって硬直差が変化 / 弱・中・強ムカ・ン・ランギットから発動した場合はDゲージを2消費",dgCost:2,thumb:null},
   {id:"yasmine_0055",name:"弱 リパ・ン・アギラ",type:"special",inputStr:"→↓↘＋弱K",startup:5,active:"5-14",recovery:"27+着地後12",onHit:"D",onBlock:-29,damage:1000,cancel:"",notes:"3段目以降はヒット時のみ派生 / 1-14F 空中判定の打撃・空弾属性に対して無敵 / 7-41F 空中判定",dgCost:0,thumb:null},
   {id:"yasmine_0056",name:"中 リパ・ン・アギラ",type:"special",inputStr:"→↓↘＋中K",startup:6,active:"6-15",recovery:"27+着地後12",onHit:"D",onBlock:-29,damage:1200,cancel:"",notes:"3段目以降はヒット時のみ派生 / 1-9F 空中判定の打撃・空弾属性に対して無敵 / 8-42F 空中判定",dgCost:0,thumb:null},
   {id:"yasmine_0057",name:"強 リパ・ン・アギラ",type:"special",inputStr:"→↓↘＋強K",startup:7,active:"7-16",recovery:"27+着地後12",onHit:"D",onBlock:-32,damage:1300,cancel:"",notes:"3段目以降はヒット時のみ派生 / 1-10F 空中判定の打撃・空弾属性に対して無敵 / 9-43F 空中判定",dgCost:0,thumb:null},
@@ -3598,6 +3606,85 @@ const SEED_MOVES={
   {id:"yasmine_0081",name:"後ジャンプ",type:"other",inputStr:"↖",startup:"4",active:"38",recovery:"3",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
   {id:"yasmine_0082",name:"垂直ジャンプ",type:"other",inputStr:"↑",startup:"4",active:"38",recovery:"3",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null}
   ],
+  "アルジュン":[
+  {id:"arjun_0001",name:"立ち弱P（ぶつ）",type:"Normal",inputStr:"弱P",startup:4,active:"4-6",recovery:"9",onHit:4,onBlock:1,damage:300,cancel:"C",notes:"連打キャンセル対応",dgCost:0,thumb:null},
+  {id:"arjun_0002",name:"立ち弱K（蹴る）",type:"Normal",inputStr:"弱K",startup:6,active:"6-8",recovery:"14",onHit:1,onBlock:-4,damage:400,cancel:"C",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0003",name:"立ち中P（ぶん殴る）",type:"Normal",inputStr:"中P",startup:11,active:"11-13",recovery:"19",onHit:4,onBlock:-2,damage:700,cancel:"C",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0004",name:"立ち中K（引っ掛ける）",type:"Normal",inputStr:"中K",startup:7,active:"7-9",recovery:"19",onHit:2,onBlock:-3,damage:700,cancel:"C",notes:"ガード時硬直2F減少",dgCost:0,thumb:null},
+  {id:"arjun_0005",name:"立ち強P（打ち砕く）",type:"Normal",inputStr:"強P",startup:15,active:"15-16",recovery:"24",onHit:2,onBlock:-3,damage:800,cancel:"",notes:"ガード時硬直1F減少",dgCost:0,thumb:null},
+  {id:"arjun_0006",name:"立ち強K（ぶっ飛ばす）",type:"Normal",inputStr:"強K",startup:14,active:"14-17",recovery:"21",onHit:"D",onBlock:-3,damage:800,cancel:"",notes:"パニッシュカウンター時吹き飛び時間延長",dgCost:0,thumb:null},
+  {id:"arjun_0007",name:"しゃがみ弱P（小突く）",type:"Normal",inputStr:"↓＋弱P",startup:5,active:"5-7",recovery:"9",onHit:5,onBlock:-1,damage:300,cancel:"C",notes:"連打キャンセル対応",dgCost:0,thumb:null},
+  {id:"arjun_0008",name:"しゃがみ弱K（突く）",type:"Normal",inputStr:"↓＋弱K",startup:5,active:"5-7",recovery:"12",onHit:2,onBlock:-2,damage:300,cancel:"",notes:"連打キャンセル対応",dgCost:0,thumb:null},
+  {id:"arjun_0009",name:"しゃがみ中P（はらう）",type:"Normal",inputStr:"↓＋中P",startup:9,active:"9-11",recovery:"22",onHit:"D",onBlock:-4,damage:700,cancel:"",notes:"パニッシュカウンター時ハードノックダウン",dgCost:0,thumb:null},
+  {id:"arjun_0010",name:"しゃがみ中K（伸ばす）",type:"Normal",inputStr:"↓＋中K",startup:8,active:"8-10",recovery:"18",onHit:5,onBlock:-2,damage:600,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0011",name:"しゃがみ強P（かちあげる）",type:"Normal",inputStr:"↓＋強P",startup:10,active:"10-16",recovery:"22",onHit:-1,onBlock:-5,damage:800,cancel:"C",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0012",name:"しゃがみ強K（踏み潰す）",type:"Normal",inputStr:"↓＋強K",startup:14,active:"14-16",recovery:"25",onHit:"D",onBlock:-11,damage:800,cancel:"C",notes:"パニッシュカウンター時床バウンド、ハードノックダウン",dgCost:0,thumb:null},
+  {id:"arjun_0013",name:"ジャンプ弱P（打つ）",type:"jump",inputStr:"（J中）弱P",startup:5,active:"5-12",recovery:"着地後3",onHit:"",onBlock:"",damage:300,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0014",name:"ジャンプ弱K（踏む）",type:"jump",inputStr:"（J中）弱K",startup:7,active:"7-15",recovery:"着地後3",onHit:"",onBlock:"",damage:300,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0015",name:"ジャンプ中P（すくい上げる）",type:"jump",inputStr:"（J中）中P",startup:8,active:"8-12",recovery:"着地後3",onHit:"",onBlock:"",damage:700,cancel:"",notes:"空中ヒット時吹き飛びダウン",dgCost:0,thumb:null},
+  {id:"arjun_0016",name:"ジャンプ中K（突き破る）",type:"jump",inputStr:"（J中）中K",startup:9,active:"9-16",recovery:"着地後3",onHit:"",onBlock:"",damage:700,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0017",name:"ジャンプ強P（振り回す）",type:"jump",inputStr:"（J中）強P",startup:10,active:"10-15",recovery:"着地後3",onHit:"",onBlock:"",damage:800,cancel:"",notes:"めくり性能 / 空中ヒット時叩きつけダウン",dgCost:0,thumb:null},
+  {id:"arjun_0018",name:"ジャンプ強K（叩き壊す）",type:"jump",inputStr:"（J中）強K",startup:10,active:"10-16",recovery:"着地後3",onHit:"",onBlock:"",damage:900,cancel:"",notes:"叩きつけダウン",dgCost:0,thumb:null},
+  {id:"arjun_0019",name:"仁義の一刀",type:"special_tech",inputStr:"→＋強P",startup:22,active:"22-24",recovery:"21",onHit:"D",onBlock:-3,damage:1000,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0020",name:"頑強な跳舞",type:"special_tech",inputStr:"→＋強K",startup:19,active:"19-21",recovery:"21",onHit:"D",onBlock:-4,damage:1000,cancel:"",notes:"8-23F 空中判定",dgCost:0,thumb:null},
+  {id:"arjun_0021",name:"規律の躍動",type:"special_tech",inputStr:"中K▶強K",startup:17,active:"17-19",recovery:"20",onHit:3,onBlock:-3,damage:900,cancel:"SA",notes:"カウンター/パニッシュカウンター時ダウン",dgCost:0,thumb:null},
+  {id:"arjun_0022",name:"不敵の調べ",type:"special_tech",inputStr:"強P▶強P",startup:16,active:"16-18",recovery:"30",onHit:"D",onBlock:-11,damage:800,cancel:"SA",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0023",name:"鎮圧",type:"special_tech",inputStr:"強P▶強P▶強P",startup:18,active:"18-20",recovery:"40",onHit:"D",onBlock:"",damage:2000,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0024",name:"追跡",type:"special_tech",inputStr:"強P▶強P▶強K",startup:"",active:"",recovery:"全体60",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0025",name:"無情の拳",type:"special_tech",inputStr:"強K▶強P",startup:24,active:"24-26",recovery:"42",onHit:"D",onBlock:-23,damage:800,cancel:"C",notes:"30F以上ホールドすると性能変化",dgCost:0,thumb:null},
+  {id:"arjun_0026",name:"無情の拳（ホールド）",type:"special_tech",inputStr:"強K▶強[P]",startup:41,active:"41-43",recovery:"42",onHit:"D",onBlock:-19,damage:1000,cancel:"C",notes:"壁到達時に壁やられ",dgCost:0,thumb:null},
+  {id:"arjun_0027",name:"弱 大義の巨腕",type:"special",inputStr:"↓↘→＋弱P",startup:15,active:"15-21",recovery:"17",onHit:2,onBlock:-2,damage:800,cancel:"SA3",notes:"飛び道具相殺判定あり（1回） / ガード時に500のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000) / カウンター/パニッシュカウンター時吹き飛びダウン",dgCost:0,thumb:null},
+  {id:"arjun_0028",name:"中 大義の巨腕",type:"special",inputStr:"↓↘→＋中P",startup:20,active:"20-26",recovery:"17",onHit:2,onBlock:-2,damage:900,cancel:"SA3",notes:"飛び道具相殺判定あり（1回） / ガード時に700のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000) / カウンター/パニッシュカウンター時吹き飛びダウン",dgCost:0,thumb:null},
+  {id:"arjun_0029",name:"強 大義の巨腕",type:"special",inputStr:"↓↘→＋強P",startup:28,active:"28-33",recovery:"20",onHit:"D",onBlock:2,damage:1000,cancel:"SA3",notes:"飛び道具相殺判定あり（1回） / 空振り時硬直3F増加 / ガード時に800のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(6000) / カウンターヒット時吹き飛び時間延長 / パニッシュカウンター時膝崩れダウン+26",dgCost:0,thumb:null},
+  {id:"arjun_0030",name:"追撃",type:"special",inputStr:"→＋P",condition:"大義の巨腕中に",startup:20,active:"20-27",recovery:"19",onHit:"D",onBlock:1,damage:800,cancel:"SA3",notes:"ガード時に600のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:0,thumb:null},
+  {id:"arjun_0031",name:"OD 大義の巨腕",type:"od",inputStr:"↓↘→＋PP",startup:23,active:"23-28",recovery:"20",onHit:"D",onBlock:2,damage:1000,cancel:"SA2",notes:"飛び道具相殺判定あり（2回） / 空振り時硬直3F増加 / ガード時に800のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(6000) / カウンター/パニッシュカウンター時吹き飛び時間延長",dgCost:2,thumb:null},
+  {id:"arjun_0032",name:"OD 追撃",type:"od",inputStr:"→＋P",condition:"OD大義の巨腕中に",startup:20,active:"20-27",recovery:"19",onHit:"D",onBlock:1,damage:800,cancel:"SA2",notes:"ガード時に600のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:0,thumb:null},
+  {id:"arjun_0033",name:"弱 厳酷な岩肩",type:"special",inputStr:"→↓↘＋弱P",startup:19,active:"19-34",recovery:"22",onHit:"D",onBlock:-4,damage:1000,cancel:"SA3",notes:"6-23F 空中判定の打撃・空弾属性に対して無敵 / ガード時に600のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000) / 岩に触れると「過剰な正義」に派生",dgCost:0,thumb:null},
+  {id:"arjun_0034",name:"中 厳酷な岩肩",type:"special",inputStr:"→↓↘＋中P",startup:23,active:"23-41",recovery:"19",onHit:"D",onBlock:-4,damage:1100,cancel:"SA3",notes:"6-27F 空中判定の打撃・空弾属性に対して無敵 / ガード時に700のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000) / 岩に触れると「過剰な正義」に派生",dgCost:0,thumb:null},
+  {id:"arjun_0035",name:"強 厳酷な岩肩",type:"special",inputStr:"→↓↘＋強P",startup:28,active:"28-48",recovery:"27",onHit:"D",onBlock:1,damage:1200,cancel:"SA3",notes:"ガード時に800のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(6000) / 岩に触れると「過剰な正義」に派生",dgCost:0,thumb:null},
+  {id:"arjun_0036",name:"過剰な正義",type:"special",inputStr:"-",condition:"厳酷な岩肩で岩に触れると自動派生",startup:11,active:"11-26",recovery:"27",onHit:"D",onBlock:-7,damage:1600,cancel:"",notes:"アーマーブレイク属性 / ガード時に1000のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(8000)",dgCost:0,thumb:null},
+  {id:"arjun_0037",name:"OD 厳酷な岩肩",type:"od",inputStr:"→↓↘＋PP",startup:22,active:"22-42",recovery:"27",onHit:"D",onBlock:1,damage:1200,cancel:"SA3",notes:"ガード時に800のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(6000) / 岩に触れると「OD過剰な正義」に派生",dgCost:2,thumb:null},
+  {id:"arjun_0038",name:"OD 過剰な正義",type:"od",inputStr:"-",condition:"OD厳酷な岩肩で岩に触れると自動派生",startup:11,active:"11-26",recovery:"27",onHit:"D",onBlock:-7,damage:1600,cancel:"",notes:"アーマーブレイク属性 / ガード時に1000のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(8000)",dgCost:0,thumb:null},
+  {id:"arjun_0039",name:"息吹の円筒",type:"special",inputStr:"↓↘→＋K",startup:17,active:"",recovery:"全体48",onHit:"D",onBlock:-6,damage:600,cancel:"SA3",notes:"ガード時に300のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(2000) / 26-36Fまで、息吹の震撼に派生可",dgCost:0,thumb:null},
+  {id:"arjun_0040",name:"弱 息吹の震撼",type:"special",inputStr:"→＋弱P",condition:"息吹の円筒中に",startup:15,active:"15-24",recovery:"18",onHit:"D",onBlock:-7,damage:800,cancel:"SA3",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0041",name:"中 息吹の震撼",type:"special",inputStr:"→＋中P",condition:"息吹の円筒中に",startup:15,active:"15-24",recovery:"18",onHit:"D",onBlock:-7,damage:800,cancel:"SA3",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0042",name:"強 息吹の震撼",type:"special",inputStr:"→＋強P",condition:"息吹の円筒中に",startup:15,active:"15-24",recovery:"18",onHit:"D",onBlock:-7,damage:800,cancel:"SA3",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0043",name:"息吹の震撼(飛び道具)",type:"special",inputStr:"-",startup:"",active:"",recovery:"",onHit:"",onBlock:"",damage:700,cancel:"",notes:"ガード時に300のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(2500)",dgCost:0,thumb:null},
+  {id:"arjun_0044",name:"OD 息吹の円筒",type:"od",inputStr:"↓↘→＋KK",startup:17,active:"",recovery:"全体48",onHit:"D",onBlock:1,damage:600,cancel:"SA2",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(2500) / 26-36Fまで、OD息吹の震撼に派生可",dgCost:2,thumb:null},
+  {id:"arjun_0045",name:"OD 弱 息吹の震撼",type:"od",inputStr:"→＋弱P",condition:"OD息吹の円筒中に",startup:15,active:"15-24",recovery:"18",onHit:"D",onBlock:-7,damage:800,cancel:"SA2",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0046",name:"OD 中 息吹の震撼",type:"od",inputStr:"→＋中P",condition:"OD息吹の円筒中に",startup:15,active:"15-24",recovery:"18",onHit:"D",onBlock:-7,damage:800,cancel:"SA2",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0047",name:"OD 強 息吹の震撼",type:"od",inputStr:"→＋強P",condition:"OD息吹の円筒中に",startup:15,active:"15-24",recovery:"18",onHit:"D",onBlock:-7,damage:800,cancel:"SA2",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0048",name:"OD 息吹の震撼(飛び道具)",type:"od",inputStr:"-",startup:"",active:"",recovery:"",onHit:"",onBlock:"",damage:1000,cancel:"",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:0,thumb:null},
+  {id:"arjun_0049",name:"弱 神気の巨巌",type:"special",inputStr:"↓↙←＋弱K",startup:25,active:"25-34",recovery:"21",onHit:"D",onBlock:-6,damage:800,cancel:"SA3",notes:"ガード時に500のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:0,thumb:null},
+  {id:"arjun_0050",name:"中 神気の巨巌",type:"special",inputStr:"↓↙←＋中K",startup:25,active:"25-34",recovery:"21",onHit:"D",onBlock:-6,damage:800,cancel:"SA3",notes:"ガード時に500のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:0,thumb:null},
+  {id:"arjun_0051",name:"強 神気の巨巌",type:"special",inputStr:"↓↙←＋強K",startup:25,active:"25-34",recovery:"21",onHit:"D",onBlock:-6,damage:800,cancel:"SA3",notes:"ガード時に500のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:0,thumb:null},
+  {id:"arjun_0052",name:"神気の巨巌(飛び道具)",type:"special",inputStr:"-",startup:"",active:"",recovery:"",onHit:"",onBlock:"",damage:800,cancel:"",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0053",name:"OD 弱 神気の巨巌",type:"od",inputStr:"↓↙←＋弱K中K",startup:20,active:"20-29",recovery:"21",onHit:"D",onBlock:-6,damage:800,cancel:"SA2",notes:"ガード時に500のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:2,thumb:null},
+  {id:"arjun_0054",name:"OD 中 神気の巨巌",type:"od",inputStr:"↓↙←＋弱K強K",startup:20,active:"20-29",recovery:"21",onHit:"D",onBlock:-6,damage:800,cancel:"SA2",notes:"ガード時に500のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:2,thumb:null},
+  {id:"arjun_0055",name:"OD 強 神気の巨巌",type:"od",inputStr:"↓↙←＋中K強K",startup:20,active:"20-29",recovery:"21",onHit:"D",onBlock:-6,damage:800,cancel:"SA2",notes:"ガード時に500のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000)",dgCost:2,thumb:null},
+  {id:"arjun_0056",name:"OD 神気の巨巌(飛び道具)",type:"od",inputStr:"-",startup:"",active:"",recovery:"",onHit:"",onBlock:"",damage:800,cancel:"",notes:"ガード時に400のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000)",dgCost:0,thumb:null},
+  {id:"arjun_0057",name:"鬼気迫る尋問",type:"special",inputStr:"→↘↓↙←＋P",condition:"近距離で",startup:8,active:"8-10",recovery:"35",onHit:"D",onBlock:"",damage:1600,cancel:"",notes:"リカバリアブルダメージ / 相手がリカバリアブルダメージ中の場合、性能変化 / ・ダメージ1800",dgCost:0,thumb:null},
+  {id:"arjun_0058",name:"OD 鬼気迫る尋問",type:"od",inputStr:"→↘↓↙←＋PP",condition:"近距離で",startup:26,active:"26-28",recovery:"38",onHit:"D",onBlock:"",damage:2200,cancel:"",notes:"リカバリアブルダメージ / 相手がリカバリアブルダメージ中の場合、性能変化 / ・ダメージ2400",dgCost:2,thumb:null},
+  {id:"arjun_0059",name:"不撓の警衛",type:"special",inputStr:"↓↓＋強K",startup:3,active:"3-28",recovery:"30",onHit:"D",onBlock:-3,damage:1500,cancel:"",notes:"3-28F 飛び道具/打撃当身、打撃当身時派生技に移行 / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(3000) / ボタンホールドで動作延長可 / ボタンホールド中、26Fから倫理の崩壊に派生可",dgCost:0,thumb:null},
+  {id:"arjun_0060",name:"倫理の崩壊",type:"special",inputStr:"P",condition:"不撓の警衛中に",startup:28,active:"28-65",recovery:"23",onHit:"D",onBlock:3,damage:1500,cancel:"",notes:"ガード時に1100のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000) / 飛び道具相殺時の強度はOD版相当",dgCost:0,thumb:null},
+  {id:"arjun_0061",name:"SA1 破壊の蛮声",type:"super",inputStr:"↓↘→↓↘→＋K",startup:8,active:"8-69",recovery:"67",onHit:"D",onBlock:-46,damage:2000,cancel:"",notes:"1-8F 打撃・投げに対して無敵 / ガード時に100のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(2500) / 最低保障ダメージ30％ / カウンター/パニッシュカウンターで数値が変動しない",dgCost:0,thumb:null},
+  {id:"arjun_0062",name:"SA2 忘却の一槌",type:"super",inputStr:"↓↙←↓↙←＋P",startup:9,active:"9-12",recovery:"57",onHit:"D",onBlock:-41,damage:3000,cancel:"",notes:"1-12F 完全無敵 / ガード時に200のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(5000) / 最低保障ダメージ40％ / カウンター/パニッシュカウンターで数値が変動しない",dgCost:0,thumb:null},
+  {id:"arjun_0063",name:"SA3 秩序の鬼神",type:"super",inputStr:"↓↘→↓↘→＋P",startup:13,active:"13-15",recovery:"58",onHit:"D",onBlock:-41,damage:4000,cancel:"",notes:"1-15F 完全無敵 / ガード時に300のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(7500) / 最低保障ダメージ50％ / カウンター/パニッシュカウンターで数値が変動しない / ※必殺技キャンセル時のみ適用",dgCost:0,thumb:null},
+  {id:"arjun_0064",name:"CA 秩序の鬼神",type:"super",inputStr:"↓↘→↓↘→＋P",condition:"25%以下",startup:13,active:"13-15",recovery:"58",onHit:"D",onBlock:-41,damage:4500,cancel:"",notes:"1-15F 完全無敵 / ガード時に300のリカバリアブルダメージを与える / バーンアウト中の相手にガードさせた時の相手Dゲージ増加量(10000) / 最低保障ダメージ50％ / カウンター/パニッシュカウンターで数値が変動しない / ※必殺技キャンセル時のみ適用",dgCost:0,thumb:null},
+  {id:"arjun_0065",name:"豪胆な制裁",type:"throw",inputStr:"投げ",startup:5,active:"5-7",recovery:"23",onHit:"D",onBlock:"",damage:1200,cancel:"",notes:"パニッシュカウンター時以下の性能変化 / ・ダメージ2040 / ・SAゲージ4000増加 / ・ハードノックダウン",dgCost:0,thumb:null},
+  {id:"arjun_0066",name:"処罰の天秤",type:"throw",inputStr:"←＋投げ",startup:5,active:"5-7",recovery:"23",onHit:"D",onBlock:"",damage:1200,cancel:"",notes:"パニッシュカウンター時以下の性能変化 / ・ダメージ2040 / ・SAゲージ4000増加 / ・ハードノックダウン",dgCost:0,thumb:null},
+  {id:"arjun_0067",name:"前方ステップ",type:"other",inputStr:"→→",startup:"",active:"",recovery:"全体22",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0068",name:"後方ステップ",type:"other",inputStr:"←←",startup:"",active:"",recovery:"全体25",onHit:"",onBlock:"",damage:0,cancel:"",notes:"1-15F 投げ無敵",dgCost:0,thumb:null},
+  {id:"arjun_0069",name:"ドライブインパクト（暴力沙汰）",type:"drive",inputStr:"インパクト",startup:26,active:"26-27",recovery:"35",onHit:"D",onBlock:-3,damage:800,cancel:"",notes:"1-27F アーマー判定（2回） / ヒットバックでステージ端に到達すると壁やられが発生 / パニッシュカウンター、もしくはアーマー成立後にヒットで以下の性能変化 / ・地上ヒット膝崩れ / ・空中ヒット吹き飛び時間増加 / ・SAゲージ3000増加",dgCost:1,thumb:null},
+  {id:"arjun_0070",name:"ドライブリバーサル（過剰防衛）",type:"drive",inputStr:"→＋インパクト",startup:20,active:"20-22",recovery:"26",onHit:"D",onBlock:-6,damage:500,cancel:"",notes:"リカバリアブルダメージ / 1-22F 完全無敵 / ヒット時硬直5F増加 / 起き上がり時は発生18F・1-20F 完全無敵",dgCost:2,thumb:null},
+  {id:"arjun_0071",name:"パリィドライブラッシュ",type:"drive",inputStr:"ドライブラッシュ",startup:"",active:"",recovery:"全体45",onHit:"",onBlock:"",damage:0,cancel:"※",notes:"暗転10F / ※動作9F目から攻撃行動にキャンセル可 / 24F目からパリィ以外の行動でキャンセル可",dgCost:0.5,thumb:null},
+  {id:"arjun_0072",name:"キャンセルドライブラッシュ",type:"drive",inputStr:"キャンセルラッシュ",startup:"",active:"",recovery:"全体46",onHit:"",onBlock:"",damage:0,cancel:"※",notes:"暗転9F / ※動作10F目から攻撃行動にキャンセル可 / 25F目からパリィ以外の行動でキャンセル可",dgCost:3,thumb:null},
+  {id:"arjun_0073",name:"前歩き",type:"other",inputStr:"→",startup:"",active:"",recovery:"",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0074",name:"後歩き",type:"other",inputStr:"←",startup:"",active:"",recovery:"",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0075",name:"前ジャンプ",type:"other",inputStr:"↗",startup:"4",active:"38",recovery:"3",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0076",name:"後ジャンプ",type:"other",inputStr:"↖",startup:"4",active:"38",recovery:"3",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
+  {id:"arjun_0077",name:"垂直ジャンプ",type:"other",inputStr:"↑",startup:"4",active:"38",recovery:"3",onHit:"",onBlock:"",damage:0,cancel:"",notes:"",dgCost:0,thumb:null},
+  ],
 };
 // ===== [S:seed-end] 技データここまで =====
 
@@ -3606,11 +3693,13 @@ const CHARS={};
 Object.keys(SEED_MOVES).forEach(nm=>{CHARS[nm]={name:nm,build:()=>SEED_MOVES[nm].map(m=>({...m}))};});
 
 // ===== [S:version] SEED_VERSION と CHANGELOG。技データ更新時はここも必ず更新 =====
-const SEED_VERSION = 16; // ★ シード(内蔵技データ)を更新したら、この数字を1つ上げると次回読み込み時に自動反映されます
+const SEED_VERSION = 17; // ★ シード(内蔵技データ)を更新したら、この数字を1つ上げると次回読み込み時に自動反映されます
 // ★ 更新履歴。新しいバージョンは必ず配列の「先頭」に追加してください。
 //   設定画面に表示されるバージョン(APP_VERSION)は、自動的にこの先頭エントリの version になります。
 //   各エントリ: { version:'x.y.z', date:'YYYY.MM.DD', ja:['変更点1','変更点2'], en:['change 1','change 2'] }
 const CHANGELOG = [
+  { version:'1.3.7', date:'2026.10.16', ja:['始動技別 に「すべて開く」「すべて閉じる」ボタンを追加しました（始動技が2つ以上あるときに右上に表示）','コンボ編集中、技チップの削除（✕）・複製（⧉）ボタンのアイコンが環境によって中心からズレて表示される問題を修正しました'], en:['Added "Expand all" / "Collapse all" buttons to STARTER TREE (shown at the top right when there are two or more starters)','Fixed the delete (✕) / duplicate (⧉) icons on move chips appearing off-center in some environments while editing a combo'] },
+  { version:'1.3.6', date:'2026.10.16', ja:['新キャラクター「アルジュン」の技データ(77技)を追加','エド・ケン・キンバリー・A.K.I.・ジェイミーのOD派生技(21技)のDゲージ消費量を2→0に修正','ヤスミンのODウラン／ODクロッグを「ODムカ・ン・ランギットから(消費0)」と「弱・中・強ムカ・ン・ランギットから(消費2)」に分割'], en:['Added move data for the new character Arjun (77 moves)','Fixed Drive Gauge cost of 21 OD follow-ups for Ed, Ken, Kimberly, A.K.I. and Jamie (2 to 0)','Split Yasmine\'s OD Ulan / OD Kulog into versions from OD Muka ng Langit (cost 0) and from L/M/H Muka ng Langit (cost 2)'] },
   { version:'1.3.5', date:'2026.09.18', ja:['始動技別・ルート図 にも FILTER のタグ絞り込みを追加しました。選択したタグはコンボ一覧と共通で、タグに合致しないコンボは子孫（分岐先）ごと非表示になります。ルート図では🕸非表示（表示トグル）とタグ絞り込みは別枠で扱われ、それぞれ0件になった場合は個別に案内が出ます'], en:["Added the FILTER tag filter to STARTER TREE and ROUTE GRAPH as well. Selected tags are shared with COMBO LIST, and combos that do not match a tag are hidden along with their branches. In ROUTE GRAPH, the 🕸 hide toggle and tag filtering are handled separately, each showing its own message when it results in zero combos"] },
   { version:'1.3.4', date:'2026.08.14', ja:['コンボ一覧 に自動並び替え（ソート）機能を追加しました。SORTバーの「始動技」「ダメージ」のピルをクリックすると一括で並び替えられます（もう一度クリックで昇順⇔降順を切替）。分岐コンボの親子関係は崩れず、並び替え後もドラッグでの手動並び替えを引き続き使えます','そのほか軽微な調整を行いました'], en:['Added an auto-sort feature to COMBO LIST. Click the "Starter" or "Damage" pill in the SORT bar to sort all combos at once (click again to toggle ascending/descending). Branch combo hierarchies stay intact, and you can still drag combos to reorder them manually afterward','Various other minor adjustments'] },
   { version:'1.3.3', date:'2026.08.11', ja:['ルート図 のノードのまとめ方（アルゴリズム）を更新しました。「共通ルート抽出」という仕組みで、コンボどうしで共通する部分列を自動で見つけて重ねるようになり、より多くの共通パーツがまとまって見やすくなりました','ルート図 に拡大縮小機能を追加しました。ツールバーの − / ＋ で倒率を変更でき、中央の倒率表示で100%に、全体でグラフ全体が画面に収まる倒率になります。PCは Ctrl（⌘）＋ホイール、スマホ・タブレットは2本指のピンチでも操作でき、いずれもカーソル（指）の位置を中心に拡大縮小します（倒率は次回起動時も引き継がれます）'], en:['Updated the merging algorithm used by ROUTE GRAPH. It now uses "Common Route Extraction", which automatically finds and merges shared sub-sequences between combos, so more shared parts are merged and easier to see','Added zoom to ROUTE GRAPH. Use − / ＋ in the toolbar to change the zoom level, press the percentage in the middle to return to 100%, or Fit to scale the whole graph into view. Also works with Ctrl (⌘) + wheel on desktop and a two-finger pinch on phones and tablets, both zooming around the pointer (or your fingers); the zoom level is remembered next time'] },
@@ -4679,7 +4768,7 @@ function openTutorial(){
     H('var(--gold)','🎮 基本操作')+
     D(`① 上部プルダウンで使用キャラを選択（${b('＋ キャラ')}で追加、${b('✎ キャラ名')}で名前を変更、${b('キャラ削除')}でそのキャラのコンボ・技・メモ・登録画像をまとめて削除）<br>② PCは左の技リストから右のコンボ枠へ${b('ドラッグ＆ドロップ')}。コンボ内の技もドラッグで並び替え可能で、${b('ドロップ位置のオレンジの縦線')}が挿入先になります（先頭・中間・末尾のどこにでも差し込めます）<br>③ コンボの${b('✎ 編集')}を押すと編集モードになり、分岐追加・複製・削除・並び替え（▲▼）などが行えます<br>④ 技カードをクリックでフレームデータ詳細を表示`)+
     H('#e84393','📑 タブ')+
-    D(`• ${b('コンボ一覧')} — コンボの作成・編集メイン画面<br>• ${b('始動技別')} — 始動技ごとにコンボをツリー表示<br>• ${b('ルート図')} — 登録済みコンボの技のつながりを俯瞰するグラフ<br>• ${b('📝 メモ')} — キャラごとの自由メモ（個別保存）`)+
+    D(`• ${b('コンボ一覧')} — コンボの作成・編集メイン画面<br>• ${b('始動技別')} — 始動技ごとにコンボをツリー表示（始動技の見出しクリックで個別に開閉、右上の${b('すべて開く／すべて閉じる')}で一括開閉）<br>• ${b('ルート図')} — 登録済みコンボの技のつながりを俯瞰するグラフ<br>• ${b('📝 メモ')} — キャラごとの自由メモ（個別保存）`)+
     CAT('コンボを作る')+
     H('#3498db','📋 コンボ管理')+
     D(`• ${b('＋ NEW COMBO')} — 新しいコンボを追加<br>• ${b('DMG欄 / DG欄')} — ダメージは手動入力。ドライブゲージ消費は自動計算され、${b('編集中はDG欄に数値を入れて手動修正')}も可能（空欄で自動計算に戻る。OD→OD派生など自動計算が合わない場合に）<br>• ${b('FRAME欄')} — コンボ終了時の有利/不利フレームを手動入力<br>• ${b('▲▼ 並び替え')} — 編集中に表示順を変更（親子コンボはまとまって移動）<br>• ${b('◀▶ 階層の変更')} — 編集中、${b('▶')} ですぐ上のコンボの分岐にし、${b('◀')} で親と同じ階層へ出せます（詳しくは「🌿 分岐コンボ」）<br>• ${b('技の複製（⧉）')} — 編集中、コンボ内の各技にある⧉ボタンで、その技の直後に同じ技をもう1つ追加（弱P→弱P 弱P のように）<br>• ${b('コンボの複製')} — 編集中のコンボを丸ごと複製（${b('分岐ツリーも一緒に')}コピーし、すぐ下に同じ階層で追加）。似た派生の量産に便利<br>• ${b('📋 コマンド出力')} — コンボのコマンドをクリップボードへコピー（外部に貼り付け可）<br>• ${b('同じ技のまとめ表示')} — コンボ一覧 / 始動技別 で同じ技が連続するとき「弱P×3」のようにまとめて表示します（${b('⚙ 設定')}でON/OFF切替。${b('📋 コマンド出力')}も同じく「×3」でコピーされます）。${b('コンボの編集中')}は1つずつの表示に戻り、より細かく並び替えできます<br>• ${b('メモ欄')} — コンボごとに一言メモを書けます（${b('✎ 編集')}中に入力可。空欄なら表示されません）<br>• ${b('タグ')} — コンボにタグを付けてフィルター。${b('コンボ一覧 上部のフィルターのタグを掴んでコンボへドラッグ&ドロップ')}すると、編集モードでなくてもそのタグを付与できます（PC）<br>• ${b('タグの複数選択')} — フィルターのタグは押すたびに選択／解除が切り替わり、複数選べます。2つ以上選ぶと ${b('AND / OR')} の切替ボタンが現れ、${b('AND')} は選んだタグを${b('すべて')}持つコンボ、${b('OR')} は${b('どれか1つでも')}持つコンボを表示します（${b('ALL')} で選択を全解除）`)+
@@ -4704,7 +4793,7 @@ function openTutorial(){
     H('var(--gold)','🎮 Basics')+
     D(`① Choose your character from the dropdown at the top (add one with ${b('＋ Character')}, rename with ${b('✎ Rename')}, or use ${b('Delete char')} to remove that character along with its combos, moves, memo and registered images)<br>② On desktop, ${b('drag & drop')} a move from the list on the left into a combo slot on the right. Moves inside a combo can also be reordered by dragging — the ${b('orange vertical line at the drop position')} shows where it will be inserted (you can drop at the start, middle, or end)<br>③ Press ${b('✎ Edit')} on a combo to enter edit mode, where you can add branches, duplicate, delete, reorder (▲▼), and more<br>④ Click a move card to view its frame-data details`)+
     H('#e84393','📑 Tabs')+
-    D(`• ${b('COMBO LIST')} — The main screen for creating and editing combos<br>• ${b('STARTER TREE')} — Combos shown as a tree grouped by starter move<br>• ${b('ROUTE GRAPH')} — An at-a-glance graph of how moves connect across your saved combos<br>• ${b('📝 MEMO')} — Free notes per character (saved individually)`)+
+    D(`• ${b('COMBO LIST')} — The main screen for creating and editing combos<br>• ${b('STARTER TREE')} — Combos shown as a tree grouped by starter move (click a starter header to open/close it, or use ${b('Expand all / Collapse all')} at the top right)<br>• ${b('ROUTE GRAPH')} — An at-a-glance graph of how moves connect across your saved combos<br>• ${b('📝 MEMO')} — Free notes per character (saved individually)`)+
     CAT('Building combos')+
     H('#3498db','📋 Managing combos')+
     D(`• ${b('＋ NEW COMBO')} — Add a new combo<br>• ${b('DMG / DG fields')} — Enter damage manually; Drive Gauge cost is auto-calculated, and ${b('you can override it by typing a number in the DG field while editing')} (leave blank to revert to auto — useful when auto-calc is off, e.g. OD→OD derivations)<br>• ${b('FRAME field')} — Manually enter the frame advantage/disadvantage at combo end<br>• ${b('▲▼ Reorder')} — Change the display order while editing (parent/child combos move together)<br>• ${b('◀▶ Change the level')} — While editing, ${b('▶')} makes the combo a branch of the one directly above it and ${b('◀')} moves it out to its parent level (see "🌿 Branch combos")<br>• ${b('Duplicate a move (⧉)')} — While editing, the ⧉ button on each move in a combo inserts another copy of that move right after it (e.g. LP → LP LP)<br>• ${b('Duplicate a combo')} — Copy the combo being edited in full (${b('including its branch tree')}), inserted just below at the same level. Handy for mass-producing similar variants<br>• ${b('📋 Copy notation')} — Copy the combo notation to the clipboard (paste it anywhere)<br>• ${b('Repeated move display')} — In COMBO LIST / STARTER TREE, consecutive identical moves are shown grouped like "LP×3" (toggle ON/OFF in ${b('⚙ Settings')}; ${b('📋 Copy notation')} is copied with "×3" too). ${b('While editing a combo')}, they revert to one-by-one display for finer reordering<br>• ${b('Note field')} — Add a short note to each combo (editable while in ${b('✎ Edit')}; hidden when blank)<br>• ${b('Tags')} — Tag combos and filter by them. ${b('Drag a tag from the filter bar at the top of COMBO LIST and drop it onto a combo')} to add that tag without entering edit mode (desktop)<br>• ${b('Multi-select tags')} — Each tag in the filter bar toggles on and off, so you can select several. Selecting two or more reveals an ${b('AND / OR')} switch: ${b('AND')} shows combos carrying ${b('every')} selected tag, ${b('OR')} shows combos carrying ${b('any')} of them (${b('ALL')} clears the selection)`)+
@@ -5189,7 +5278,7 @@ function renderComboBlock(area,combo){
         const meta=ctrMeta(ctr);
         ctrHtml=`<span class="ctr-badge ${meta.cls}" title="${meta.title}">${meta.label}</span>`;
       }
-      pm.innerHTML=`${ico}<div style="font-size:10px;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.name)}</div>${ctrHtml}${editing?`<button class="dup-btn" title="${esc(t('dupMoveTitle'))}">⧉</button><button class="rm-btn">✕</button>`:''}`;
+      pm.innerHTML=`${ico}<div style="font-size:10px;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.name)}</div>${ctrHtml}${editing?`<button class="dup-btn" title="${esc(t('dupMoveTitle'))}">${ICON_DUP}</button><button class="rm-btn">${ICON_RM}</button>`:''}`;
       pm.addEventListener('click',e2=>{
         if(e2.target.classList.contains('rm-btn')||e2.target.classList.contains('ctr-btn')||e2.target.classList.contains('dup-btn'))return;
         if(pickTapGuard(combo.id,idx))return;
@@ -5518,6 +5607,10 @@ function toggleComboRoute(id){
   showToast(combo.inRoute===false?t('rgToastOff'):t('rgToastOn'));
 }
 
+// ★ 技チップの ✕（削除）/ ⧉（複製）アイコン。viewBox の中心(5,5)に図形の中心を合わせてある
+const ICON_RM='<svg viewBox="0 0 10 10" width="8" height="8" aria-hidden="true"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+const ICON_DUP='<svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><rect x="3.6" y="3.6" width="4.9" height="4.9" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.1V2.5a1 1 0 0 1 1-1h3.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+
 // ===== [S:tree] STARTER TREE =====
 function renderTree(){
   const wrap=document.getElementById('treeViewWrap');wrap.innerHTML='';
@@ -5539,6 +5632,7 @@ function renderTree(){
   const _byId=new Map();const _kids=new Map();
   combos.forEach(c=>{_byId.set(c.id,c);const p=c.parentId||null;let a=_kids.get(p);if(!a){a=[];_kids.set(p,a);}a.push(c);});
   const root=document.createElement('div');root.className='tree-root';
+  const _blocks=[]; // すべて開く／閉じる用に、表示したブロックとキーを控える
   Object.entries(map).forEach(([k,listAll])=>{
     // ★ タグに合致しないコンボは子孫ごと非表示（コンボ一覧と同じ「合致しないものは丸ごと消える」方針）
     const list=listAll.filter(comboMatchesTags);
@@ -5610,6 +5704,7 @@ function renderTree(){
       const collapsed=block.classList.toggle('collapsed');
       if(collapsed)treeCollapsed.add(_ckey);else treeCollapsed.delete(_ckey);
     });
+    _blocks.push({block,key:_ckey});
     root.appendChild(block);
   });
   if(!root.children.length&&activeTags.size){
@@ -5618,6 +5713,14 @@ function renderTree(){
     empty.innerHTML=esc(t('noComboHits'))+'<br><button type="button" class="btn" style="margin-top:8px;" onclick="clearTagFilter()">'+esc(t('clearTagFilter'))+'</button>';
     wrap.appendChild(empty);
     return;
+  }
+  // ★ すべて開く／すべて閉じる（表示中の始動技ブロックが2つ以上あるときだけ出す）
+  if(_blocks.length>1){
+    const tb=document.createElement('div');tb.className='tree-toolbar';
+    const mk=(label,collapse)=>{const b=document.createElement('button');b.type='button';b.className='btn';b.textContent=t(label);
+      b.addEventListener('click',()=>{_blocks.forEach(({block,key})=>{block.classList.toggle('collapsed',collapse);if(collapse)treeCollapsed.add(key);else treeCollapsed.delete(key);});});return b;};
+    tb.appendChild(mk('treeExpandAll',false));tb.appendChild(mk('treeCollapseAll',true));
+    wrap.insertBefore(tb,wrap.firstChild);
   }
   wrap.appendChild(root);
 }
